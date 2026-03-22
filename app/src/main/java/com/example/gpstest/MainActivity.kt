@@ -15,7 +15,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.example.gpstest.data.source.GnssDataSourceImpl
+import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.GnssRepositoryImpl
+import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
 import com.example.gpstest.ui.theme.Theme
 import com.example.gpstest.viewmodel.SatelliteViewModel
 
