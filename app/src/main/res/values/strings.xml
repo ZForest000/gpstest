@@ -1,4 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GPS Debug Tool</string>
+
+    <!-- Main Screen -->
+    <string name="main_title">GPS调试工具</string>
+    <string name="main_gps_status_title">GPS状态</string>
+    <string name="main_satellite_info_title">卫星信息</string>
+    <string name="main_signal_quality_title">信号质量</string>
+    <string name="main_location_data_title">定位数据</string>
+    <string name="main_nmea_data_title">NMEA数据</string>
+
+    <!-- GPS Status -->
+    <string name="gps_status_enabled">已启用</string>
+    <string name="gps_status_disabled">未启用</string>
+    <string name="gps_status_enabled_details">GPS功能已开启，正在搜索卫星</string>
+    <string name="gps_status_disabled_details">GPS功能未开启，请检查设置</string>
+
+    <!-- Satellite Info -->
+    <string name="satellite_count_format">卫星数量: %1$d</string>
+    <string name="satellite_used_in_fix">用于定位: %1$d</string>
+    <string name="satellite_view_only">仅查看: %1$d</string>
+
+    <!-- Signal Quality -->
+    <string name="signal_strength_excellent">优秀</string>
+    <string name="signal_strength_good">良好</string>
+    <string name="signal_strength_fair">一般</string>
+    <string name="signal_strength_poor">差</string>
+    <string name="signal_strength_none">无信号</string>
+
+    <!-- Location Data -->
+    <string name="location_latitude">纬度</string>
+    <string name="location_longitude">经度</string>
+    <string name="location_altitude">海拔</string>
+    <string name="location_accuracy">精度</string>
+    <string name="location_speed">速度</string>
+    <string name="location_bearing">方位</string>
+    <string name="location_time">更新时间</string>
+
+    <!-- Values -->
+    <string name="value_not_available">--</string>
+    <string name="value_latitude_format">%.6f°</string>
+    <string name="value_longitude_format">%.6f°</string>
+    <string name="value_altitude_format">%.1f 米</string>
+    <string name="value_accuracy_format">%.1f 米</string>
+    <string name="value_speed_format">%.1f km/h</string>
+    <string name="value_bearing_format">%.1f°</string>
+
+    <!-- NMEA Data -->
+    <string name="nmea_no_data">暂无NMEA数据</string>
+    <string name="nmea_sentence_format">[%1$tH:%1$tM:%1$tS.%1$tL] %2$s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">设置</string>
+    <string name="settings_gps_interval">GPS更新间隔</string>
+    <string name="settings_gps_interval_summary">设置GPS位置更新频率</string>
+    <string name="settings_min_time">最小时间间隔</string>
+    <string name="settings_min_distance">最小距离间隔</string>
+    <string name="settings_nmea_enabled">启用NMEA输出</string>
+    <string name="settings_nmea_enabled_summary">显示原始NMEA数据</string>
+    <string name="settings_dark_mode">深色模式</string>
+    <string name="settings_dark_mode_summary">使用深色主题</string>
+
+    <!-- Permissions -->
+    <string name="permission_required_title">需要权限</string>
+    <string name="permission_required_message">该应用需要位置权限才能访问GPS数据</string>
+    <string name="permission_granted">权限已授予</string>
+    <string name="permission_denied">权限被拒绝</string>
+    <string name="permission_go_settings">前往设置</string>
+
+    <!-- Errors -->
+    <string name="error_gps_not_available">GPS不可用</string>
+    <string name="error_location_disabled">位置服务已禁用</string>
+    <string name="error_permission_denied">权限被拒绝，无法访问GPS</string>
+
+    <!-- Menu -->
+    <string name="menu_settings">设置</string>
+    <string name="menu_about">关于</string>
+
+    <!-- About -->
+    <string name="about_title">关于</string>
+    <string name="about_version">版本</string>
+    <string name="about_description">GPS调试工具 - 用于测试和调试GPS功能的实用工具</string>
 </resources>
