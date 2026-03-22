@@ -1,6 +1,7 @@
 package com.example.gpstest
 
 import android.Manifest
+import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,11 +13,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
+import com.example.gpstest.data.source.GnssDataSourceImpl
+import com.example.gpstest.domain.repository.GnssRepositoryImpl
 import com.example.gpstest.ui.theme.Theme
+import com.example.gpstest.viewmodel.SatelliteViewModel
 
 class MainActivity : ComponentActivity() {
 
-    private val viewModel: SatelliteViewModel by viewModels()
+    private val viewModel: SatelliteViewModel by viewModels {
+        val application = application as GpstestApplication
+        val dataSource = GnssDataSourceImpl(application)
+        val repository = GnssRepositoryImpl(dataSource)
+        SatelliteViewModelFactory(application, repository)
+    }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -51,5 +61,18 @@ class MainActivity : ComponentActivity() {
         ) {
             viewModel.startListening()
         }
+    }
+}
+
+class SatelliteViewModelFactory(
+    private val application: Application,
+    private val repository: GnssRepository
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SatelliteViewModel::class.java)) {
+            return SatelliteViewModel(application, repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
