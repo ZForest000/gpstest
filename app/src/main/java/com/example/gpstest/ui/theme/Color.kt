@@ -53,3 +53,12 @@ val BackgroundDark = Color(0xFF121212)
 val OnBackgroundDark = Color(0xFFE0E0E0)
 val SurfaceDark = Color(0xFF1E1E1E)
 val OnSurfaceDark = Color(0xFFE0E0E0)
+
+// Constellation colors
+val Blue40 = Color(0xFF1976D2)
+val Red40 = Color(0xFFD32F2F)
+val Yellow40 = Color(0xFFFBC02D)
+val Purple40 = Color(0xFF7B1FA2)
+val Teal40 = Color(0xFF00796B)
+val Orange40 = Color(0xFFF57C00)
+val Pink40 = Color(0xFFC2185B)
