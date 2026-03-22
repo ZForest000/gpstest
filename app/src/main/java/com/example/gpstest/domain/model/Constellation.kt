@@ -2,6 +2,7 @@ package com.example.gpstest.domain.model
 
 enum class Constellation {
     GPS,
+    SBAS,
     GLONASS,
     GALILEO,
     BEIDOU,
@@ -22,6 +23,3 @@ enum class Constellation {
         }
     }
 }
-
-// Note: SBAS is a special case, mapped to UNKNOWN for now
-private const val SBAS = UNKNOWN

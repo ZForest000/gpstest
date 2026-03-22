@@ -92,3 +92,14 @@ fun GPSTestTheme(
         content = content
     )
 }
+
+/**
+ * Alias for GPSTestTheme to match the import in MainActivity
+ */
+@Composable
+fun Theme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    GPSTestTheme(darkTheme = darkTheme, content = content)
+}

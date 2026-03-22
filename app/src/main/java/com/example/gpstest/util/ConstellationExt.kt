@@ -1,6 +1,5 @@
 package com.example.gpstest.util
 
-import android.location.GnssStatus
 import androidx.compose.ui.graphics.Color
 import com.example.gpstest.ui.theme.Blue40
 import com.example.gpstest.ui.theme.Orange40
@@ -22,15 +21,15 @@ import com.example.gpstest.ui.theme.Yellow40
  */
 fun getConstellationName(constellationType: Int): String {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_GPS -> "GPS"
-        GnssStatus.CONSTELLATION_GLONASS -> "GLONASS"
-        GnssStatus.CONSTELLATION_BEIDOU -> "BeiDou"
-        GnssStatus.CONSTELLATION_QZSS -> "QZSS"
-        GnssStatus.CONSTELLATION_GALILEO -> "Galileo"
-        GnssStatus.CONSTELLATION_NAVIC -> "NavIC"
-        GnssStatus.CONSTELLATION_IRNSS -> "IRNSS"
-        GnssStatus.CONSTELLATION_SBAS -> "SBAS"
-        GnssStatus.CONSTELLATION_UNKNOWN -> "Unknown"
+        1 -> "GPS"
+        3 -> "GLONASS"
+        5 -> "BeiDou"
+        4 -> "QZSS"
+        6 -> "Galileo"
+        7 -> "NavIC"
+        // Note: IRNSS (old name for NavIC) uses same value
+        2 -> "SBAS"
+        0 -> "Unknown"
         else -> "Constellation $constellationType"
     }
 }
@@ -43,15 +42,14 @@ fun getConstellationName(constellationType: Int): String {
  */
 fun getConstellationColor(constellationType: Int): Color {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_GPS -> Blue40
-        GnssStatus.CONSTELLATION_GLONASS -> Red40
-        GnssStatus.CONSTELLATION_BEIDOU -> Yellow40
-        GnssStatus.CONSTELLATION_QZSS -> Purple40
-        GnssStatus.CONSTELLATION_GALILEO -> Teal40
-        GnssStatus.CONSTELLATION_NAVIC -> Orange40
-        GnssStatus.CONSTELLATION_IRNSS -> Pink40
-        GnssStatus.CONSTELLATION_SBAS -> Color.Gray
-        GnssStatus.CONSTELLATION_UNKNOWN -> Color.LightGray
+        1 -> Blue40
+        3 -> Red40
+        5 -> Yellow40
+        4 -> Purple40
+        6 -> Teal40
+        7 -> Orange40
+        2 -> Color.Gray
+        0 -> Color.LightGray
         else -> Color.Gray
     }
 }
@@ -64,15 +62,14 @@ fun getConstellationColor(constellationType: Int): Color {
  */
 fun getConstellationDescription(constellationType: Int): String {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_GPS -> "Global Positioning System (USA)"
-        GnssStatus.CONSTELLATION_GLONASS -> "Global Navigation Satellite System (Russia)"
-        GnssStatus.CONSTELLATION_BEIDOU -> "BeiDou Navigation Satellite System (China)"
-        GnssStatus.CONSTELLATION_QZSS -> "Quasi-Zenith Satellite System (Japan)"
-        GnssStatus.CONSTELLATION_GALILEO -> "Galileo (European Union)"
-        GnssStatus.CONSTELLATION_NAVIC -> "Navigation with Indian Constellation (India)"
-        GnssStatus.CONSTELLATION_IRNSS -> "Indian Regional Navigation Satellite System (India)"
-        GnssStatus.CONSTELLATION_SBAS -> "Satellite-Based Augmentation System"
-        GnssStatus.CONSTELLATION_UNKNOWN -> "Unknown Constellation"
+        1 -> "Global Positioning System (USA)"
+        3 -> "Global Navigation Satellite System (Russia)"
+        5 -> "BeiDou Navigation Satellite System (China)"
+        4 -> "Quasi-Zenith Satellite System (Japan)"
+        6 -> "Galileo (European Union)"
+        7 -> "Navigation with Indian Constellation (India)"
+        2 -> "Satellite-Based Augmentation System"
+        0 -> "Unknown Constellation"
         else -> "Unknown Constellation Type: $constellationType"
     }
 }
@@ -85,14 +82,13 @@ fun getConstellationDescription(constellationType: Int): String {
  */
 fun getConstellationSatelliteCount(constellationType: Int): Int {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_GPS -> 32
-        GnssStatus.CONSTELLATION_GLONASS -> 24
-        GnssStatus.CONSTELLATION_BEIDOU -> 45
-        GnssStatus.CONSTELLATION_QZSS -> 4
-        GnssStatus.CONSTELLATION_GALILEO -> 30
-        GnssStatus.CONSTELLATION_NAVIC -> 7
-        GnssStatus.CONSTELLATION_IRNSS -> 7
-        GnssStatus.CONSTELLATION_SBAS -> 0 // 变化的
+        1 -> 32  // GPS
+        3 -> 24  // GLONASS
+        5 -> 45  // BeiDou
+        4 -> 4   // QZSS
+        6 -> 30  // Galileo
+        7 -> 7   // NavIC/IRNSS
+        2 -> 0   // SBAS (varies)
         else -> 0
     }
 }

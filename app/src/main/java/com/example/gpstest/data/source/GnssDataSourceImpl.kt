@@ -19,23 +19,27 @@ class GnssDataSourceImpl(
     override fun startListening(): Flow<List<GnssSatellite>> = callbackFlow {
         val callback = object : GnssMeasurementsEvent.Callback() {
             override fun onGnssMeasurementsReceived(event: GnssMeasurementsEvent) {
-                val satellites = event.measurements.map { measurement ->
-                    GnssSatellite(
-                        svid = measurement.svid,
-                        constellation = Constellation.fromConstellationType(
-                            measurement.constellationType
-                        ),
-                        cn0DbHz = measurement.cn0DbHz,
-                        azimuthDegrees = measurement.azimuthDegrees,
-                        elevationDegrees = measurement.elevationDegrees,
-                        hasAlmanac = measurement.hasAlmanac(),
-                        hasEphemeris = measurement.hasEphemeris(),
-                        usedInFix = measurement.usedInFix(),
-                        carrierFrequencyHz = measurement.carrierFrequencyHz,
-                        carrierCycles = measurement.carrierCycles,
-                        dopplerShiftHz = measurement.dopplerShiftHz,
-                        timeNanos = measurement.timeNanos
-                    )
+                val satellites = event.measurements.mapNotNull { measurement ->
+                    try {
+                        GnssSatellite(
+                            svid = measurement.svid,
+                            constellation = Constellation.fromConstellationType(
+                                measurement.constellationType
+                            ),
+                            cn0DbHz = measurement.cn0DbHz,
+                            azimuthDegrees = measurement.azimuthDegrees,
+                            elevationDegrees = measurement.elevationDegrees,
+                            hasAlmanac = measurement.hasAlmanac(),
+                            hasEphemeris = measurement.hasEphemeris(),
+                            usedInFix = measurement.usedInFix(),
+                            carrierFrequencyHz = measurement.carrierFrequencyHz,
+                            carrierCycles = measurement.carrierCycles,
+                            dopplerShiftHz = measurement.dopplerShiftHz,
+                            timeNanos = measurement.timeNanos
+                        )
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
                 trySend(satellites)
             }
@@ -49,8 +53,8 @@ class GnssDataSourceImpl(
         }
 
         val registered = locationManager?.registerGnssMeasurementsCallback(
-            callback,
-            context.mainExecutor
+            context.mainExecutor,
+            callback
         ) ?: false
 
         if (!registered) {
@@ -68,6 +72,8 @@ class GnssDataSourceImpl(
     }
 
     override fun isSupported(): Boolean {
-        return locationManager?.getGnssHardwareCapabilities()?.let { true } ?: false
+        // Check if LocationManager has GNSS support
+        val lm = locationManager ?: return false
+        return lm.allProviders.contains("gps")
     }
 }
