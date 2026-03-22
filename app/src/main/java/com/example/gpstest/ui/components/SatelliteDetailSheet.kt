@@ -36,6 +36,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gpstest.data.model.Satellite
+import com.example.gpstest.data.model.almanac
+import com.example.gpstest.data.model.azimuth
+import com.example.gpstest.data.model.constellationType
+import com.example.gpstest.data.model.elevation
+import com.example.gpstest.data.model.ephemeris
+import com.example.gpstest.data.model.snrCn0
 import com.example.gpstest.util.getConstellationColor
 import com.example.gpstest.util.getConstellationName
 import kotlinx.coroutines.launch

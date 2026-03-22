@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.data.model.Satellite
+import com.example.gpstest.data.model.constellationType
+import com.example.gpstest.data.model.snrCn0
 import com.example.gpstest.util.getConstellationColor
 import com.example.gpstest.util.getConstellationName
 

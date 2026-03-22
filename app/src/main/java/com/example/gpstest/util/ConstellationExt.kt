@@ -142,13 +142,12 @@ fun isAugmentationSystem(constellationType: Int): Boolean {
  */
 fun getConstellationFrequencies(constellationType: Int): List<String> {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_GPS -> listOf("L1", "L2", "L5")
-        GnssStatus.CONSTELLATION_GLONASS -> listOf("L1", "L2", "L3")
-        GnssStatus.CONSTELLATION_BEIDOU -> listOf("B1", "B2", "B3")
-        GnssStatus.CONSTELLATION_QZSS -> listOf("L1", "L2", "L5", "L6")
-        GnssStatus.CONSTELLATION_GALILEO -> listOf("E1", "E5", "E6")
-        GnssStatus.CONSTELLATION_NAVIC -> listOf("L5", "S")
-        GnssStatus.CONSTELLATION_IRNSS -> listOf("L5", "S")
+        1 -> listOf("L1", "L2", "L5")  // GPS
+        3 -> listOf("L1", "L2", "L3")  // GLONASS
+        5 -> listOf("B1", "B2", "B3")  // BeiDou
+        4 -> listOf("L1", "L2", "L5", "L6")  // QZSS
+        6 -> listOf("E1", "E5", "E6")  // Galileo
+        7 -> listOf("L5", "S")  // NavIC
         else -> emptyList()
     }
 }

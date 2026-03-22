@@ -46,3 +46,19 @@ val GnssSatellite.azimuth: Float
 
 val GnssSatellite.elevation: Float
     get() = elevationDegrees
+
+// Additional extension properties for enhanced UI
+val GnssSatellite.basebandCn0: Float
+    get() = cn0DbHz
+
+val GnssSatellite.carrierFrequencyMhz: Float?
+    get() = carrierFrequencyHz?.div(1_000_000)?.toFloat()
+
+val GnssSatellite.hasCarrierFrequency: Boolean
+    get() = carrierFrequencyHz != null && carrierFrequencyHz > 0
+
+val GnssSatellite.pseudoRandomNumber: Int
+    get() = svid
+
+val GnssSatellite.svidWithConstellation: String
+    get() = "${constellation.name}-$svid"

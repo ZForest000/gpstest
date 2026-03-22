@@ -22,6 +22,10 @@ class SatelliteViewModel(
     private val _selectedSatellite = MutableStateFlow<GnssSatellite?>(null)
     val selectedSatellite: StateFlow<GnssSatellite?> = _selectedSatellite.asStateFlow()
 
+    // Enhanced state for pull-to-refresh
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     fun startListening() {
         viewModelScope.launch {
             try {
@@ -47,6 +51,24 @@ class SatelliteViewModel(
     fun clearSelection() {
         _selectedSatellite.value = null
     }
+
+    // Additional methods for enhanced UI
+    fun refreshSatellites() {
+        _isRefreshing.value = true
+        // Re-start listening (this will trigger the flow again)
+        startListening()
+        _isRefreshing.value = false
+    }
+
+    val isLoading: Boolean
+        get() = _uiState.value is SatelliteUiState.Loading
+
+    fun endRefresh() {
+        _isRefreshing.value = false
+    }
+
+    val hasLocationPermission: Boolean
+        get() = _uiState.value is SatelliteUiState.Success
 }
 
 sealed interface SatelliteUiState {
