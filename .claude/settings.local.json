@@ -11,7 +11,9 @@
       "Read(//c/Program Files/Java/jdk-21/bin/**)",
       "Bash(\"/c/Program Files/Java/jdk-21/bin/java.exe\" -version)",
       "Bash(export JAVA_HOME=\"/c/Program Files/Java/jdk-21\")",
-      "Bash(adb devices:*)"
+      "Bash(adb devices:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

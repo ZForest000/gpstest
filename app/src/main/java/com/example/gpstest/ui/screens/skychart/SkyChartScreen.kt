@@ -1,16 +1,14 @@
-package com.example.gpstest.ui.screens.satellite
+package com.example.gpstest.ui.screens.skychart
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
@@ -34,24 +32,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.gpstest.PermissionState
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
-import com.example.gpstest.ui.components.ConstellationStatCard
-import com.example.gpstest.ui.components.LocationCard
-import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
-import com.example.gpstest.ui.components.StatBar
-import com.example.gpstest.viewmodel.SatelliteViewModel
 import com.example.gpstest.viewmodel.SatelliteUiState
+import com.example.gpstest.viewmodel.SatelliteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SatelliteListScreen(
+fun SkyChartScreen(
     viewModel: SatelliteViewModel,
-    permissionState: com.example.gpstest.PermissionState,
+    permissionState: PermissionState,
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
-    onOpenDrawer: () -> Unit = {},
+    onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -61,7 +56,7 @@ fun SatelliteListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = { Text("天空图") },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
@@ -94,13 +89,8 @@ fun SatelliteListScreen(
                 }
                 is SatelliteUiState.Success -> {
                     val allSatellites = state.usedInFix + state.visibleOnly + state.searching
-                    SatelliteListContent(
-                        usedInFix = state.usedInFix,
-                        visibleOnly = state.visibleOnly,
-                        searching = state.searching,
-                        totalCount = state.totalCount,
-                        allSatellites = allSatellites,
-                        location = state.location,
+                    SkyChartContent(
+                        satellites = allSatellites,
                         onSatelliteClick = { selectedSatellite = it }
                     )
                 }
@@ -116,7 +106,6 @@ fun SatelliteListScreen(
 
     selectedSatellite?.let { satellite ->
         val signalHistory = viewModel.getSignalHistoryForSatellite(satellite)
-        
         ModalBottomSheet(
             onDismissRequest = { selectedSatellite = null },
             sheetState = sheetState
@@ -130,105 +119,36 @@ fun SatelliteListScreen(
 }
 
 @Composable
-private fun SatelliteListContent(
-    usedInFix: List<GnssSatellite>,
-    visibleOnly: List<GnssSatellite>,
-    searching: List<GnssSatellite>,
-    totalCount: Int,
-    allSatellites: List<GnssSatellite>,
-    location: com.example.gpstest.domain.model.LocationInfo?,
+private fun SkyChartContent(
+    satellites: List<GnssSatellite>,
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val visibleCount = usedInFix.size + visibleOnly.size
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item {
-            LocationCard(location = location)
-        }
+        Spacer(modifier = Modifier.height(8.dp))
 
-        item {
-            ConstellationStatCard(usedInFix = usedInFix)
-        }
+        SkyChartView(
+            satellites = satellites,
+            onSatelliteClick = onSatelliteClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+        )
 
-        item {
-            StatBar(
-                usedInFixCount = usedInFix.size,
-                visibleCount = visibleCount,
-                totalCount = totalCount,
-                satellites = allSatellites
-            )
-        }
+        Spacer(modifier = Modifier.height(12.dp))
 
-        if (usedInFix.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.used_in_fix),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
-            itemsIndexed(
-                items = usedInFix,
-                key = { index, satellite ->
-                    "used_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
-                }
-            ) { _, satellite ->
-                SatelliteCard(
-                    satellite = satellite,
-                    onClick = { onSatelliteClick(satellite) }
-                )
-            }
-        }
-
-        if (visibleOnly.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.visible_not_in_fix),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
-            itemsIndexed(
-                items = visibleOnly,
-                key = { index, satellite ->
-                    "visible_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
-                }
-            ) { _, satellite ->
-                SatelliteCard(
-                    satellite = satellite,
-                    onClick = { onSatelliteClick(satellite) }
-                )
-            }
-        }
-
-        if (searching.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.searching),
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
-            itemsIndexed(
-                items = searching,
-                key = { index, satellite ->
-                    "searching_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
-                }
-            ) { _, satellite ->
-                SatelliteCard(
-                    satellite = satellite,
-                    onClick = { onSatelliteClick(satellite) }
-                )
-            }
-        }
+        SkyChartLegend()
     }
 }
 
 @Composable
 private fun PermissionRequiredContent(
-    permissionState: com.example.gpstest.PermissionState,
+    permissionState: PermissionState,
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
     modifier: Modifier = Modifier
@@ -247,7 +167,7 @@ private fun PermissionRequiredContent(
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = when (permissionState) {
-                com.example.gpstest.PermissionState.PERMANENTLY_DENIED ->
+                PermissionState.PERMANENTLY_DENIED ->
                     stringResource(R.string.permission_permanently_denied_message)
                 else ->
                     stringResource(R.string.permission_rationale)
@@ -257,7 +177,7 @@ private fun PermissionRequiredContent(
         )
         Spacer(modifier = Modifier.height(24.dp))
         when (permissionState) {
-            com.example.gpstest.PermissionState.PERMANENTLY_DENIED -> {
+            PermissionState.PERMANENTLY_DENIED -> {
                 Button(onClick = onOpenAppSettings) {
                     Text(stringResource(R.string.permission_go_settings))
                 }

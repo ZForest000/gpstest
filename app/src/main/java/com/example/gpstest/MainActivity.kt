@@ -12,8 +12,21 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.SatelliteAlt
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,6 +51,7 @@ import com.example.gpstest.viewmodel.SatelliteViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 enum class PermissionState {
     GRANTED, DENIED, PERMANENTLY_DENIED
@@ -147,10 +161,12 @@ class MainActivity : ComponentActivity() {
 
 sealed class Screen(val route: String) {
     object SatelliteList : Screen("satellite_list")
+    object SkyChart : Screen("sky_chart")
     object History : Screen("history")
     object AGps : Screen("agps")
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @androidx.compose.runtime.Composable
 fun GpsTestApp(
     satelliteViewModel: SatelliteViewModel,
@@ -161,32 +177,107 @@ fun GpsTestApp(
 ) {
     val navController = rememberNavController()
     val permissionState by permissionStateFlow.collectAsState()
+    val drawerState = androidx.compose.material3.rememberDrawerState(
+        initialValue = androidx.compose.material3.DrawerValue.Closed
+    )
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val currentBackStack by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStack?.destination?.route
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.SatelliteList.route
+    val navigateAndCloseDrawer: (String) -> Unit = { route ->
+        navController.navigate(route) {
+            popUpTo(Screen.SatelliteList.route) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+        scope.launch {
+            drawerState.close()
+        }
+    }
+
+    androidx.compose.material3.ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            androidx.compose.material3.ModalDrawerSheet {
+                androidx.compose.material3.Text(
+                    text = "GNSS 测试",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(16.dp)
+                )
+                androidx.compose.material3.HorizontalDivider()
+                androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.SatelliteAlt, contentDescription = null) },
+                    label = { Text("卫星列表") },
+                    selected = currentRoute == Screen.SatelliteList.route,
+                    onClick = { navigateAndCloseDrawer(Screen.SatelliteList.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+                androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Explore, contentDescription = null) },
+                    label = { Text("天空图") },
+                    selected = currentRoute == Screen.SkyChart.route,
+                    onClick = { navigateAndCloseDrawer(Screen.SkyChart.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+                androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                    label = { Text("A-GPS 管理") },
+                    selected = currentRoute == Screen.AGps.route,
+                    onClick = { navigateAndCloseDrawer(Screen.AGps.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+                androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.History, contentDescription = null) },
+                    label = { Text("历史记录") },
+                    selected = currentRoute == Screen.History.route,
+                    onClick = { navigateAndCloseDrawer(Screen.History.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+            }
+        }
     ) {
-        composable(Screen.SatelliteList.route) {
-            SatelliteListScreen(
-                viewModel = satelliteViewModel,
-                permissionState = permissionState,
-                onRequestPermission = onRequestPermission,
-                onOpenAppSettings = onOpenAppSettings,
-                onNavigateToHistory = { navController.navigate(Screen.History.route) },
-                onNavigateToAGps = { navController.navigate(Screen.AGps.route) }
-            )
-        }
-        composable(Screen.History.route) {
-            HistoryScreen(
-                viewModel = satelliteViewModel,
-                onNavigateBack = { navController.popBackStack() }
-            )
-        }
-        composable(Screen.AGps.route) {
-            AGpsManagerScreen(
-                viewModel = agpsViewModel,
-                onNavigateBack = { navController.popBackStack() }
-            )
+        NavHost(
+            navController = navController,
+            startDestination = Screen.SatelliteList.route
+        ) {
+            composable(Screen.SatelliteList.route) {
+                SatelliteListScreen(
+                    viewModel = satelliteViewModel,
+                    permissionState = permissionState,
+                    onRequestPermission = onRequestPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenDrawer = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }
+                )
+            }
+            composable(Screen.SkyChart.route) {
+                com.example.gpstest.ui.screens.skychart.SkyChartScreen(
+                    viewModel = satelliteViewModel,
+                    permissionState = permissionState,
+                    onRequestPermission = onRequestPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenDrawer = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }
+                )
+            }
+            composable(Screen.History.route) {
+                HistoryScreen(
+                    viewModel = satelliteViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.AGps.route) {
+                AGpsManagerScreen(
+                    viewModel = agpsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 }

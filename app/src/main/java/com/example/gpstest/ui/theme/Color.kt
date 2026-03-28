@@ -75,3 +75,4 @@ val GalileoColor = Teal40
 val BeidouColor = Yellow40
 val QzssColor = Purple40
 val SbasColor = Color.Gray
+val UnknownConstellationColor = Color(0xFFBDBDBD)
