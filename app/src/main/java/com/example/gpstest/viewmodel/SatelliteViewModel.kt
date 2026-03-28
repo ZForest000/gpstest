@@ -11,6 +11,8 @@ import com.example.gpstest.domain.model.SatelliteGroup
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.SatelliteHistoryRepository
+import com.example.gpstest.domain.model.DopInfo
+import com.example.gpstest.domain.util.DopCalculator
 import com.example.gpstest.ui.components.SignalReading
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,14 +61,17 @@ class SatelliteViewModel(
                 repository.getGnssData().collect { gnssData ->
                     val satellites = gnssData.satellites
                     val grouped = satellites.groupBy { it.group }
+                    val usedInFixList = grouped[SatelliteGroup.USED_IN_FIX].orEmpty()
+                    val dopInfo = DopCalculator.calculate(usedInFixList)
                     _uiState.value = SatelliteUiState.Success(
-                        usedInFix = grouped[SatelliteGroup.USED_IN_FIX].orEmpty(),
+                        usedInFix = usedInFixList,
                         visibleOnly = grouped[SatelliteGroup.VISIBLE_ONLY].orEmpty(),
                         searching = grouped[SatelliteGroup.SEARCHING].orEmpty(),
                         totalCount = satellites.size,
                         location = gnssData.location,
                         clock = gnssData.clock,
-                        dumpsysData = gnssData.dumpsysData
+                        dumpsysData = gnssData.dumpsysData,
+                        dopInfo = dopInfo
                     )
                     
                     updateSignalHistory(satellites)
@@ -189,7 +194,8 @@ sealed interface SatelliteUiState {
         val totalCount: Int,
         val location: LocationInfo? = null,
         val clock: GnssClockData? = null,
-        val dumpsysData: DumpsysGnssData? = null
+        val dumpsysData: DumpsysGnssData? = null,
+        val dopInfo: DopInfo? = null
     ) : SatelliteUiState
     data class Error(val message: String) : SatelliteUiState
 }

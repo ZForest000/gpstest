@@ -39,6 +39,7 @@ import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.ui.components.ClockInfoCard
 import com.example.gpstest.ui.components.ConstellationStatCard
 import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
+import com.example.gpstest.ui.components.DopCard
 import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
@@ -105,6 +106,7 @@ fun SatelliteListScreen(
                         location = state.location,
                         clock = state.clock,
                         dumpsysData = state.dumpsysData,
+                        dopInfo = state.dopInfo,
                         onSatelliteClick = { selectedSatellite = it }
                     )
                 }
@@ -143,6 +145,7 @@ private fun SatelliteListContent(
     location: com.example.gpstest.domain.model.LocationInfo?,
     clock: com.example.gpstest.domain.model.GnssClockData?,
     dumpsysData: com.example.gpstest.data.source.DumpsysGnssData?,
+    dopInfo: com.example.gpstest.domain.model.DopInfo?,
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -159,6 +162,10 @@ private fun SatelliteListContent(
 
         item {
             ConstellationStatCard(usedInFix = usedInFix)
+        }
+
+        item {
+            DopCard(dopInfo = dopInfo)
         }
 
         item {

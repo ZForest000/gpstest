@@ -214,4 +214,9 @@
     <string name="adb_mode">ADB</string>
     <string name="used_constellations">参与定位星座</string>
     <string name="measurement_count">测量数量</string>
+
+    <!-- DOP -->
+    <string name="dop_title">DOP 精度因子</string>
+    <string name="dop_satellite_count">卫星: %d 颗</string>
+    <string name="dop_waiting">等待定位...</string>
 </resources>
