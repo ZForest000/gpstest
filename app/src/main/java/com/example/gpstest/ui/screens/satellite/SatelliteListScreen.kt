@@ -1,40 +1,32 @@
 package com.example.gpstest.ui.screens.satellite
 
-import android.Manifest
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,348 +35,190 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.gpstest.data.model.Satellite
-import com.example.gpstest.ui.components.CompactStatBar
+import com.example.gpstest.R
+import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
 import com.example.gpstest.ui.components.StatBar
 import com.example.gpstest.viewmodel.SatelliteViewModel
+import com.example.gpstest.viewmodel.SatelliteUiState
 
-/**
- * 卫星列表主界面
- *
- * @param viewModel 卫星视图模型
- * @param onRequestPermission 请求权限回调
- * @param modifier 修饰符
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SatelliteListScreen(
     viewModel: SatelliteViewModel,
+    hasPermission: Boolean,
     onRequestPermission: () -> Unit,
+    onNavigateToHistory: () -> Unit = {},
+    onNavigateToAGps: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedSatellite by remember { mutableStateOf<Satellite?>(null) }
-    val pullToRefreshState = rememberPullToRefreshState()
+    var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // 处理刷新
-    if (pullToRefreshState.isRefreshing) {
-        viewModel.refreshSatellites()
-        // 刷新完成后重置状态
-        if (!uiState.isLoading) {
-            pullToRefreshState.endRefresh()
-        }
-    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // 顶部应用栏
+    Scaffold(
+        topBar = {
             TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "GPS Debug Tool",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                        Text(
-                            text = if (uiState.hasLocationPermission) "Permission Granted" else "Permission Required",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (uiState.hasLocationPermission) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            }
-                        )
-                    }
-                },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = { viewModel.refreshSatellites() }) {
+                    IconButton(onClick = onNavigateToAGps) {
                         Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.primary
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.agps_manager)
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
+                    IconButton(onClick = onNavigateToHistory) {
+                        Icon(
+                            imageVector = Icons.Filled.History,
+                            contentDescription = stringResource(R.string.history_title)
+                        )
+                    }
+                }
             )
-
-            // 主内容区域
-            PullToRefreshBox(
-                state = pullToRefreshState,
-                onRefresh = { viewModel.refreshSatellites() },
-                isRefreshing = uiState.isLoading,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when {
-                    // 没有权限
-                    !uiState.hasLocationPermission -> {
-                        PermissionRequestContent(onRequestPermission = onRequestPermission)
-                    }
-                    // 加载中
-                    uiState.isLoading && uiState.satellites.isEmpty() -> {
-                        LoadingContent()
-                    }
-                    // 错误状态
-                    uiState.error != null -> {
-                        ErrorContent(
-                            error = uiState.error,
-                            onRetry = { viewModel.refreshSatellites() }
-                        )
-                    }
-                    // 正常显示
-                    else -> {
-                        SatelliteListContent(
-                            satellites = uiState.satellites,
-                            selectedSatellite = selectedSatellite,
-                            onSatelliteClick = { selectedSatellite = it },
-                            onDismissDetail = { selectedSatellite = null },
-                            viewModel = viewModel
-                        )
-                    }
+        },
+        modifier = modifier
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when (val state = uiState) {
+                is SatelliteUiState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                is SatelliteUiState.PermissionRequired -> {
+                    PermissionRequiredContent(
+                        onRequestPermission = onRequestPermission
+                    )
+                }
+                is SatelliteUiState.Success -> {
+                    val allSatellites = state.usedInFix + state.visibleOnly + state.searching
+                    SatelliteListContent(
+                        usedInFix = state.usedInFix,
+                        visibleOnly = state.visibleOnly,
+                        searching = state.searching,
+                        totalCount = state.totalCount,
+                        allSatellites = allSatellites,
+                        location = state.location,
+                        onSatelliteClick = { selectedSatellite = it }
+                    )
+                }
+                is SatelliteUiState.Error -> {
+                    ErrorContent(
+                        message = state.message,
+                        onRetry = { viewModel.startListening() }
+                    )
                 }
             }
         }
     }
-}
 
-/**
- * 权限请求内容
- */
-@Composable
-private fun PermissionRequestContent(
-    onRequestPermission: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Warning,
-            contentDescription = "Permission Required",
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Location Permission Required",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = "This app requires ACCESS_FINE_LOCATION permission to access GNSS satellite data. Please grant the permission to continue.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onRequestPermission,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+    selectedSatellite?.let { satellite ->
+        val signalHistory = viewModel.getSignalHistoryForSatellite(satellite)
+        
+        ModalBottomSheet(
+            onDismissRequest = { selectedSatellite = null },
+            sheetState = sheetState
         ) {
-            Text(
-                text = "Grant Permission",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                )
+            SatelliteDetailSheet(
+                satellite = satellite,
+                signalHistory = signalHistory
             )
         }
     }
 }
 
-/**
- * 加载中内容
- */
-@Composable
-private fun LoadingContent(
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(48.dp),
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Listening for GNSS data...",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-/**
- * 错误内容
- */
-@Composable
-private fun ErrorContent(
-    error: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Warning,
-            contentDescription = "Error",
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Error Occurred",
-            style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.error
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = error,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text(
-                text = "Retry",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                )
-            )
-        }
-    }
-}
-
-/**
- * 卫星列表内容
- */
 @Composable
 private fun SatelliteListContent(
-    satellites: List<Satellite>,
-    selectedSatellite: Satellite?,
-    onSatelliteClick: (Satellite) -> Unit,
-    onDismissDetail: () -> Unit,
-    viewModel: SatelliteViewModel,
+    usedInFix: List<GnssSatellite>,
+    visibleOnly: List<GnssSatellite>,
+    searching: List<GnssSatellite>,
+    totalCount: Int,
+    allSatellites: List<GnssSatellite>,
+    location: com.example.gpstest.domain.model.LocationInfo?,
+    onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val stats by viewModel.stats.collectAsState()
+    val visibleCount = usedInFix.size + visibleOnly.size
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 统计信息卡片
         item {
-            StatisticsCard(stats = stats)
+            LocationCard(location = location)
+        }
+        
+        item {
+            StatBar(
+                usedInFixCount = usedInFix.size,
+                visibleCount = visibleCount,
+                totalCount = totalCount,
+                satellites = allSatellites
+            )
         }
 
-        // 卫星列表标题
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Satellites",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-
-                Text(
-                    text = "${satellites.size} detected",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        // 卫星列表
-        if (satellites.isEmpty()) {
+        if (usedInFix.isNotEmpty()) {
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(48.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Waiting for satellite data...",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                Text(
+                    text = stringResource(R.string.used_in_fix),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
-        } else {
-            items(satellites, key = { it.svid }) { satellite ->
+            itemsIndexed(
+                items = usedInFix,
+                key = { index, satellite ->
+                    "used_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
+                }
+            ) { _, satellite ->
+                SatelliteCard(
+                    satellite = satellite,
+                    onClick = { onSatelliteClick(satellite) }
+                )
+            }
+        }
+
+        if (visibleOnly.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.visible_not_in_fix),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            itemsIndexed(
+                items = visibleOnly,
+                key = { index, satellite ->
+                    "visible_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
+                }
+            ) { _, satellite ->
+                SatelliteCard(
+                    satellite = satellite,
+                    onClick = { onSatelliteClick(satellite) }
+                )
+            }
+        }
+
+        if (searching.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.searching),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            itemsIndexed(
+                items = searching,
+                key = { index, satellite ->
+                    "searching_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
+                }
+            ) { _, satellite ->
                 SatelliteCard(
                     satellite = satellite,
                     onClick = { onSatelliteClick(satellite) }
@@ -392,103 +226,80 @@ private fun SatelliteListContent(
             }
         }
     }
+}
 
-    // 详情底部抽屉
-    selectedSatellite?.let { satellite ->
-        SatelliteDetailSheet(
-            satellite = satellite,
-            onDismiss = onDismissDetail
+@Composable
+private fun PermissionRequiredContent(
+    onRequestPermission: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(R.string.permission_required),
+            style = MaterialTheme.typography.titleLarge
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.permission_message),
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRequestPermission) {
+            Text(stringResource(R.string.grant))
+        }
     }
 }
 
-/**
- * 统计信息卡片
- */
 @Composable
-private fun StatisticsCard(
-    stats: SatelliteViewModel.SatelliteStats,
+private fun PermissionDialog(
+    onRequestPermission: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.permission_required)) },
+        text = { Text(stringResource(R.string.permission_message)) },
+        confirmButton = {
+            Button(onClick = onRequestPermission) {
+                Text(stringResource(R.string.grant))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun ErrorContent(
+    message: String,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "GNSS Status",
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            StatBar(
-                label = "Total Satellites",
-                value = stats.totalSatellites.toString()
-            )
-
-            StatBar(
-                label = "Used in Fix",
-                value = stats.usedInFix.toString()
-            )
-
-            StatBar(
-                label = "Average SNR",
-                value = "${stats.averageSnr.toInt()} dB-Hz"
-            )
-
-            // 详细统计
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                CompactStatBar(
-                    label = "GPS",
-                    value = stats.byConstellation["GPS"]?.toString() ?: "0",
-                    modifier = Modifier.weight(1f)
-                )
-                CompactStatBar(
-                    label = "GLONASS",
-                    value = stats.byConstellation["GLONASS"]?.toString() ?: "0",
-                    modifier = Modifier.weight(1f)
-                )
-                CompactStatBar(
-                    label = "Galileo",
-                    value = stats.byConstellation["Galileo"]?.toString() ?: "0",
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                CompactStatBar(
-                    label = "BeiDou",
-                    value = stats.byConstellation["BeiDou"]?.toString() ?: "0",
-                    modifier = Modifier.weight(1f)
-                )
-                CompactStatBar(
-                    label = "QZSS",
-                    value = stats.byConstellation["QZSS"]?.toString() ?: "0",
-                    modifier = Modifier.weight(1f)
-                )
-                CompactStatBar(
-                    label = "NavIC",
-                    value = stats.byConstellation["NavIC"]?.toString() ?: "0",
-                    modifier = Modifier.weight(1f)
-                )
-            }
+        Text(
+            text = stringResource(R.string.error_occurred),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
+            Text(stringResource(R.string.retry))
         }
     }
 }

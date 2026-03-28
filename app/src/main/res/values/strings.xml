@@ -81,4 +81,110 @@
     <string name="about_title">关于</string>
     <string name="about_version">版本</string>
     <string name="about_description">GPS调试工具 - 用于测试和调试GPS功能的实用工具</string>
+
+    <!-- Satellite Details -->
+    <string name="satellite_details">卫星详情 %1$s</string>
+    <string name="basic_info">基本信息</string>
+    <string name="constellation_type">星座类型</string>
+    <string name="satellite_id">卫星ID</string>
+    <string name="signal_strength">信号强度</string>
+    <string name="azimuth">方位角</string>
+    <string name="elevation">仰角</string>
+    <string name="status">状态</string>
+    <string name="used_in_fix_yes">用于定位</string>
+    <string name="used_in_fix_no">未用于定位</string>
+    <string name="raw_measurement">原始测量数据</string>
+    <string name="carrier_frequency">载波频率</string>
+    <string name="carrier_cycles">载波周期</string>
+    <string name="doppler_shift">多普勒频移</string>
+    <string name="timestamp">时间戳</string>
+    <string name="has_ephemeris">星历数据</string>
+    <string name="has_almanac">历书数据</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="signal_chart">信号图表</string>
+    <string name="signal_chart_subtitle">最近 %d 次测量</string>
+
+    <!-- Constellations -->
+    <string name="constellation_gps">GPS (美国)</string>
+    <string name="constellation_glonass">GLONASS (俄罗斯)</string>
+    <string name="constellation_galileo">Galileo (欧盟)</string>
+    <string name="constellation_beidou">北斗 (中国)</string>
+    <string name="constellation_qzss">QZSS (日本)</string>
+    <string name="constellation_unknown">未知</string>
+
+    <!-- Signal Stats -->
+    <string name="signal_stats">信号统计</string>
+    <string name="used_in_fix">用于定位</string>
+    <string name="visible_not_in_fix">可见但未用于定位</string>
+    <string name="searching">搜索中</string>
+
+    <!-- Formats -->
+    <string name="signal_strength_format">%d dB-Hz</string>
+    <string name="azimuth_elevation_format" formatted="false">E: %d° A: %d°</string>
+
+    <!-- Permission Dialog -->
+    <string name="permission_required">需要权限</string>
+    <string name="permission_message">该应用需要位置权限才能访问GNSS卫星数据。请授予权限以继续。</string>
+    <string name="grant">授予权限</string>
+    <string name="cancel">取消</string>
+
+    <!-- Errors -->
+    <string name="error_occurred">发生错误</string>
+    <string name="retry">重试</string>
+
+    <!-- History -->
+    <string name="history_title">历史记录</string>
+    <string name="no_history">暂无历史记录</string>
+    <string name="no_history_description">历史快照将每分钟自动保存，或点击下方按钮手动保存。</string>
+    <string name="save_snapshot">保存快照</string>
+    <string name="save_snapshot_now">立即保存快照</string>
+    <string name="clear_history">清除历史</string>
+    <string name="clear_history_title">清除历史记录</string>
+    <string name="clear_history_message">确定要清除所有历史记录吗？此操作不可撤销。</string>
+    <string name="clear">清除</string>
+    <string name="back">返回</string>
+    <string name="visible">可见</string>
+    <string name="total">总计</string>
+    <string name="snapshot_count">共 %d 条记录</string>
+    <string name="signal_strength_avg">平均信号: %d dB-Hz</string>
+
+    <!-- A-GPS -->
+    <string name="agps_manager">A-GPS 管理</string>
+    <string name="data_status">数据状态</string>
+    <string name="time_sync">时间同步</string>
+    <string name="ephemeris">星历数据</string>
+    <string name="almanac">历书数据</string>
+    <string name="ephemeris_short">星历</string>
+    <string name="almanac_short">历书</string>
+    <string name="last_update">最后更新: %s</string>
+    <string name="last_injection_time">最后注入: %s</string>
+    <string name="status_valid">有效</string>
+    <string name="status_partial">部分有效</string>
+    <string name="status_expired">已过期</string>
+    <string name="status_missing">缺失</string>
+    <string name="status_unknown">未知</string>
+    <string name="auto_update">自动更新</string>
+    <string name="enable_auto_update">启用自动更新</string>
+    <string name="auto_update_desc">每 %d 小时自动下载更新</string>
+    <string name="manual_actions">手动操作</string>
+    <string name="download_now">立即下载</string>
+    <string name="import_file">导入文件</string>
+    <string name="sync_time">同步时间</string>
+    <string name="clear_agps_data">清除数据</string>
+    <string name="injection_history">注入历史</string>
+    <string name="success">成功</string>
+    <string name="failed">失败</string>
+    <string name="dismiss">关闭</string>
+    
+    <!-- Location -->
+    <string name="location_info">位置信息</string>
+    <string name="location_locked">已定位</string>
+    <string name="location_searching">定位中...</string>
+    <string name="lat_format">纬度: %.6f°</string>
+    <string name="lng_format">经度: %.6f°</string>
+    <string name="altitude_format">海拔: %.1f m</string>
+    <string name="accuracy_format">精度: %.1f m</string>
+    <string name="baro_altitude_format">气压海拔: %.1f m</string>
+    <string name="pressure_format">气压: %.1f hPa</string>
 </resources>

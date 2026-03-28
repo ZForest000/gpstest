@@ -1,10 +1,20 @@
 package com.example.gpstest.data.source
 
 import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.location.GnssMeasurement
 import android.location.GnssMeasurementsEvent
+import android.location.GnssStatus
+import android.location.Location
+import android.location.LocationListener
 import android.location.LocationManager
 import com.example.gpstest.domain.model.Constellation
+import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.domain.model.LocationInfo
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -15,65 +25,206 @@ class GnssDataSourceImpl(
 
     private val locationManager: LocationManager?
         get() = context.getSystemService(LocationManager::class.java)
+    
+    private val sensorManager: SensorManager?
+        get() = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
 
-    override fun startListening(): Flow<List<GnssSatellite>> = callbackFlow {
-        val callback = object : GnssMeasurementsEvent.Callback() {
+    override fun getGnssData(): Flow<GnssData> = callbackFlow {
+        var currentSatellites: List<GnssSatellite> = emptyList()
+        var currentLocation: LocationInfo? = null
+        var currentPressure: Float? = null
+        var currentBaroAltitude: Double? = null
+
+        // Key: "constellationType_svid" -> measurement extras
+        data class MeasurementExtras(
+            val carrierCycles: Long?,
+            val dopplerShiftHz: Double?
+        )
+        var measurementMap = mutableMapOf<String, MeasurementExtras>()
+
+        val speedOfLight = 299_792_458.0 // m/s
+
+        val measurementCallback = object : GnssMeasurementsEvent.Callback() {
             override fun onGnssMeasurementsReceived(event: GnssMeasurementsEvent) {
-                val satellites = event.measurements.mapNotNull { measurement ->
-                    try {
-                        GnssSatellite(
-                            svid = measurement.svid,
-                            constellation = Constellation.fromConstellationType(
-                                measurement.constellationType
-                            ),
-                            cn0DbHz = measurement.cn0DbHz,
-                            azimuthDegrees = measurement.azimuthDegrees,
-                            elevationDegrees = measurement.elevationDegrees,
-                            hasAlmanac = measurement.hasAlmanac(),
-                            hasEphemeris = measurement.hasEphemeris(),
-                            usedInFix = measurement.usedInFix(),
-                            carrierFrequencyHz = measurement.carrierFrequencyHz,
-                            carrierCycles = measurement.carrierCycles,
-                            dopplerShiftHz = measurement.dopplerShiftHz,
-                            timeNanos = measurement.timeNanos
-                        )
-                    } catch (e: Exception) {
-                        null
-                    }
+                val newMap = mutableMapOf<String, MeasurementExtras>()
+                for (measurement in event.measurements) {
+                    val key = "${measurement.constellationType}_${measurement.svid}"
+                    val carrierFreqHz = if (measurement.hasCarrierFrequencyHz()) {
+                        measurement.carrierFrequencyHz.toDouble()
+                    } else null
+                    val dopplerShift = if (carrierFreqHz != null) {
+                        -measurement.pseudorangeRateMetersPerSecond * carrierFreqHz / speedOfLight
+                    } else null
+                    newMap[key] = MeasurementExtras(
+                        carrierCycles = if (measurement.hasCarrierCycles()) measurement.carrierCycles else null,
+                        dopplerShiftHz = dopplerShift
+                    )
                 }
-                trySend(satellites)
-            }
+                measurementMap = newMap
 
-            override fun onStatusChanged(status: Int) {
-                // Status can be: STATUS_NOT_SUPPORTED (0), STATUS_READY (1), STATUS_LOCATION_DISABLED (2)
-                if (status == GnssMeasurementsEvent.Callback.STATUS_NOT_SUPPORTED) {
-                    close()
+                // Merge measurement data into existing satellites
+                if (currentSatellites.isNotEmpty()) {
+                    currentSatellites = currentSatellites.map { sat ->
+                        val key = "${toConstellationType(sat.constellation)}_${sat.svid}"
+                        val extras = measurementMap[key]
+                        if (extras != null && (extras.carrierCycles != null || extras.dopplerShiftHz != null)) {
+                            sat.copy(
+                                carrierCycles = extras.carrierCycles ?: sat.carrierCycles,
+                                dopplerShiftHz = extras.dopplerShiftHz ?: sat.dopplerShiftHz
+                            )
+                        } else sat
+                    }
+                    trySend(GnssData(currentSatellites, currentLocation))
                 }
             }
         }
 
-        val registered = locationManager?.registerGnssMeasurementsCallback(
-            context.mainExecutor,
-            callback
-        ) ?: false
+        val callback = object : GnssStatus.Callback() {
+            override fun onSatelliteStatusChanged(status: GnssStatus) {
+                val satellites = mutableListOf<GnssSatellite>()
 
-        if (!registered) {
-            close()
+                for (i in 0 until status.satelliteCount) {
+                    try {
+                        val constellation = Constellation.fromConstellationType(
+                            status.getConstellationType(i)
+                        )
+
+                        val key = "${status.getConstellationType(i)}_${status.getSvid(i)}"
+                        val extras = measurementMap[key]
+
+                        val satellite = GnssSatellite(
+                            svid = status.getSvid(i),
+                            constellation = constellation,
+                            cn0DbHz = status.getCn0DbHz(i),
+                            azimuthDegrees = status.getAzimuthDegrees(i),
+                            elevationDegrees = status.getElevationDegrees(i),
+                            hasAlmanac = status.hasAlmanacData(i),
+                            hasEphemeris = status.hasEphemerisData(i),
+                            usedInFix = status.usedInFix(i),
+                            carrierFrequencyHz = if (status.hasCarrierFrequencyHz(i)) {
+                                status.getCarrierFrequencyHz(i)
+                            } else {
+                                null
+                            },
+                            carrierCycles = extras?.carrierCycles,
+                            dopplerShiftHz = extras?.dopplerShiftHz,
+                            timeNanos = System.nanoTime()
+                        )
+
+                        satellites.add(satellite)
+                    } catch (e: Exception) {
+                        // Skip invalid satellite
+                    }
+                }
+
+                currentSatellites = satellites
+                trySend(GnssData(currentSatellites, currentLocation))
+            }
+        }
+        
+        val locationListener = object : LocationListener {
+            override fun onLocationChanged(location: Location) {
+                currentLocation = LocationInfo(
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    altitude = if (location.hasAltitude()) location.altitude else 0.0,
+                    accuracy = if (location.hasAccuracy()) location.accuracy else 0f,
+                    speed = if (location.hasSpeed()) location.speed else 0f,
+                    bearing = if (location.hasBearing()) location.bearing else 0f,
+                    timestamp = location.time,
+                    barometricAltitude = currentBaroAltitude,
+                    pressure = currentPressure
+                )
+                trySend(GnssData(currentSatellites, currentLocation))
+            }
+        }
+        
+        val pressureListener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent?) {
+                event?.let {
+                    if (it.sensor.type == Sensor.TYPE_PRESSURE && it.values.isNotEmpty()) {
+                        currentPressure = it.values[0]
+                        currentBaroAltitude = SensorManager.getAltitude(
+                            SensorManager.PRESSURE_STANDARD_ATMOSPHERE,
+                            it.values[0]
+                        ).toDouble()
+                        
+                        currentLocation?.let { loc ->
+                            currentLocation = loc.copy(
+                                barometricAltitude = currentBaroAltitude,
+                                pressure = currentPressure
+                            )
+                            trySend(GnssData(currentSatellites, currentLocation))
+                        }
+                    }
+                }
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
+
+        val lm = locationManager
+        if (lm == null) {
+            close(IllegalStateException("LocationManager not available"))
             awaitClose()
+            return@callbackFlow
+        }
+
+        try {
+            lm.registerGnssStatusCallback(context.mainExecutor, callback)
+            lm.registerGnssMeasurementsCallback(context.mainExecutor, measurementCallback)
+            lm.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                1000L,
+                0f,
+                context.mainExecutor,
+                locationListener
+            )
+            
+            val pressureSensor = sensorManager?.getDefaultSensor(Sensor.TYPE_PRESSURE)
+            if (pressureSensor != null) {
+                sensorManager?.registerListener(
+                    pressureListener,
+                    pressureSensor,
+                    SensorManager.SENSOR_DELAY_UI
+                )
+            }
+        } catch (e: SecurityException) {
+            close(e)
+            awaitClose()
+            return@callbackFlow
+        } catch (e: Exception) {
+            close(e)
+            awaitClose()
+            return@callbackFlow
         }
 
         awaitClose {
-            locationManager?.unregisterGnssMeasurementsCallback(callback)
+            try {
+                locationManager?.unregisterGnssStatusCallback(callback)
+                locationManager?.unregisterGnssMeasurementsCallback(measurementCallback)
+                locationManager?.removeUpdates(locationListener)
+                sensorManager?.unregisterListener(pressureListener)
+            } catch (e: Exception) {
+                // Ignore cleanup errors
+            }
         }
     }
 
-    override fun stopListening() {
-        // Flow is automatically stopped when collector is cancelled
-    }
-
     override fun isSupported(): Boolean {
-        // Check if LocationManager has GNSS support
         val lm = locationManager ?: return false
         return lm.allProviders.contains("gps")
+    }
+
+    private fun toConstellationType(constellation: Constellation): Int {
+        return when (constellation) {
+            Constellation.GPS -> 1
+            Constellation.SBAS -> 2
+            Constellation.GLONASS -> 3
+            Constellation.QZSS -> 4
+            Constellation.BEIDOU -> 5
+            Constellation.GALILEO -> 6
+            Constellation.UNKNOWN -> 0
+        }
     }
 }

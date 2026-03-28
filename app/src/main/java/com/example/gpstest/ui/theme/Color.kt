@@ -62,3 +62,14 @@ val Purple40 = Color(0xFF7B1FA2)
 val Teal40 = Color(0xFF00796B)
 val Orange40 = Color(0xFFF57C00)
 val Pink40 = Color(0xFFC2185B)
+
+// Signal strength colors
+val SignalStrong = Color(0xFF4CAF50)
+val SignalMedium = Color(0xFFFFC107)
+val SignalWeak = Color(0xFFF44336)
+
+// Constellation specific colors
+val GpsColor = Blue40
+val GlonassColor = Red40
+val GalileoColor = Teal40
+val BeidouColor = Yellow40

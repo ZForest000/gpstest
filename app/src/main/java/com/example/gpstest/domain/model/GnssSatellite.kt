@@ -10,8 +10,8 @@ data class GnssSatellite(
     val hasEphemeris: Boolean,
     val usedInFix: Boolean,
     val carrierFrequencyHz: Float?,
-    val carrierCycles: Float?,
-    val dopplerShiftHz: Float?,
+    val carrierCycles: Long?,
+    val dopplerShiftHz: Double?,
     val timeNanos: Long
 ) {
     val group: SatelliteGroup

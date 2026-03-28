@@ -101,10 +101,11 @@ fun getConstellationSatelliteCount(constellationType: Int): Int {
  */
 fun isGlobalConstellation(constellationType: Int): Boolean {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_GPS,
-        GnssStatus.CONSTELLATION_GLONASS,
-        GnssStatus.CONSTELLATION_BEIDOU,
-        GnssStatus.CONSTELLATION_GALILEO -> true
+        1,  // GPS
+        3,  // GLONASS
+        5,  // BeiDou
+        6   // Galileo
+        -> true
         else -> false
     }
 }
@@ -117,9 +118,9 @@ fun isGlobalConstellation(constellationType: Int): Boolean {
  */
 fun isRegionalConstellation(constellationType: Int): Boolean {
     return when (constellationType) {
-        GnssStatus.CONSTELLATION_QZSS,
-        GnssStatus.CONSTELLATION_NAVIC,
-        GnssStatus.CONSTELLATION_IRNSS -> true
+        4,  // QZSS
+        7   // NavIC
+        -> true
         else -> false
     }
 }
@@ -131,7 +132,7 @@ fun isRegionalConstellation(constellationType: Int): Boolean {
  * @return 是否为增强系统
  */
 fun isAugmentationSystem(constellationType: Int): Boolean {
-    return constellationType == GnssStatus.CONSTELLATION_SBAS
+    return constellationType == 2  // SBAS
 }
 
 /**

@@ -1,10 +1,9 @@
 package com.example.gpstest.data.source
 
-import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.domain.model.GnssData
 import kotlinx.coroutines.flow.Flow
 
 interface GnssDataSource {
-    fun startListening(): Flow<List<GnssSatellite>>
-    fun stopListening()
+    fun getGnssData(): Flow<GnssData>
     fun isSupported(): Boolean
 }
