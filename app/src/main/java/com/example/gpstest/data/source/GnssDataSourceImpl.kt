@@ -15,6 +15,7 @@ import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
+import com.example.gpstest.domain.model.MultipathIndicator
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -38,7 +39,9 @@ class GnssDataSourceImpl(
         // Key: "constellationType_svid" -> measurement extras
         data class MeasurementExtras(
             val carrierCycles: Long?,
-            val dopplerShiftHz: Double?
+            val dopplerShiftHz: Double?,
+            val agcLevelDb: Double?,
+            val multipathIndicator: MultipathIndicator?
         )
         var measurementMap = mutableMapOf<String, MeasurementExtras>()
 
@@ -57,7 +60,9 @@ class GnssDataSourceImpl(
                     } else null
                     newMap[key] = MeasurementExtras(
                         carrierCycles = if (measurement.hasCarrierCycles()) measurement.carrierCycles else null,
-                        dopplerShiftHz = dopplerShift
+                        dopplerShiftHz = dopplerShift,
+                        agcLevelDb = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && measurement.hasAutomaticGainControlLevelDb()) measurement.automaticGainControlLevelDb else null,
+                        multipathIndicator = MultipathIndicator.fromInt(measurement.multipathIndicator)
                     )
                 }
                 measurementMap = newMap
@@ -67,10 +72,12 @@ class GnssDataSourceImpl(
                     currentSatellites = currentSatellites.map { sat ->
                         val key = "${toConstellationType(sat.constellation)}_${sat.svid}"
                         val extras = measurementMap[key]
-                        if (extras != null && (extras.carrierCycles != null || extras.dopplerShiftHz != null)) {
+                        if (extras != null) {
                             sat.copy(
                                 carrierCycles = extras.carrierCycles ?: sat.carrierCycles,
-                                dopplerShiftHz = extras.dopplerShiftHz ?: sat.dopplerShiftHz
+                                dopplerShiftHz = extras.dopplerShiftHz ?: sat.dopplerShiftHz,
+                                agcLevelDb = extras.agcLevelDb ?: sat.agcLevelDb,
+                                multipathIndicator = extras.multipathIndicator ?: sat.multipathIndicator
                             )
                         } else sat
                     }
@@ -108,7 +115,9 @@ class GnssDataSourceImpl(
                             },
                             carrierCycles = extras?.carrierCycles,
                             dopplerShiftHz = extras?.dopplerShiftHz,
-                            timeNanos = System.nanoTime()
+                            timeNanos = System.nanoTime(),
+                            agcLevelDb = extras?.agcLevelDb,
+                            multipathIndicator = extras?.multipathIndicator
                         )
 
                         satellites.add(satellite)

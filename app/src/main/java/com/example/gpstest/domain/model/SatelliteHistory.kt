@@ -58,8 +58,9 @@ data class SatelliteHistorySnapshot(
             val entriesJson = Json.encodeToString(ListSerializer(SatelliteHistoryEntry.serializer()), entries)
             val usedInFixCount = satellites.count { it.usedInFix }
             val visibleCount = satellites.count { it.cn0DbHz > 0 }
-            val avgSignal = if (satellites.isNotEmpty()) {
-                satellites.filter { it.cn0DbHz > 0 }.map { it.cn0DbHz }.average().toFloat()
+            val validSignals = satellites.filter { it.cn0DbHz > 0 }
+            val avgSignal = if (validSignals.isNotEmpty()) {
+                validSignals.map { it.cn0DbHz }.average().toFloat()
             } else 0f
             
             return SatelliteHistorySnapshot(

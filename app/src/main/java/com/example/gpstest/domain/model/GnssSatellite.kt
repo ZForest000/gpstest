@@ -1,5 +1,21 @@
 package com.example.gpstest.domain.model
 
+enum class MultipathIndicator {
+    UNKNOWN,
+    DETECTED,
+    NOT_DETECTED;
+
+    companion object {
+        fun fromInt(value: Int): MultipathIndicator {
+            return when (value) {
+                1 -> DETECTED
+                2 -> NOT_DETECTED
+                else -> UNKNOWN
+            }
+        }
+    }
+}
+
 data class GnssSatellite(
     val svid: Int,
     val constellation: Constellation,
@@ -12,7 +28,9 @@ data class GnssSatellite(
     val carrierFrequencyHz: Float?,
     val carrierCycles: Long?,
     val dopplerShiftHz: Double?,
-    val timeNanos: Long
+    val timeNanos: Long,
+    val agcLevelDb: Double? = null,
+    val multipathIndicator: MultipathIndicator? = null
 ) {
     val group: SatelliteGroup
         get() = when {

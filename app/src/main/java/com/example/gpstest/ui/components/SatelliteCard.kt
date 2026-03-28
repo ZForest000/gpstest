@@ -20,10 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
-import com.example.gpstest.ui.theme.BeidouColor
-import com.example.gpstest.ui.theme.GalileoColor
-import com.example.gpstest.ui.theme.GlonassColor
-import com.example.gpstest.ui.theme.GpsColor
+import com.example.gpstest.domain.model.MultipathIndicator
 import com.example.gpstest.ui.theme.SignalMedium
 import com.example.gpstest.ui.theme.SignalStrong
 import com.example.gpstest.ui.theme.SignalWeak
@@ -56,11 +53,24 @@ fun SatelliteCard(
                 usedInFix = satellite.usedInFix
             )
             Column {
-                Text(
-                    text = "${getConstellationName(satellite.constellation)}-${satellite.svid}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${getConstellationName(satellite.constellation)}-${satellite.svid}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (satellite.multipathIndicator == MultipathIndicator.DETECTED) {
+                        Text(
+                            text = stringResource(R.string.multipath_detected),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFF9800),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
                 Text(
                     text = stringResource(
                         R.string.signal_strength_format,

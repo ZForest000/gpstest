@@ -2,7 +2,7 @@
 
 ## 高价值
 
-- [ ] **卫星天空图 (Sky View)** — 方位角+仰角极坐标图，直观展示卫星空间分布，参与定位的卫星用不同颜色标记
+- [*] **卫星天空图 (Sky View)** — 方位角+仰角极坐标图，直观展示卫星空间分布，参与定位的卫星用不同颜色标记
 - [ ] **信号历史曲线** — 已有60秒 SignalHistory 数据，用折线图展示每颗卫星的信号强度变化
 - [ ] **多路径指示 (Multipath)** — 来自 `GnssMeasurement.multipathIndicator`，检测信号是否经反射到达
 - [ ] **自动增益控制 (AGC)** — 来自 `GnssMeasurement.automaticGainControlLevel`，反映信号干扰环境

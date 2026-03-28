@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.domain.model.MultipathIndicator
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,6 +83,18 @@ fun SatelliteDetailSheet(
             DetailRow(
                 stringResource(R.string.doppler_shift),
                 satellite.dopplerShiftHz?.let { "%.2f Hz".format(it) } ?: "N/A"
+            )
+            DetailRow(
+                stringResource(R.string.agc_level),
+                satellite.agcLevelDb?.let { "%.1f dB".format(it) } ?: "N/A"
+            )
+            DetailRow(
+                stringResource(R.string.multipath_detected),
+                when (satellite.multipathIndicator) {
+                    MultipathIndicator.DETECTED -> stringResource(R.string.yes)
+                    MultipathIndicator.NOT_DETECTED -> stringResource(R.string.no)
+                    else -> "N/A"
+                }
             )
             DetailRow(
                 stringResource(R.string.timestamp),

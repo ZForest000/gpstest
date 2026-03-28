@@ -189,4 +189,9 @@
     <string name="accuracy_format">精度: %.1f m</string>
     <string name="baro_altitude_format">气压海拔: %.1f m</string>
     <string name="pressure_format">气压: %.1f hPa</string>
+
+    <!-- Multipath & AGC -->
+    <string name="multipath_detected">多路径</string>
+    <string name="agc_level">AGC</string>
+    <string name="agc_format">AGC: %.1f dB</string>
 </resources>
