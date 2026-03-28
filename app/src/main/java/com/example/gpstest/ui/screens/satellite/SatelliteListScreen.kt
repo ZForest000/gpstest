@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.ui.components.ConstellationStatCard
+import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
 import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
@@ -153,6 +154,13 @@ private fun SatelliteListContent(
 
         item {
             ConstellationStatCard(usedInFix = usedInFix)
+        }
+
+        item {
+            ConstellationHealthSummaryCard(
+                usedInFix = usedInFix,
+                allSatellites = allSatellites
+            )
         }
 
         item {

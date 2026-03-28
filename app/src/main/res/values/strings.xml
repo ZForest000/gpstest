@@ -115,6 +115,9 @@
 
     <!-- Signal Stats -->
     <string name="signal_stats">信号统计</string>
+    <string name="constellation_health_summary">星座健康状态汇总</string>
+    <string name="constellation_health_ratio">%1$s: %2$d/%3$d</string>
+    <string name="constellation_health_percent">%1$d%%</string>
     <string name="used_in_fix">用于定位</string>
     <string name="visible_not_in_fix">可见但未用于定位</string>
     <string name="searching">搜索中</string>
