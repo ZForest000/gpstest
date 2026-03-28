@@ -3,6 +3,8 @@ package com.example.gpstest.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gpstest.data.source.DumpsysGnssData
+import com.example.gpstest.domain.model.GnssClockData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.SatelliteGroup
@@ -62,7 +64,9 @@ class SatelliteViewModel(
                         visibleOnly = grouped[SatelliteGroup.VISIBLE_ONLY].orEmpty(),
                         searching = grouped[SatelliteGroup.SEARCHING].orEmpty(),
                         totalCount = satellites.size,
-                        location = gnssData.location
+                        location = gnssData.location,
+                        clock = gnssData.clock,
+                        dumpsysData = gnssData.dumpsysData
                     )
                     
                     updateSignalHistory(satellites)
@@ -183,7 +187,9 @@ sealed interface SatelliteUiState {
         val visibleOnly: List<GnssSatellite>,
         val searching: List<GnssSatellite>,
         val totalCount: Int,
-        val location: LocationInfo? = null
+        val location: LocationInfo? = null,
+        val clock: GnssClockData? = null,
+        val dumpsysData: DumpsysGnssData? = null
     ) : SatelliteUiState
     data class Error(val message: String) : SatelliteUiState
 }

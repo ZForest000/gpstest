@@ -197,4 +197,21 @@
     <string name="multipath_detected">多路径</string>
     <string name="agc_level">AGC</string>
     <string name="agc_format">AGC: %.1f dB</string>
+
+    <!-- Baseband C/N0 & Clock -->
+    <string name="baseband_cn0">基带信噪比</string>
+    <string name="clock_info">时钟信息</string>
+    <string name="clock_bias">时钟偏差</string>
+    <string name="clock_drift">时钟漂移</string>
+    <string name="clock_bias_uncertainty">偏差不确定度</string>
+    <string name="clock_drift_uncertainty">漂移不确定度</string>
+    <string name="avg_baseband_cn0">平均基带信噪比</string>
+    <string name="shizuku_status">Shizuku 状态</string>
+    <string name="shizuku_available">可用 (%s)</string>
+    <string name="shizuku_unavailable">不可用</string>
+    <string name="shizuku_permission_required">需要授权</string>
+    <string name="root_mode">ROOT</string>
+    <string name="adb_mode">ADB</string>
+    <string name="used_constellations">参与定位星座</string>
+    <string name="measurement_count">测量数量</string>
 </resources>

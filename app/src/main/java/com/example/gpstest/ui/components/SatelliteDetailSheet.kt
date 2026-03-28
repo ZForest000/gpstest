@@ -89,6 +89,10 @@ fun SatelliteDetailSheet(
                 satellite.agcLevelDb?.let { "%.1f dB".format(it) } ?: "N/A"
             )
             DetailRow(
+                stringResource(R.string.baseband_cn0),
+                satellite.basebandCn0DbHz?.let { "%.1f dB-Hz".format(it) } ?: "N/A"
+            )
+            DetailRow(
                 stringResource(R.string.multipath_detected),
                 when (satellite.multipathIndicator) {
                     MultipathIndicator.DETECTED -> stringResource(R.string.yes)

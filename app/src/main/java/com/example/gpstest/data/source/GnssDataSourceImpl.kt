@@ -12,6 +12,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import com.example.gpstest.domain.model.Constellation
+import com.example.gpstest.domain.model.GnssClockData
 import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
@@ -35,8 +36,9 @@ class GnssDataSourceImpl(
         var currentLocation: LocationInfo? = null
         var currentPressure: Float? = null
         var currentBaroAltitude: Double? = null
+        var currentClock: GnssClockData? = null
+        var currentDumpsysData: DumpsysGnssData? = null
 
-        // Key: "constellationType_svid" -> measurement extras
         data class MeasurementExtras(
             val carrierCycles: Long?,
             val dopplerShiftHz: Double?,
@@ -67,7 +69,17 @@ class GnssDataSourceImpl(
                 }
                 measurementMap = newMap
 
-                // Merge measurement data into existing satellites
+                val clock = event.clock
+                currentClock = GnssClockData(
+                    timeNanos = clock.timeNanos,
+                    biasNanos = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && clock.hasBiasNanos()) clock.biasNanos else null,
+                    fullBiasNanos = if (clock.hasFullBiasNanos()) clock.fullBiasNanos else null,
+                    driftNanosPerSecond = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && clock.hasDriftNanosPerSecond()) clock.driftNanosPerSecond else null,
+                    biasUncertaintyNanos = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && clock.hasBiasUncertaintyNanos()) clock.biasUncertaintyNanos else null,
+                    driftUncertaintyNanosPerSecond = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && clock.hasDriftUncertaintyNanosPerSecond()) clock.driftUncertaintyNanosPerSecond else null,
+                    hardwareClockDiscontinuityCount = clock.hardwareClockDiscontinuityCount
+                )
+
                 if (currentSatellites.isNotEmpty()) {
                     currentSatellites = currentSatellites.map { sat ->
                         val key = "${toConstellationType(sat.constellation)}_${sat.svid}"
@@ -81,7 +93,7 @@ class GnssDataSourceImpl(
                             )
                         } else sat
                     }
-                    trySend(GnssData(currentSatellites, currentLocation))
+                    trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
                 }
             }
         }
@@ -98,6 +110,10 @@ class GnssDataSourceImpl(
 
                         val key = "${status.getConstellationType(i)}_${status.getSvid(i)}"
                         val extras = measurementMap[key]
+
+                        val basebandCn0 = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            if (status.hasBasebandCn0DbHz(i)) status.getBasebandCn0DbHz(i) else null
+                        } else null
 
                         val satellite = GnssSatellite(
                             svid = status.getSvid(i),
@@ -117,7 +133,8 @@ class GnssDataSourceImpl(
                             dopplerShiftHz = extras?.dopplerShiftHz,
                             timeNanos = System.nanoTime(),
                             agcLevelDb = extras?.agcLevelDb,
-                            multipathIndicator = extras?.multipathIndicator
+                            multipathIndicator = extras?.multipathIndicator,
+                            basebandCn0DbHz = basebandCn0
                         )
 
                         satellites.add(satellite)
@@ -127,7 +144,7 @@ class GnssDataSourceImpl(
                 }
 
                 currentSatellites = satellites
-                trySend(GnssData(currentSatellites, currentLocation))
+                trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
             }
         }
         
@@ -144,7 +161,7 @@ class GnssDataSourceImpl(
                     barometricAltitude = currentBaroAltitude,
                     pressure = currentPressure
                 )
-                trySend(GnssData(currentSatellites, currentLocation))
+                trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
             }
         }
         
@@ -163,7 +180,7 @@ class GnssDataSourceImpl(
                                 barometricAltitude = currentBaroAltitude,
                                 pressure = currentPressure
                             )
-                            trySend(GnssData(currentSatellites, currentLocation))
+                            trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
                         }
                     }
                 }

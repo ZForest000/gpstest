@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.ui.components.ClockInfoCard
 import com.example.gpstest.ui.components.ConstellationStatCard
 import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
 import com.example.gpstest.ui.components.LocationCard
@@ -102,6 +103,8 @@ fun SatelliteListScreen(
                         totalCount = state.totalCount,
                         allSatellites = allSatellites,
                         location = state.location,
+                        clock = state.clock,
+                        dumpsysData = state.dumpsysData,
                         onSatelliteClick = { selectedSatellite = it }
                     )
                 }
@@ -138,6 +141,8 @@ private fun SatelliteListContent(
     totalCount: Int,
     allSatellites: List<GnssSatellite>,
     location: com.example.gpstest.domain.model.LocationInfo?,
+    clock: com.example.gpstest.domain.model.GnssClockData?,
+    dumpsysData: com.example.gpstest.data.source.DumpsysGnssData?,
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -154,6 +159,17 @@ private fun SatelliteListContent(
 
         item {
             ConstellationStatCard(usedInFix = usedInFix)
+        }
+
+        item {
+            ClockInfoCard(
+                gnssData = com.example.gpstest.domain.model.GnssData(
+                    satellites = allSatellites,
+                    location = location,
+                    clock = clock,
+                    dumpsysData = dumpsysData
+                )
+            )
         }
 
         item {

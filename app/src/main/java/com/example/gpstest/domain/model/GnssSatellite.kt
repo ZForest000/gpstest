@@ -30,7 +30,8 @@ data class GnssSatellite(
     val dopplerShiftHz: Double?,
     val timeNanos: Long,
     val agcLevelDb: Double? = null,
-    val multipathIndicator: MultipathIndicator? = null
+    val multipathIndicator: MultipathIndicator? = null,
+    val basebandCn0DbHz: Float? = null
 ) {
     val group: SatelliteGroup
         get() = when {
