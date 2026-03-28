@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./gradlew assembleDebug)"
+      "Bash(./gradlew assembleDebug)",
+      "Bash(where java:*)",
+      "Read(//c//**)",
+      "Bash(reg query:*)",
+      "Read(//c/Users/$USER/**)",
+      "Read(//d//**)",
+      "Bash(ls /d/jdk*)",
+      "Read(//c/Program Files/Java/jdk-21/bin/**)",
+      "Bash(\"/c/Program Files/Java/jdk-21/bin/java.exe\" -version)",
+      "Bash(export JAVA_HOME=\"/c/Program Files/Java/jdk-21\")",
+      "Bash(adb devices:*)"
     ]
   }
 }

@@ -12,6 +12,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew clean                  # Clean build artifacts
 ```
 
+**JDK 路径**: `C:\Program Files\Java\jdk-21` — 构建前需设置 `JAVA_HOME`：
+```bash
+export JAVA_HOME="/c/Program Files/Java/jdk-21"
+```
+
+**Android SDK 路径**: `D:\android_sdk` — ADB 等工具路径：
+```bash
+export PATH="$PATH:/d/android_sdk/platform-tools"
+```
+
 No lint configuration is currently set up. Tests use JUnit 4; there are no instrumented test runner customizations beyond the default `AndroidJUnitRunner`.
 
 ## Architecture
