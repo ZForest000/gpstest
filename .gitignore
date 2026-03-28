@@ -106,3 +106,4 @@ Desktop.ini
 # Compose generated files
 compose_generated/
 .kotlin/
+.trae/skills/

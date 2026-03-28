@@ -44,6 +44,7 @@ import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
 import com.example.gpstest.ui.components.StatBar
+import com.example.gpstest.ui.components.TtffCard
 import com.example.gpstest.viewmodel.SatelliteViewModel
 import com.example.gpstest.viewmodel.SatelliteUiState
 
@@ -58,6 +59,7 @@ fun SatelliteListScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val ttffState by viewModel.ttffState.collectAsState()
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -107,6 +109,8 @@ fun SatelliteListScreen(
                         clock = state.clock,
                         dumpsysData = state.dumpsysData,
                         dopInfo = state.dopInfo,
+                        ttffState = ttffState,
+                        onTtffReset = { viewModel.resetTtff() },
                         onSatelliteClick = { selectedSatellite = it }
                     )
                 }
@@ -146,6 +150,8 @@ private fun SatelliteListContent(
     clock: com.example.gpstest.domain.model.GnssClockData?,
     dumpsysData: com.example.gpstest.data.source.DumpsysGnssData?,
     dopInfo: com.example.gpstest.domain.model.DopInfo?,
+    ttffState: com.example.gpstest.viewmodel.TtffState,
+    onTtffReset: () -> Unit,
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -156,6 +162,13 @@ private fun SatelliteListContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            TtffCard(
+                ttffState = ttffState,
+                onReset = onTtffReset
+            )
+        }
+
         item {
             LocationCard(location = location)
         }

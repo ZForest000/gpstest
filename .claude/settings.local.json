@@ -13,7 +13,12 @@
       "Bash(export JAVA_HOME=\"/c/Program Files/Java/jdk-21\")",
       "Bash(adb devices:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(./gradlew testDebugUnitTest --tests \"com.example.gpstest.domain.util.DopCalculatorTest\")",
+      "Bash(find D:/project/gpstest/app/build -name TEST-*.xml -path *DopCalculator*)",
+      "Bash(./gradlew testDebugUnitTest)",
+      "Bash(./gradlew testDebugUnitTest --tests \"com.example.gpstest.domain.util.DopCalculatorTest\" --info)",
+      "Bash(./gradlew clean:*)"
     ]
   }
 }

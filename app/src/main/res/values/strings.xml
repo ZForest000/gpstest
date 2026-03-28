@@ -219,4 +219,10 @@
     <string name="dop_title">DOP 精度因子</string>
     <string name="dop_satellite_count">卫星: %d 颗</string>
     <string name="dop_waiting">等待定位...</string>
+
+    <!-- TTFF -->
+    <string name="ttff_title">TTFF 首次定位时间</string>
+    <string name="ttff_measuring">正在测量...</string>
+    <string name="ttff_unit">秒</string>
+    <string name="ttff_reset">重置</string>
 </resources>

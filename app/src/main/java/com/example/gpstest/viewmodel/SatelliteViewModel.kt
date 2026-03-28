@@ -44,6 +44,9 @@ class SatelliteViewModel(
     private val _signalHistory = MutableStateFlow<Map<String, MutableList<SignalReading>>>(emptyMap())
     val signalHistory: StateFlow<Map<String, List<SignalReading>>> = _signalHistory.asStateFlow()
 
+    private val _ttffState = MutableStateFlow<TtffState>(TtffState.Measuring(System.currentTimeMillis()))
+    val ttffState: StateFlow<TtffState> = _ttffState.asStateFlow()
+
     private var lastSnapshotTime = 0L
     private val snapshotIntervalMs = 60_000L
     private var collectionJob: Job? = null
@@ -74,6 +77,7 @@ class SatelliteViewModel(
                         dopInfo = dopInfo
                     )
                     
+                    updateTtffState(gnssData.location)
                     updateSignalHistory(satellites)
                     maybeSaveSnapshot(satellites)
                 }
@@ -81,6 +85,18 @@ class SatelliteViewModel(
                 _uiState.value = SatelliteUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private fun updateTtffState(location: LocationInfo?) {
+        val currentState = _ttffState.value
+        if (location != null && currentState is TtffState.Measuring) {
+            val ttffMs = System.currentTimeMillis() - currentState.startTime
+            _ttffState.value = TtffState.Completed(ttffMs)
+        }
+    }
+
+    fun resetTtff() {
+        _ttffState.value = TtffState.Measuring(System.currentTimeMillis())
     }
 
     private fun updateSignalHistory(satellites: List<GnssSatellite>) {
@@ -198,4 +214,9 @@ sealed interface SatelliteUiState {
         val dopInfo: DopInfo? = null
     ) : SatelliteUiState
     data class Error(val message: String) : SatelliteUiState
+}
+
+sealed interface TtffState {
+    data class Measuring(val startTime: Long) : TtffState
+    data class Completed(val ttffMs: Long) : TtffState
 }
