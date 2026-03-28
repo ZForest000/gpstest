@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -50,8 +48,9 @@ import com.example.gpstest.viewmodel.SatelliteUiState
 @Composable
 fun SatelliteListScreen(
     viewModel: SatelliteViewModel,
-    hasPermission: Boolean,
+    permissionState: com.example.gpstest.PermissionState,
     onRequestPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     onNavigateToHistory: () -> Unit = {},
     onNavigateToAGps: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -95,7 +94,9 @@ fun SatelliteListScreen(
                 }
                 is SatelliteUiState.PermissionRequired -> {
                     PermissionRequiredContent(
-                        onRequestPermission = onRequestPermission
+                        permissionState = permissionState,
+                        onRequestPermission = onRequestPermission,
+                        onOpenAppSettings = onOpenAppSettings
                     )
                 }
                 is SatelliteUiState.Success -> {
@@ -230,11 +231,15 @@ private fun SatelliteListContent(
 
 @Composable
 private fun PermissionRequiredContent(
+    permissionState: com.example.gpstest.PermissionState,
     onRequestPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -242,38 +247,31 @@ private fun PermissionRequiredContent(
             text = stringResource(R.string.permission_required),
             style = MaterialTheme.typography.titleLarge
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.permission_message),
-            style = MaterialTheme.typography.bodyMedium
-        )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onRequestPermission) {
-            Text(stringResource(R.string.grant))
+        Text(
+            text = when (permissionState) {
+                com.example.gpstest.PermissionState.PERMANENTLY_DENIED ->
+                    stringResource(R.string.permission_permanently_denied_message)
+                else ->
+                    stringResource(R.string.permission_rationale)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        when (permissionState) {
+            com.example.gpstest.PermissionState.PERMANENTLY_DENIED -> {
+                Button(onClick = onOpenAppSettings) {
+                    Text(stringResource(R.string.permission_go_settings))
+                }
+            }
+            else -> {
+                Button(onClick = onRequestPermission) {
+                    Text(stringResource(R.string.grant))
+                }
+            }
         }
     }
-}
-
-@Composable
-private fun PermissionDialog(
-    onRequestPermission: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.permission_required)) },
-        text = { Text(stringResource(R.string.permission_message)) },
-        confirmButton = {
-            Button(onClick = onRequestPermission) {
-                Text(stringResource(R.string.grant))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
 }
 
 @Composable

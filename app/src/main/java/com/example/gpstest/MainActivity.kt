@@ -2,8 +2,11 @@ package com.example.gpstest
 
 import android.Manifest
 import android.app.Application
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,8 +31,17 @@ import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
 import com.example.gpstest.ui.screens.history.HistoryScreen
 import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
 import com.example.gpstest.ui.theme.Theme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.example.gpstest.viewmodel.AGpsViewModel
 import com.example.gpstest.viewmodel.SatelliteViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+enum class PermissionState {
+    GRANTED, DENIED, PERMANENTLY_DENIED
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -52,25 +64,34 @@ class MainActivity : ComponentActivity() {
         AGpsViewModelFactory(application, repository)
     }
 
-    private var hasPermission: Boolean = false
+    private val _permissionState = MutableStateFlow(PermissionState.DENIED)
+    val permissionState: StateFlow<PermissionState> = _permissionState.asStateFlow()
+
+    private var hasRequestedPermission = false
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        hasPermission = isGranted
+        hasRequestedPermission = true
         if (isGranted) {
+            _permissionState.value = PermissionState.GRANTED
             satelliteViewModel.startListening()
         } else {
+            if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
+                _permissionState.value = PermissionState.PERMANENTLY_DENIED
+            } else {
+                _permissionState.value = PermissionState.DENIED
+            }
             satelliteViewModel.setPermissionDenied()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         requestWindowFeature(Window.FEATURE_NO_TITLE)
 
-        hasPermission = checkLocationPermission()
+        updatePermissionState()
 
         setContent {
             Theme {
@@ -78,25 +99,49 @@ class MainActivity : ComponentActivity() {
                     GpsTestApp(
                         satelliteViewModel = satelliteViewModel,
                         agpsViewModel = agpsViewModel,
-                        hasPermission = hasPermission,
-                        onRequestPermission = { requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }
+                        permissionStateFlow = _permissionState,
+                        onRequestPermission = {
+                            hasRequestedPermission = true
+                            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        },
+                        onOpenAppSettings = { openAppSettings() }
                     )
                 }
             }
         }
     }
 
-    private fun checkLocationPermission(): Boolean {
+    override fun onResume() {
+        super.onResume()
+        updatePermissionState()
+    }
+
+    private fun updatePermissionState() {
         val granted = ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-        
+
         if (granted) {
+            _permissionState.value = PermissionState.GRANTED
             satelliteViewModel.startListening()
+        } else {
+            satelliteViewModel.setPermissionDenied()
+            if (hasRequestedPermission &&
+                !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
+            ) {
+                _permissionState.value = PermissionState.PERMANENTLY_DENIED
+            } else {
+                _permissionState.value = PermissionState.DENIED
+            }
         }
-        
-        return granted
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+        }
+        startActivity(intent)
     }
 }
 
@@ -110,11 +155,13 @@ sealed class Screen(val route: String) {
 fun GpsTestApp(
     satelliteViewModel: SatelliteViewModel,
     agpsViewModel: AGpsViewModel,
-    hasPermission: Boolean,
-    onRequestPermission: () -> Unit
+    permissionStateFlow: StateFlow<PermissionState>,
+    onRequestPermission: () -> Unit,
+    onOpenAppSettings: () -> Unit
 ) {
     val navController = rememberNavController()
-    
+    val permissionState by permissionStateFlow.collectAsState()
+
     NavHost(
         navController = navController,
         startDestination = Screen.SatelliteList.route
@@ -122,8 +169,9 @@ fun GpsTestApp(
         composable(Screen.SatelliteList.route) {
             SatelliteListScreen(
                 viewModel = satelliteViewModel,
-                hasPermission = hasPermission,
+                permissionState = permissionState,
                 onRequestPermission = onRequestPermission,
+                onOpenAppSettings = onOpenAppSettings,
                 onNavigateToHistory = { navController.navigate(Screen.History.route) },
                 onNavigateToAGps = { navController.navigate(Screen.AGps.route) }
             )
