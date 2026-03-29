@@ -15,6 +15,7 @@ import androidx.activity.viewModels
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SatelliteAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +42,7 @@ import com.example.gpstest.domain.repository.AGpsRepositoryImpl
 import com.example.gpstest.domain.repository.GnssRepositoryImpl
 import com.example.gpstest.domain.repository.SatelliteHistoryRepositoryImpl
 import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
+import com.example.gpstest.ui.screens.help.HelpScreen
 import com.example.gpstest.ui.screens.history.HistoryScreen
 import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
 import com.example.gpstest.ui.theme.Theme
@@ -164,6 +166,7 @@ sealed class Screen(val route: String) {
     object SkyChart : Screen("sky_chart")
     object History : Screen("history")
     object AGps : Screen("agps")
+    object Help : Screen("help")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -233,6 +236,13 @@ fun GpsTestApp(
                     onClick = { navigateAndCloseDrawer(Screen.History.route) },
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
+                androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Help, contentDescription = null) },
+                    label = { Text("帮助") },
+                    selected = currentRoute == Screen.Help.route,
+                    onClick = { navigateAndCloseDrawer(Screen.Help.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
             }
         }
     ) {
@@ -275,6 +285,11 @@ fun GpsTestApp(
             composable(Screen.AGps.route) {
                 AGpsManagerScreen(
                     viewModel = agpsViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Help.route) {
+                HelpScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
