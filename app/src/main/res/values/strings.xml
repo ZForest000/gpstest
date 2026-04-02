@@ -198,6 +198,12 @@
     <string name="agc_level">AGC</string>
     <string name="agc_format">AGC: %.1f dB</string>
 
+    <!-- Measurement Details -->
+    <string name="received_sv_time">卫星时间</string>
+    <string name="received_sv_time_uncertainty">时间不确定度</string>
+    <string name="pseudorange_rate">伪距变化率</string>
+    <string name="measurement_cn0">测量载噪比</string>
+
     <!-- Baseband C/N0 & Clock -->
     <string name="baseband_cn0">基带信噪比</string>
     <string name="clock_info">时钟信息</string>

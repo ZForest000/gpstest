@@ -43,7 +43,16 @@ class GnssDataSourceImpl(
             val carrierCycles: Long?,
             val dopplerShiftHz: Double?,
             val agcLevelDb: Double?,
-            val multipathIndicator: MultipathIndicator?
+            val multipathIndicator: MultipathIndicator?,
+            val accumulatedDeltaRangeMeters: Double?,
+            val accumulatedDeltaRangeState: Int?,
+            val accumulatedDeltaRangeUncertaintyMeters: Double?,
+            val receivedSvTimeNanos: Long?,
+            val receivedSvTimeUncertaintyNanos: Double?,
+            val pseudorangeRateMetersPerSecond: Double?,
+            val measurementState: Int?,
+            val measurementCn0DbHz: Double?,
+            val fullCarrierPhaseCycleCount: Long?
         )
         var measurementMap = mutableMapOf<String, MeasurementExtras>()
 
@@ -64,7 +73,16 @@ class GnssDataSourceImpl(
                         carrierCycles = if (measurement.hasCarrierCycles()) measurement.carrierCycles else null,
                         dopplerShiftHz = dopplerShift,
                         agcLevelDb = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && measurement.hasAutomaticGainControlLevelDb()) measurement.automaticGainControlLevelDb else null,
-                        multipathIndicator = MultipathIndicator.fromInt(measurement.multipathIndicator)
+                        multipathIndicator = MultipathIndicator.fromInt(measurement.multipathIndicator),
+                        accumulatedDeltaRangeMeters = if ((measurement.accumulatedDeltaRangeState and GnssMeasurement.ADR_STATE_VALID) != 0) measurement.accumulatedDeltaRangeMeters else null,
+                        accumulatedDeltaRangeState = measurement.accumulatedDeltaRangeState,
+                        accumulatedDeltaRangeUncertaintyMeters = if ((measurement.accumulatedDeltaRangeState and GnssMeasurement.ADR_STATE_VALID) != 0) measurement.accumulatedDeltaRangeUncertaintyMeters else null,
+                        receivedSvTimeNanos = measurement.receivedSvTimeNanos,
+                        receivedSvTimeUncertaintyNanos = measurement.receivedSvTimeUncertaintyNanos.toDouble(),
+                        pseudorangeRateMetersPerSecond = measurement.pseudorangeRateMetersPerSecond,
+                        measurementState = measurement.state,
+                        measurementCn0DbHz = measurement.cn0DbHz,
+                        fullCarrierPhaseCycleCount = null
                     )
                 }
                 measurementMap = newMap
@@ -89,7 +107,16 @@ class GnssDataSourceImpl(
                                 carrierCycles = extras.carrierCycles ?: sat.carrierCycles,
                                 dopplerShiftHz = extras.dopplerShiftHz ?: sat.dopplerShiftHz,
                                 agcLevelDb = extras.agcLevelDb ?: sat.agcLevelDb,
-                                multipathIndicator = extras.multipathIndicator ?: sat.multipathIndicator
+                                multipathIndicator = extras.multipathIndicator ?: sat.multipathIndicator,
+                                accumulatedDeltaRangeMeters = extras.accumulatedDeltaRangeMeters ?: sat.accumulatedDeltaRangeMeters,
+                                accumulatedDeltaRangeState = extras.accumulatedDeltaRangeState ?: sat.accumulatedDeltaRangeState,
+                                accumulatedDeltaRangeUncertaintyMeters = extras.accumulatedDeltaRangeUncertaintyMeters ?: sat.accumulatedDeltaRangeUncertaintyMeters,
+                                receivedSvTimeNanos = extras.receivedSvTimeNanos ?: sat.receivedSvTimeNanos,
+                                receivedSvTimeUncertaintyNanos = extras.receivedSvTimeUncertaintyNanos ?: sat.receivedSvTimeUncertaintyNanos,
+                                pseudorangeRateMetersPerSecond = extras.pseudorangeRateMetersPerSecond ?: sat.pseudorangeRateMetersPerSecond,
+                                measurementState = extras.measurementState ?: sat.measurementState,
+                                measurementCn0DbHz = extras.measurementCn0DbHz ?: sat.measurementCn0DbHz,
+                                fullCarrierPhaseCycleCount = extras.fullCarrierPhaseCycleCount ?: sat.fullCarrierPhaseCycleCount
                             )
                         } else sat
                     }
@@ -134,7 +161,16 @@ class GnssDataSourceImpl(
                             timeNanos = System.nanoTime(),
                             agcLevelDb = extras?.agcLevelDb,
                             multipathIndicator = extras?.multipathIndicator,
-                            basebandCn0DbHz = basebandCn0
+                            basebandCn0DbHz = basebandCn0,
+                            accumulatedDeltaRangeMeters = extras?.accumulatedDeltaRangeMeters,
+                            accumulatedDeltaRangeState = extras?.accumulatedDeltaRangeState,
+                            accumulatedDeltaRangeUncertaintyMeters = extras?.accumulatedDeltaRangeUncertaintyMeters,
+                            receivedSvTimeNanos = extras?.receivedSvTimeNanos,
+                            receivedSvTimeUncertaintyNanos = extras?.receivedSvTimeUncertaintyNanos,
+                            pseudorangeRateMetersPerSecond = extras?.pseudorangeRateMetersPerSecond,
+                            measurementState = extras?.measurementState,
+                            measurementCn0DbHz = extras?.measurementCn0DbHz,
+                            fullCarrierPhaseCycleCount = extras?.fullCarrierPhaseCycleCount
                         )
 
                         satellites.add(satellite)

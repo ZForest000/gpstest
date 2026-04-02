@@ -1,5 +1,7 @@
 package com.example.gpstest.domain.model
 
+import android.location.GnssMeasurement
+
 enum class MultipathIndicator {
     UNKNOWN,
     DETECTED,
@@ -31,7 +33,16 @@ data class GnssSatellite(
     val timeNanos: Long,
     val agcLevelDb: Double? = null,
     val multipathIndicator: MultipathIndicator? = null,
-    val basebandCn0DbHz: Float? = null
+    val basebandCn0DbHz: Float? = null,
+    val accumulatedDeltaRangeMeters: Double? = null,
+    val accumulatedDeltaRangeState: Int? = null,
+    val accumulatedDeltaRangeUncertaintyMeters: Double? = null,
+    val receivedSvTimeNanos: Long? = null,
+    val receivedSvTimeUncertaintyNanos: Double? = null,
+    val pseudorangeRateMetersPerSecond: Double? = null,
+    val measurementState: Int? = null,
+    val measurementCn0DbHz: Double? = null,
+    val fullCarrierPhaseCycleCount: Long? = null
 ) {
     val group: SatelliteGroup
         get() = when {
@@ -46,6 +57,36 @@ data class GnssSatellite(
             cn0DbHz >= 25f -> SignalStrength.MEDIUM
             else -> SignalStrength.WEAK
         }
+
+    val isAdrValid: Boolean
+        get() = accumulatedDeltaRangeState?.let { state ->
+            (state and GnssMeasurement.ADR_STATE_VALID) != 0
+        } ?: false
+
+    val hasCycleSlip: Boolean
+        get() = accumulatedDeltaRangeState?.let { state ->
+            (state and GnssMeasurement.ADR_STATE_CYCLE_SLIP) != 0
+        } ?: false
+
+    val hasCarrierPhaseLock: Boolean
+        get() = measurementState?.let { state ->
+            (state and GnssMeasurement.STATE_TOW_DECODED) != 0
+        } ?: false
+
+    val hasCodeLock: Boolean
+        get() = measurementState?.let { state ->
+            (state and GnssMeasurement.STATE_CODE_LOCK) != 0
+        } ?: false
+
+    val hasBitSync: Boolean
+        get() = measurementState?.let { state ->
+            (state and GnssMeasurement.STATE_BIT_SYNC) != 0
+        } ?: false
+
+    val hasSubframeSync: Boolean
+        get() = measurementState?.let { state ->
+            (state and GnssMeasurement.STATE_SUBFRAME_SYNC) != 0
+        } ?: false
 }
 
 enum class SignalStrength {

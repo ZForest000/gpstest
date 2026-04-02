@@ -8,7 +8,6 @@ plugins {
 android {
     namespace = "com.example.gpstest"
     compileSdk = 35
-
     defaultConfig {
         applicationId = "com.example.gpstest"
         minSdk = 24

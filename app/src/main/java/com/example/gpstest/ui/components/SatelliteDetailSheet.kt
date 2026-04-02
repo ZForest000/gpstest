@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ fun SatelliteDetailSheet(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         Text(
@@ -112,7 +115,25 @@ fun SatelliteDetailSheet(
                 stringResource(R.string.has_almanac),
                 if (satellite.hasAlmanac) stringResource(R.string.yes) else stringResource(R.string.no)
             )
+            DetailRow(
+                stringResource(R.string.pseudorange_rate),
+                satellite.pseudorangeRateMetersPerSecond?.let { "%.3f m/s".format(it) } ?: "N/A"
+            )
+            DetailRow(
+                stringResource(R.string.measurement_cn0),
+                satellite.measurementCn0DbHz?.let { "%.1f dB-Hz".format(it) } ?: "N/A"
+            )
+            DetailRow(
+                stringResource(R.string.received_sv_time),
+                satellite.receivedSvTimeNanos?.let { "%,d ns".format(it) } ?: "N/A"
+            )
+            DetailRow(
+                stringResource(R.string.received_sv_time_uncertainty),
+                satellite.receivedSvTimeUncertaintyNanos?.let { "%.3f ns".format(it) } ?: "N/A"
+            )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (signalHistory.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))

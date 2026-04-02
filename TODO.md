@@ -12,9 +12,9 @@
 
 ## 中等价值（专业/调试用）
 
-- [ ] **伪距变化率** — `GnssMeasurement.pseudorangeRateMetersPerSecond`，原始多普勒数据
-- [ ] **卫星时间不确定度** — `GnssMeasurement.svTimeUncertaintyNanos`，测量精度指标
-- [ ] **载波相位完整周期** — `GnssMeasurement.fullCarrierPhaseCycleCount`，RTK/高精度定位核心数据
+- [x] **伪距变化率** — `GnssMeasurement.pseudorangeRateMetersPerSecond`，原始多普勒数据
+- [x] **卫星时间不确定度** — `GnssMeasurement.svTimeUncertaintyNanos`，测量精度指标
+- [x] **载波相位完整周期** — `GnssMeasurement.fullCarrierPhaseCycleCount`，RTK/高精度定位核心数据
 - [*] **基带 C/N0** — `GnssStatus.basebandCn0DbHz`，与信噪比互补的信号质量指标
 - [*] **时钟偏差/漂移** — `GnssClock` 接收机时钟状态
 
