@@ -31,43 +31,43 @@ import java.util.Locale
 @Composable
 fun AGpsStatusCard(
     status: AGpsStatus,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
         ) {
             Text(
                 text = stringResource(R.string.data_status),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             StatusRow(
                 label = stringResource(R.string.time_sync),
-                status = status.timeStatus
+                status = status.timeStatus,
             )
-            
+
             StatusRow(
                 label = stringResource(R.string.ephemeris),
-                status = status.ephemerisStatus
+                status = status.ephemerisStatus,
             )
-            
+
             StatusRow(
                 label = stringResource(R.string.almanac),
-                status = status.almanacStatus
+                status = status.almanacStatus,
             )
-            
+
             val injectionTime = status.lastInjectionTime ?: status.lastUpdateTime
             if (injectionTime != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.last_injection_time, formatTime(injectionTime)),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -78,54 +78,57 @@ fun AGpsStatusCard(
 private fun StatusRow(
     label: String,
     status: DataStatus,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
-        
+
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = if (status == DataStatus.VALID) Icons.Default.Check else Icons.Default.Warning,
                 contentDescription = null,
                 tint = getStatusColor(status),
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = getStatusText(status),
                 style = MaterialTheme.typography.bodyMedium,
-                color = getStatusColor(status)
+                color = getStatusColor(status),
             )
         }
     }
 }
 
 @Composable
-private fun getStatusColor(status: DataStatus) = when (status) {
-    DataStatus.VALID -> MaterialTheme.colorScheme.primary
-    DataStatus.PARTIAL -> MaterialTheme.colorScheme.tertiary
-    DataStatus.EXPIRED -> MaterialTheme.colorScheme.error
-    DataStatus.MISSING -> MaterialTheme.colorScheme.error
-    DataStatus.UNKNOWN -> MaterialTheme.colorScheme.outline
-}
+private fun getStatusColor(status: DataStatus) =
+    when (status) {
+        DataStatus.VALID -> MaterialTheme.colorScheme.primary
+        DataStatus.PARTIAL -> MaterialTheme.colorScheme.tertiary
+        DataStatus.EXPIRED -> MaterialTheme.colorScheme.error
+        DataStatus.MISSING -> MaterialTheme.colorScheme.error
+        DataStatus.UNKNOWN -> MaterialTheme.colorScheme.outline
+    }
 
 @Composable
-private fun getStatusText(status: DataStatus) = when (status) {
-    DataStatus.VALID -> stringResource(R.string.status_valid)
-    DataStatus.PARTIAL -> stringResource(R.string.status_partial)
-    DataStatus.EXPIRED -> stringResource(R.string.status_expired)
-    DataStatus.MISSING -> stringResource(R.string.status_missing)
-    DataStatus.UNKNOWN -> stringResource(R.string.status_unknown)
-}
+private fun getStatusText(status: DataStatus) =
+    when (status) {
+        DataStatus.VALID -> stringResource(R.string.status_valid)
+        DataStatus.PARTIAL -> stringResource(R.string.status_partial)
+        DataStatus.EXPIRED -> stringResource(R.string.status_expired)
+        DataStatus.MISSING -> stringResource(R.string.status_missing)
+        DataStatus.UNKNOWN -> stringResource(R.string.status_unknown)
+    }
 
 private fun formatTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())

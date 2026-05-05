@@ -15,28 +15,30 @@ import java.util.concurrent.TimeUnit
 
 class AGpsUpdateWorker(
     context: Context,
-    workerParams: WorkerParameters
+    workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams) {
-
     override suspend fun doWork(): Result {
         val settingsStore = AGpsSettingsStore(applicationContext)
         val settings = settingsStore.settings.first()
-        
+
         if (!settings.autoUpdateEnabled) {
             return Result.success()
         }
-        
+
         val dataSource = AGpsDataSourceImpl(applicationContext)
         val downloader = AGpsDownloaderImpl()
-        val repository = AGpsRepositoryImpl(
-            dataSource = dataSource,
-            downloader = downloader,
-            fileHandler = com.example.gpstest.data.local.AGpsFileHandlerImpl(applicationContext),
-            settingsStore = settingsStore
-        )
-        
+        val repository =
+            AGpsRepositoryImpl(
+                dataSource = dataSource,
+                downloader = downloader,
+                fileHandler =
+                    com.example.gpstest.data.local
+                        .AGpsFileHandlerImpl(applicationContext),
+                settingsStore = settingsStore,
+            )
+
         val result = repository.downloadAndInject()
-        
+
         return if (result.isSuccess) {
             settingsStore.updateLastAutoUpdateTime(System.currentTimeMillis())
             Result.success()
@@ -48,16 +50,20 @@ class AGpsUpdateWorker(
     companion object {
         private const val WORK_NAME = "agps_update_work"
 
-        fun schedule(context: Context, intervalHours: Int) {
-            val request = PeriodicWorkRequestBuilder<AGpsUpdateWorker>(
-                intervalHours.toLong(),
-                TimeUnit.HOURS
-            ).build()
+        fun schedule(
+            context: Context,
+            intervalHours: Int,
+        ) {
+            val request =
+                PeriodicWorkRequestBuilder<AGpsUpdateWorker>(
+                    intervalHours.toLong(),
+                    TimeUnit.HOURS,
+                ).build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
                 ExistingPeriodicWorkPolicy.UPDATE,
-                request
+                request,
             )
         }
 

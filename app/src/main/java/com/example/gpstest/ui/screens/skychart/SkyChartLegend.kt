@@ -1,8 +1,8 @@
 package com.example.gpstest.ui.screens.skychart
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -24,23 +24,22 @@ import com.example.gpstest.ui.theme.UnknownConstellationColor
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SkyChartLegend(
-    modifier: Modifier = Modifier
-) {
-    val items = listOf(
-        "GPS" to GpsColor,
-        "BDS" to BeidouColor,
-        "GLO" to GlonassColor,
-        "GAL" to GalileoColor,
-        "QZS" to QzssColor,
-        "SBAS" to SbasColor,
-        "UNK" to UnknownConstellationColor,
-    )
+fun SkyChartLegend(modifier: Modifier = Modifier) {
+    val items =
+        listOf(
+            "GPS" to GpsColor,
+            "BDS" to BeidouColor,
+            "GLO" to GlonassColor,
+            "GAL" to GalileoColor,
+            "QZS" to QzssColor,
+            "SBAS" to SbasColor,
+            "UNK" to UnknownConstellationColor,
+        )
 
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // 定位状态图例
         LegendItem(dotColor = MaterialTheme.colorScheme.onSurface, filled = true, label = "定位中")
@@ -50,7 +49,7 @@ fun SkyChartLegend(
         Text(
             text = "|",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         // 星座颜色图例
@@ -64,31 +63,34 @@ fun SkyChartLegend(
 private fun LegendItem(
     dotColor: Color,
     filled: Boolean,
-    label: String
+    label: String,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(10.dp)
-                .drawBehind {
-                    if (filled) {
-                        drawCircle(color = dotColor, radius = size.minDimension / 2f)
-                    } else {
-                        drawCircle(
-                            color = dotColor,
-                            radius = size.minDimension / 2f,
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
-                        )
-                    }
-                }
+            modifier =
+                Modifier
+                    .size(10.dp)
+                    .drawBehind {
+                        if (filled) {
+                            drawCircle(color = dotColor, radius = size.minDimension / 2f)
+                        } else {
+                            drawCircle(
+                                color = dotColor,
+                                radius = size.minDimension / 2f,
+                                style =
+                                    androidx.compose.ui.graphics.drawscope
+                                        .Stroke(width = 1.5f),
+                            )
+                        }
+                    },
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

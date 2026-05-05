@@ -7,11 +7,12 @@ enum class Constellation {
     GALILEO,
     BEIDOU,
     QZSS,
-    UNKNOWN;
+    UNKNOWN,
+    ;
 
     companion object {
-        fun fromConstellationType(type: Int): Constellation {
-            return when (type) {
+        fun fromConstellationType(type: Int): Constellation =
+            when (type) {
                 1 -> GPS
                 2 -> SBAS
                 3 -> GLONASS
@@ -20,6 +21,5 @@ enum class Constellation {
                 6 -> GALILEO
                 else -> UNKNOWN
             }
-        }
     }
 }

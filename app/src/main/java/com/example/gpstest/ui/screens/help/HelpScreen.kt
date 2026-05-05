@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,7 +40,7 @@ import com.example.gpstest.R
 @Composable
 fun HelpScreen(
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Scaffold(
         topBar = {
@@ -51,25 +50,26 @@ fun HelpScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
-                }
+                },
             )
         },
-        modifier = modifier
+        modifier = modifier,
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 HelpSection(
                     title = stringResource(R.string.help_ttff_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_ttff_content))
                     HelpValueRow(label = stringResource(R.string.help_ttff_excellent), value = "< 10s", color = Color(0xFF4CAF50))
@@ -82,7 +82,7 @@ fun HelpScreen(
             item {
                 HelpSection(
                     title = stringResource(R.string.help_location_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_location_content))
                     HelpSubItem(title = stringResource(R.string.help_latitude_title), desc = stringResource(R.string.help_latitude_desc))
@@ -97,13 +97,16 @@ fun HelpScreen(
             item {
                 HelpSection(
                     title = stringResource(R.string.help_constellation_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_constellation_content))
                     HelpSubItem(title = "GPS", desc = stringResource(R.string.help_constellation_gps))
                     HelpSubItem(title = "GLONASS", desc = stringResource(R.string.help_constellation_glonass))
                     HelpSubItem(title = "Galileo", desc = stringResource(R.string.help_constellation_galileo))
-                    HelpSubItem(title = stringResource(R.string.help_constellation_beidou_name), desc = stringResource(R.string.help_constellation_beidou))
+                    HelpSubItem(
+                        title = stringResource(R.string.help_constellation_beidou_name),
+                        desc = stringResource(R.string.help_constellation_beidou),
+                    )
                     HelpSubItem(title = "QZSS", desc = stringResource(R.string.help_constellation_qzss))
                 }
             }
@@ -111,7 +114,7 @@ fun HelpScreen(
             item {
                 HelpSection(
                     title = stringResource(R.string.help_dop_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_dop_content))
                     HelpSubItem(title = "PDOP", desc = stringResource(R.string.help_dop_pdop))
@@ -129,7 +132,7 @@ fun HelpScreen(
             item {
                 HelpSection(
                     title = stringResource(R.string.help_satellite_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_satellite_content))
                     HelpSubItem(title = stringResource(R.string.help_cn0_title), desc = stringResource(R.string.help_cn0_desc))
@@ -148,42 +151,66 @@ fun HelpScreen(
             item {
                 HelpSection(
                     title = stringResource(R.string.help_clock_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_clock_content))
-                    HelpSubItem(title = stringResource(R.string.help_clock_bias_title), desc = stringResource(R.string.help_clock_bias_desc))
-                    HelpSubItem(title = stringResource(R.string.help_clock_drift_title), desc = stringResource(R.string.help_clock_drift_desc))
+                    HelpSubItem(
+                        title = stringResource(R.string.help_clock_bias_title),
+                        desc = stringResource(R.string.help_clock_bias_desc),
+                    )
+                    HelpSubItem(
+                        title = stringResource(R.string.help_clock_drift_title),
+                        desc = stringResource(R.string.help_clock_drift_desc),
+                    )
                 }
             }
 
             item {
                 HelpSection(
                     title = stringResource(R.string.help_agps_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_agps_content))
-                    HelpSubItem(title = stringResource(R.string.help_agps_ephemeris_title), desc = stringResource(R.string.help_agps_ephemeris_desc))
-                    HelpSubItem(title = stringResource(R.string.help_agps_almanac_title), desc = stringResource(R.string.help_agps_almanac_desc))
+                    HelpSubItem(
+                        title = stringResource(R.string.help_agps_ephemeris_title),
+                        desc = stringResource(R.string.help_agps_ephemeris_desc),
+                    )
+                    HelpSubItem(
+                        title = stringResource(R.string.help_agps_almanac_title),
+                        desc = stringResource(R.string.help_agps_almanac_desc),
+                    )
                 }
             }
 
             item {
                 HelpSection(
                     title = stringResource(R.string.help_satellite_detail_title),
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) }
+                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
                 ) {
                     HelpText(stringResource(R.string.help_satellite_detail_content))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.help_raw_measurement_title),
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
-                    HelpSubItem(title = stringResource(R.string.help_carrier_freq_title), desc = stringResource(R.string.help_carrier_freq_desc))
-                    HelpSubItem(title = stringResource(R.string.help_carrier_cycles_title), desc = stringResource(R.string.help_carrier_cycles_desc))
-                    HelpSubItem(title = stringResource(R.string.help_doppler_shift_title), desc = stringResource(R.string.help_doppler_shift_desc))
+                    HelpSubItem(
+                        title = stringResource(R.string.help_carrier_freq_title),
+                        desc = stringResource(R.string.help_carrier_freq_desc),
+                    )
+                    HelpSubItem(
+                        title = stringResource(R.string.help_carrier_cycles_title),
+                        desc = stringResource(R.string.help_carrier_cycles_desc),
+                    )
+                    HelpSubItem(
+                        title = stringResource(R.string.help_doppler_shift_title),
+                        desc = stringResource(R.string.help_doppler_shift_desc),
+                    )
                     HelpSubItem(title = stringResource(R.string.help_agc_title), desc = stringResource(R.string.help_agc_desc))
-                    HelpSubItem(title = stringResource(R.string.help_baseband_cn0_title), desc = stringResource(R.string.help_baseband_cn0_desc))
+                    HelpSubItem(
+                        title = stringResource(R.string.help_baseband_cn0_title),
+                        desc = stringResource(R.string.help_baseband_cn0_desc),
+                    )
                     HelpSubItem(title = stringResource(R.string.help_multipath_title), desc = stringResource(R.string.help_multipath_desc))
                 }
             }
@@ -195,28 +222,29 @@ fun HelpScreen(
 private fun HelpSection(
     title: String,
     icon: @Composable () -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 icon()
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
             content()
@@ -229,29 +257,30 @@ private fun HelpText(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 
 @Composable
 private fun HelpSubItem(
     title: String,
-    desc: String
+    desc: String,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = desc,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -260,30 +289,32 @@ private fun HelpSubItem(
 private fun HelpValueRow(
     label: String,
     value: String,
-    color: Color
+    color: Color,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(color = color, shape = RoundedCornerShape(4.dp))
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .background(color = color, shape = RoundedCornerShape(4.dp)),
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
     }
 }

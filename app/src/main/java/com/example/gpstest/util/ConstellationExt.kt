@@ -3,7 +3,6 @@ package com.example.gpstest.util
 import androidx.compose.ui.graphics.Color
 import com.example.gpstest.ui.theme.Blue40
 import com.example.gpstest.ui.theme.Orange40
-import com.example.gpstest.ui.theme.Pink40
 import com.example.gpstest.ui.theme.Purple40
 import com.example.gpstest.ui.theme.Red40
 import com.example.gpstest.ui.theme.Teal40
@@ -19,8 +18,8 @@ import com.example.gpstest.ui.theme.Yellow40
  * @param constellationType 星座类型常量
  * @return 星座名称
  */
-fun getConstellationName(constellationType: Int): String {
-    return when (constellationType) {
+fun getConstellationName(constellationType: Int): String =
+    when (constellationType) {
         1 -> "GPS"
         3 -> "GLONASS"
         5 -> "BeiDou"
@@ -32,7 +31,6 @@ fun getConstellationName(constellationType: Int): String {
         0 -> "Unknown"
         else -> "Constellation $constellationType"
     }
-}
 
 /**
  * 获取星座颜色
@@ -40,8 +38,8 @@ fun getConstellationName(constellationType: Int): String {
  * @param constellationType 星座类型常量
  * @return 星座对应的颜色
  */
-fun getConstellationColor(constellationType: Int): Color {
-    return when (constellationType) {
+fun getConstellationColor(constellationType: Int): Color =
+    when (constellationType) {
         1 -> Blue40
         3 -> Red40
         5 -> Yellow40
@@ -52,7 +50,6 @@ fun getConstellationColor(constellationType: Int): Color {
         0 -> Color.LightGray
         else -> Color.Gray
     }
-}
 
 /**
  * 获取星座描述
@@ -60,8 +57,8 @@ fun getConstellationColor(constellationType: Int): Color {
  * @param constellationType 星座类型常量
  * @return 星座的详细描述
  */
-fun getConstellationDescription(constellationType: Int): String {
-    return when (constellationType) {
+fun getConstellationDescription(constellationType: Int): String =
+    when (constellationType) {
         1 -> "Global Positioning System (USA)"
         3 -> "Global Navigation Satellite System (Russia)"
         5 -> "BeiDou Navigation Satellite System (China)"
@@ -72,7 +69,6 @@ fun getConstellationDescription(constellationType: Int): String {
         0 -> "Unknown Constellation"
         else -> "Unknown Constellation Type: $constellationType"
     }
-}
 
 /**
  * 获取星座的卫星数量
@@ -80,18 +76,17 @@ fun getConstellationDescription(constellationType: Int): String {
  * @param constellationType 星座类型常量
  * @return 该星座的理论卫星数量
  */
-fun getConstellationSatelliteCount(constellationType: Int): Int {
-    return when (constellationType) {
-        1 -> 32  // GPS
-        3 -> 24  // GLONASS
-        5 -> 45  // BeiDou
-        4 -> 4   // QZSS
-        6 -> 30  // Galileo
-        7 -> 7   // NavIC/IRNSS
-        2 -> 0   // SBAS (varies)
+fun getConstellationSatelliteCount(constellationType: Int): Int =
+    when (constellationType) {
+        1 -> 32 // GPS
+        3 -> 24 // GLONASS
+        5 -> 45 // BeiDou
+        4 -> 4 // QZSS
+        6 -> 30 // Galileo
+        7 -> 7 // NavIC/IRNSS
+        2 -> 0 // SBAS (varies)
         else -> 0
     }
-}
 
 /**
  * 检查是否为全球导航卫星系统
@@ -99,16 +94,15 @@ fun getConstellationSatelliteCount(constellationType: Int): Int {
  * @param constellationType 星座类型常量
  * @return 是否为全球系统
  */
-fun isGlobalConstellation(constellationType: Int): Boolean {
-    return when (constellationType) {
-        1,  // GPS
-        3,  // GLONASS
-        5,  // BeiDou
-        6   // Galileo
+fun isGlobalConstellation(constellationType: Int): Boolean =
+    when (constellationType) {
+        1, // GPS
+        3, // GLONASS
+        5, // BeiDou
+        6, // Galileo
         -> true
         else -> false
     }
-}
 
 /**
  * 检查是否为区域导航卫星系统
@@ -116,14 +110,13 @@ fun isGlobalConstellation(constellationType: Int): Boolean {
  * @param constellationType 星座类型常量
  * @return 是否为区域系统
  */
-fun isRegionalConstellation(constellationType: Int): Boolean {
-    return when (constellationType) {
-        4,  // QZSS
-        7   // NavIC
+fun isRegionalConstellation(constellationType: Int): Boolean =
+    when (constellationType) {
+        4, // QZSS
+        7, // NavIC
         -> true
         else -> false
     }
-}
 
 /**
  * 检查是否为增强系统
@@ -132,7 +125,7 @@ fun isRegionalConstellation(constellationType: Int): Boolean {
  * @return 是否为增强系统
  */
 fun isAugmentationSystem(constellationType: Int): Boolean {
-    return constellationType == 2  // SBAS
+    return constellationType == 2 // SBAS
 }
 
 /**
@@ -141,14 +134,13 @@ fun isAugmentationSystem(constellationType: Int): Boolean {
  * @param constellationType 星座类型常量
  * @return 频率类型列表
  */
-fun getConstellationFrequencies(constellationType: Int): List<String> {
-    return when (constellationType) {
-        1 -> listOf("L1", "L2", "L5")  // GPS
-        3 -> listOf("L1", "L2", "L3")  // GLONASS
-        5 -> listOf("B1", "B2", "B3")  // BeiDou
-        4 -> listOf("L1", "L2", "L5", "L6")  // QZSS
-        6 -> listOf("E1", "E5", "E6")  // Galileo
-        7 -> listOf("L5", "S")  // NavIC
+fun getConstellationFrequencies(constellationType: Int): List<String> =
+    when (constellationType) {
+        1 -> listOf("L1", "L2", "L5") // GPS
+        3 -> listOf("L1", "L2", "L3") // GLONASS
+        5 -> listOf("B1", "B2", "B3") // BeiDou
+        4 -> listOf("L1", "L2", "L5", "L6") // QZSS
+        6 -> listOf("E1", "E5", "E6") // Galileo
+        7 -> listOf("L5", "S") // NavIC
         else -> emptyList()
     }
-}

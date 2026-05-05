@@ -25,50 +25,50 @@ import java.util.Locale
 @Composable
 fun HistorySnapshotCard(
     snapshot: SatelliteHistorySnapshot,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp),
+                ).padding(12.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = formatTimestamp(snapshot.timestamp),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
             Text(
                 text = stringResource(R.string.signal_strength_avg, snapshot.averageSignalStrength.toInt()),
                 style = MaterialTheme.typography.bodyMedium,
-                color = getSignalColor(snapshot.averageSignalStrength)
+                color = getSignalColor(snapshot.averageSignalStrength),
             )
         }
-        
+
         Spacer(modifier = Modifier.height(8.dp))
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             StatItemCompact(
                 label = stringResource(R.string.used_in_fix),
-                value = snapshot.usedInFixCount.toString()
+                value = snapshot.usedInFixCount.toString(),
             )
             StatItemCompact(
                 label = stringResource(R.string.visible),
-                value = snapshot.visibleCount.toString()
+                value = snapshot.visibleCount.toString(),
             )
             StatItemCompact(
                 label = stringResource(R.string.total),
-                value = snapshot.getEntries().size.toString()
+                value = snapshot.getEntries().size.toString(),
             )
         }
     }
@@ -78,17 +78,17 @@ fun HistorySnapshotCard(
 private fun StatItemCompact(
     label: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
         )
     }
 }
@@ -98,10 +98,9 @@ private fun formatTimestamp(timestamp: Long): String {
     return sdf.format(Date(timestamp))
 }
 
-private fun getSignalColor(cn0: Float): androidx.compose.ui.graphics.Color {
-    return when {
+private fun getSignalColor(cn0: Float): androidx.compose.ui.graphics.Color =
+    when {
         cn0 >= 35f -> com.example.gpstest.ui.theme.SignalStrong
         cn0 >= 25f -> com.example.gpstest.ui.theme.SignalMedium
         else -> com.example.gpstest.ui.theme.SignalWeak
     }
-}

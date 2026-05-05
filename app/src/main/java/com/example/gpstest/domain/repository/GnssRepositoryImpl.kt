@@ -5,14 +5,9 @@ import com.example.gpstest.domain.model.GnssData
 import kotlinx.coroutines.flow.Flow
 
 class GnssRepositoryImpl(
-    private val dataSource: GnssDataSource
+    private val dataSource: GnssDataSource,
 ) : GnssRepository {
+    override fun getGnssData(): Flow<GnssData> = dataSource.getGnssData()
 
-    override fun getGnssData(): Flow<GnssData> {
-        return dataSource.getGnssData()
-    }
-
-    override suspend fun isGnssSupported(): Boolean {
-        return dataSource.isSupported()
-    }
+    override suspend fun isGnssSupported(): Boolean = dataSource.isSupported()
 }

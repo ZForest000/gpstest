@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gpstest.data.source.DumpsysGnssData
+import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.model.GnssClockData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
@@ -11,7 +12,6 @@ import com.example.gpstest.domain.model.SatelliteGroup
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.SatelliteHistoryRepository
-import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.util.DopCalculator
 import com.example.gpstest.ui.components.SignalReading
 import kotlinx.coroutines.Job
@@ -23,9 +23,8 @@ import kotlinx.coroutines.launch
 class SatelliteViewModel(
     application: Application,
     private val repository: GnssRepository,
-    private val historyRepository: SatelliteHistoryRepository? = null
+    private val historyRepository: SatelliteHistoryRepository? = null,
 ) : AndroidViewModel(application) {
-
     private val _uiState = MutableStateFlow<SatelliteUiState>(SatelliteUiState.Loading)
     val uiState: StateFlow<SatelliteUiState> = _uiState.asStateFlow()
 
@@ -59,32 +58,34 @@ class SatelliteViewModel(
 
     fun startListening() {
         collectionJob?.cancel()
-        collectionJob = viewModelScope.launch {
-            try {
-                repository.getGnssData().collect { gnssData ->
-                    val satellites = gnssData.satellites
-                    val grouped = satellites.groupBy { it.group }
-                    val usedInFixList = grouped[SatelliteGroup.USED_IN_FIX].orEmpty()
-                    val dopInfo = DopCalculator.calculate(usedInFixList)
-                    _uiState.value = SatelliteUiState.Success(
-                        usedInFix = usedInFixList,
-                        visibleOnly = grouped[SatelliteGroup.VISIBLE_ONLY].orEmpty(),
-                        searching = grouped[SatelliteGroup.SEARCHING].orEmpty(),
-                        totalCount = satellites.size,
-                        location = gnssData.location,
-                        clock = gnssData.clock,
-                        dumpsysData = gnssData.dumpsysData,
-                        dopInfo = dopInfo
-                    )
-                    
-                    updateTtffState(gnssData.location)
-                    updateSignalHistory(satellites)
-                    maybeSaveSnapshot(satellites)
+        collectionJob =
+            viewModelScope.launch {
+                try {
+                    repository.getGnssData().collect { gnssData ->
+                        val satellites = gnssData.satellites
+                        val grouped = satellites.groupBy { it.group }
+                        val usedInFixList = grouped[SatelliteGroup.USED_IN_FIX].orEmpty()
+                        val dopInfo = DopCalculator.calculate(usedInFixList)
+                        _uiState.value =
+                            SatelliteUiState.Success(
+                                usedInFix = usedInFixList,
+                                visibleOnly = grouped[SatelliteGroup.VISIBLE_ONLY].orEmpty(),
+                                searching = grouped[SatelliteGroup.SEARCHING].orEmpty(),
+                                totalCount = satellites.size,
+                                location = gnssData.location,
+                                clock = gnssData.clock,
+                                dumpsysData = gnssData.dumpsysData,
+                                dopInfo = dopInfo,
+                            )
+
+                        updateTtffState(gnssData.location)
+                        updateSignalHistory(satellites)
+                        maybeSaveSnapshot(satellites)
+                    }
+                } catch (e: Exception) {
+                    _uiState.value = SatelliteUiState.Error(e.message ?: "Unknown error")
                 }
-            } catch (e: Exception) {
-                _uiState.value = SatelliteUiState.Error(e.message ?: "Unknown error")
             }
-        }
     }
 
     private fun updateTtffState(location: LocationInfo?) {
@@ -102,18 +103,18 @@ class SatelliteViewModel(
     private fun updateSignalHistory(satellites: List<GnssSatellite>) {
         val now = System.currentTimeMillis()
         val currentHistory = _signalHistory.value.toMutableMap()
-        
+
         satellites.forEach { satellite ->
             val key = "${satellite.constellation.name}_${satellite.svid}"
             val readings = currentHistory.getOrPut(key) { mutableListOf() }
-            
+
             readings.add(SignalReading(timestamp = now, cn0DbHz = satellite.cn0DbHz))
-            
+
             while (readings.size > maxSignalHistorySize) {
                 readings.removeAt(0)
             }
         }
-        
+
         _signalHistory.value = currentHistory
     }
 
@@ -202,7 +203,9 @@ class SatelliteViewModel(
 
 sealed interface SatelliteUiState {
     data object Loading : SatelliteUiState
+
     data object PermissionRequired : SatelliteUiState
+
     data class Success(
         val usedInFix: List<GnssSatellite>,
         val visibleOnly: List<GnssSatellite>,
@@ -211,12 +214,20 @@ sealed interface SatelliteUiState {
         val location: LocationInfo? = null,
         val clock: GnssClockData? = null,
         val dumpsysData: DumpsysGnssData? = null,
-        val dopInfo: DopInfo? = null
+        val dopInfo: DopInfo? = null,
     ) : SatelliteUiState
-    data class Error(val message: String) : SatelliteUiState
+
+    data class Error(
+        val message: String,
+    ) : SatelliteUiState
 }
 
 sealed interface TtffState {
-    data class Measuring(val startTime: Long) : TtffState
-    data class Completed(val ttffMs: Long) : TtffState
+    data class Measuring(
+        val startTime: Long,
+    ) : TtffState
+
+    data class Completed(
+        val ttffMs: Long,
+    ) : TtffState
 }

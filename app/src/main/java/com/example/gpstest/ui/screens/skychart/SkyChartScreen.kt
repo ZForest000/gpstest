@@ -47,7 +47,7 @@ fun SkyChartScreen(
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
     onOpenDrawer: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
@@ -61,43 +61,44 @@ fun SkyChartScreen(
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
                             imageVector = Icons.Filled.Menu,
-                            contentDescription = "菜单"
+                            contentDescription = "菜单",
                         )
                     }
-                }
+                },
             )
         },
-        modifier = modifier
+        modifier = modifier,
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             when (val state = uiState) {
                 is SatelliteUiState.Loading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
                 is SatelliteUiState.PermissionRequired -> {
                     PermissionRequiredContent(
                         permissionState = permissionState,
                         onRequestPermission = onRequestPermission,
-                        onOpenAppSettings = onOpenAppSettings
+                        onOpenAppSettings = onOpenAppSettings,
                     )
                 }
                 is SatelliteUiState.Success -> {
                     val allSatellites = state.usedInFix + state.visibleOnly + state.searching
                     SkyChartContent(
                         satellites = allSatellites,
-                        onSatelliteClick = { selectedSatellite = it }
+                        onSatelliteClick = { selectedSatellite = it },
                     )
                 }
                 is SatelliteUiState.Error -> {
                     ErrorContent(
                         message = state.message,
-                        onRetry = { viewModel.startListening() }
+                        onRetry = { viewModel.startListening() },
                     )
                 }
             }
@@ -108,11 +109,11 @@ fun SkyChartScreen(
         val signalHistory = viewModel.getSignalHistoryForSatellite(satellite)
         ModalBottomSheet(
             onDismissRequest = { selectedSatellite = null },
-            sheetState = sheetState
+            sheetState = sheetState,
         ) {
             SatelliteDetailSheet(
                 satellite = satellite,
-                signalHistory = signalHistory
+                signalHistory = signalHistory,
             )
         }
     }
@@ -122,22 +123,24 @@ fun SkyChartScreen(
 private fun SkyChartContent(
     satellites: List<GnssSatellite>,
     onSatelliteClick: (GnssSatellite) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
         SkyChartView(
             satellites = satellites,
             onSatelliteClick = onSatelliteClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f),
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -151,29 +154,31 @@ private fun PermissionRequiredContent(
     permissionState: PermissionState,
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = stringResource(R.string.permission_required),
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = when (permissionState) {
-                PermissionState.PERMANENTLY_DENIED ->
-                    stringResource(R.string.permission_permanently_denied_message)
-                else ->
-                    stringResource(R.string.permission_rationale)
-            },
+            text =
+                when (permissionState) {
+                    PermissionState.PERMANENTLY_DENIED ->
+                        stringResource(R.string.permission_permanently_denied_message)
+                    else ->
+                        stringResource(R.string.permission_rationale)
+                },
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(24.dp))
         when (permissionState) {
@@ -195,22 +200,22 @@ private fun PermissionRequiredContent(
 private fun ErrorContent(
     message: String,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = stringResource(R.string.error_occurred),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {

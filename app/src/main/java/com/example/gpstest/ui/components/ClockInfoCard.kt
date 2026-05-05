@@ -23,21 +23,22 @@ import com.example.gpstest.domain.model.GnssData
 @Composable
 fun ClockInfoCard(
     gnssData: GnssData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
         ) {
             Text(
                 text = stringResource(R.string.clock_info),
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -48,7 +49,7 @@ fun ClockInfoCard(
                 Text(
                     text = "N/A",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -74,25 +75,25 @@ private fun ClockDataSection(clock: GnssClockData) {
         clock.totalBiasMicroseconds?.let { bias ->
             DetailRow(
                 stringResource(R.string.clock_bias),
-                "%.3f μs".format(bias)
+                "%.3f μs".format(bias),
             )
         }
         clock.driftMicrosecondsPerSecond?.let { drift ->
             DetailRow(
                 stringResource(R.string.clock_drift),
-                "%.6f μs/s".format(drift)
+                "%.6f μs/s".format(drift),
             )
         }
         clock.biasUncertaintyNanos?.let { uncertainty ->
             DetailRow(
                 stringResource(R.string.clock_bias_uncertainty),
-                "%.1f ns".format(uncertainty)
+                "%.1f ns".format(uncertainty),
             )
         }
         clock.driftUncertaintyNanosPerSecond?.let { uncertainty ->
             DetailRow(
                 stringResource(R.string.clock_drift_uncertainty),
-                "%.3f ns/s".format(uncertainty)
+                "%.3f ns/s".format(uncertainty),
             )
         }
     }
@@ -107,13 +108,13 @@ private fun AvgBasebandCn0Section(gnssData: GnssData) {
         if (avgBaseband > 0) {
             DetailRow(
                 stringResource(R.string.avg_baseband_cn0),
-                "%.1f dB-Hz".format(avgBaseband)
+                "%.1f dB-Hz".format(avgBaseband),
             )
         }
         if (avgCn0 > 0) {
             DetailRow(
                 stringResource(R.string.signal_strength),
-                "%.1f dB-Hz".format(avgCn0)
+                "%.1f dB-Hz".format(avgCn0),
             )
         }
     }
@@ -125,19 +126,19 @@ private fun DumpsysDataSection(dumpsysData: DumpsysGnssData) {
         dumpsysData.avgBasebandCn0?.let { cn0 ->
             DetailRow(
                 stringResource(R.string.avg_baseband_cn0) + " (dumpsys)",
-                "%.1f dB-Hz".format(cn0)
+                "%.1f dB-Hz".format(cn0),
             )
         }
         if (dumpsysData.measurementCount > 0) {
             DetailRow(
                 stringResource(R.string.measurement_count),
-                "${dumpsysData.measurementCount}"
+                "${dumpsysData.measurementCount}",
             )
         }
         if (dumpsysData.usedInFixConstellations.isNotEmpty()) {
             DetailRow(
                 stringResource(R.string.used_constellations),
-                dumpsysData.usedInFixConstellations.joinToString(", ")
+                dumpsysData.usedInFixConstellations.joinToString(", "),
             )
         }
     }
@@ -149,54 +150,60 @@ private fun ShizukuStatusSection() {
     val isGranted = ShizukuHelper.isPermissionGranted
     val isRoot = ShizukuHelper.isRootMode
 
-    val statusText = when {
-        !isAvailable -> stringResource(R.string.shizuku_unavailable)
-        !isGranted -> stringResource(R.string.shizuku_permission_required)
-        else -> {
-            val mode = if (isRoot) stringResource(R.string.root_mode) else stringResource(R.string.adb_mode)
-            stringResource(R.string.shizuku_available, mode)
+    val statusText =
+        when {
+            !isAvailable -> stringResource(R.string.shizuku_unavailable)
+            !isGranted -> stringResource(R.string.shizuku_permission_required)
+            else -> {
+                val mode = if (isRoot) stringResource(R.string.root_mode) else stringResource(R.string.adb_mode)
+                stringResource(R.string.shizuku_available, mode)
+            }
         }
-    }
 
-    val statusColor = when {
-        isAvailable && isGranted -> MaterialTheme.colorScheme.primary
-        isAvailable -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val statusColor =
+        when {
+            isAvailable && isGranted -> MaterialTheme.colorScheme.primary
+            isAvailable -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     Row(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Text(
             text = stringResource(R.string.shizuku_status) + ": ",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = statusText,
             style = MaterialTheme.typography.bodySmall,
-            color = statusColor
+            color = statusColor,
         )
     }
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(
+    label: String,
+    value: String,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 2.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 2.dp),
     ) {
         Text(
             text = "$label: ",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }

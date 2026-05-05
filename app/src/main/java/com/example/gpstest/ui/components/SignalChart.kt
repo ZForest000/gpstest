@@ -12,13 +12,13 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import com.example.gpstest.ui.theme.SignalStrong
 import com.example.gpstest.ui.theme.SignalMedium
+import com.example.gpstest.ui.theme.SignalStrong
 import com.example.gpstest.ui.theme.SignalWeak
 
 data class SignalReading(
     val timestamp: Long,
-    val cn0DbHz: Float
+    val cn0DbHz: Float,
 )
 
 @Composable
@@ -26,7 +26,7 @@ fun SignalChart(
     readings: List<SignalReading>,
     modifier: Modifier = Modifier,
     minSignal: Float = 0f,
-    maxSignal: Float = 50f
+    maxSignal: Float = 50f,
 ) {
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     val textGreen = SignalStrong
@@ -35,9 +35,10 @@ fun SignalChart(
     val lineColor = MaterialTheme.colorScheme.primary
 
     Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(120.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(120.dp),
     ) {
         val canvasWidth = size.width
         val canvasHeight = size.height
@@ -57,7 +58,7 @@ fun SignalChart(
             mediumThreshold = 25f,
             textGreen = textGreen,
             textYellow = textYellow,
-            textRed = textRed
+            textRed = textRed,
         )
 
         if (readings.isNotEmpty()) {
@@ -69,7 +70,7 @@ fun SignalChart(
                 chartHeight = chartHeight,
                 lineColor = lineColor,
                 minSignal = minSignal,
-                maxSignal = maxSignal
+                maxSignal = maxSignal,
             )
         }
     }
@@ -87,10 +88,10 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
     mediumThreshold: Float,
     textGreen: Color,
     textYellow: Color,
-    textRed: Color
+    textRed: Color,
 ) {
     val signalRange = maxSignal - minSignal
-    
+
     val strongY = chartTop + chartHeight * (1 - (strongThreshold - minSignal) / signalRange)
     val mediumY = chartTop + chartHeight * (1 - (mediumThreshold - minSignal) / signalRange)
 
@@ -99,7 +100,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
         start = Offset(chartLeft, strongY),
         end = Offset(chartLeft + chartWidth, strongY),
         strokeWidth = 1.dp.toPx(),
-        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
     )
 
     drawLine(
@@ -107,7 +108,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
         start = Offset(chartLeft, mediumY),
         end = Offset(chartLeft + chartWidth, mediumY),
         strokeWidth = 1.dp.toPx(),
-        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
+        pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
     )
 
     for (i in 0..4) {
@@ -116,7 +117,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
             color = gridColor.copy(alpha = 0.3f),
             start = Offset(x, chartTop),
             end = Offset(x, chartTop + chartHeight),
-            strokeWidth = 1.dp.toPx()
+            strokeWidth = 1.dp.toPx(),
         )
     }
 
@@ -124,7 +125,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGridLines(
         color = gridColor,
         start = Offset(chartLeft, chartTop + chartHeight),
         end = Offset(chartLeft + chartWidth, chartTop + chartHeight),
-        strokeWidth = 1.dp.toPx()
+        strokeWidth = 1.dp.toPx(),
     )
 }
 
@@ -136,7 +137,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSignalLine(
     chartHeight: Float,
     lineColor: Color,
     minSignal: Float,
-    maxSignal: Float
+    maxSignal: Float,
 ) {
     if (readings.size < 2) return
 
@@ -158,7 +159,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSignalLine(
     drawPath(
         path = path,
         color = lineColor,
-        style = Stroke(width = 2.dp.toPx())
+        style = Stroke(width = 2.dp.toPx()),
     )
 
     readings.lastOrNull()?.let { lastReading ->
@@ -169,7 +170,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSignalLine(
         drawCircle(
             color = lineColor,
             radius = 4.dp.toPx(),
-            center = Offset(x, y)
+            center = Offset(x, y),
         )
     }
 }

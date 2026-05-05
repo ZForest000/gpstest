@@ -19,9 +19,8 @@ import kotlinx.coroutines.launch
 
 class AGpsViewModel(
     application: Application,
-    private val repository: AGpsRepository
+    private val repository: AGpsRepository,
 ) : AndroidViewModel(application) {
-
     private val _uiState = MutableStateFlow<AGpsUiState>(AGpsUiState.Idle)
     val uiState: StateFlow<AGpsUiState> = _uiState.asStateFlow()
 
@@ -59,11 +58,12 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Downloading
             val result = repository.downloadAndInject()
-            _uiState.value = if (result.isSuccess) {
-                AGpsUiState.Success("A-GPS数据注入成功，请返回主界面查看卫星状态验证效果")
-            } else {
-                AGpsUiState.Error(result.exceptionOrNull()?.message ?: "下载失败")
-            }
+            _uiState.value =
+                if (result.isSuccess) {
+                    AGpsUiState.Success("A-GPS数据注入成功，请返回主界面查看卫星状态验证效果")
+                } else {
+                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "下载失败")
+                }
         }
     }
 
@@ -71,11 +71,12 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Injecting
             val result = repository.injectFromFile(uri.toString())
-            _uiState.value = if (result.isSuccess) {
-                AGpsUiState.Success("文件注入成功")
-            } else {
-                AGpsUiState.Error(result.exceptionOrNull()?.message ?: "注入失败")
-            }
+            _uiState.value =
+                if (result.isSuccess) {
+                    AGpsUiState.Success("文件注入成功")
+                } else {
+                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "注入失败")
+                }
         }
     }
 
@@ -83,11 +84,12 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Injecting
             val result = repository.injectTime()
-            _uiState.value = if (result.isSuccess) {
-                AGpsUiState.Success("时间同步成功")
-            } else {
-                AGpsUiState.Error(result.exceptionOrNull()?.message ?: "时间同步失败")
-            }
+            _uiState.value =
+                if (result.isSuccess) {
+                    AGpsUiState.Success("时间同步成功")
+                } else {
+                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "时间同步失败")
+                }
         }
     }
 
@@ -95,11 +97,12 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Injecting
             val result = repository.clearApsData()
-            _uiState.value = if (result.isSuccess) {
-                AGpsUiState.Success("A-GPS数据已清除")
-            } else {
-                AGpsUiState.Error(result.exceptionOrNull()?.message ?: "清除失败")
-            }
+            _uiState.value =
+                if (result.isSuccess) {
+                    AGpsUiState.Success("A-GPS数据已清除")
+                } else {
+                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "清除失败")
+                }
         }
     }
 
@@ -113,7 +116,7 @@ class AGpsViewModel(
     fun updateSettings(settings: AGpsSettings) {
         viewModelScope.launch {
             repository.updateSettings(settings)
-            
+
             if (settings.autoUpdateEnabled) {
                 AGpsUpdateWorker.schedule(getApplication(), settings.updateIntervalHours)
             } else {
@@ -139,11 +142,12 @@ class AGpsViewModel(
             _uiState.value = AGpsUiState.Injecting
             val result = repository.validateFile(uri.toString())
             _validationResult.value = result
-            _uiState.value = if (result.isValid) {
-                AGpsUiState.Success("文件验证通过")
-            } else {
-                AGpsUiState.Error(result.errorMessage ?: "验证失败")
-            }
+            _uiState.value =
+                if (result.isValid) {
+                    AGpsUiState.Success("文件验证通过")
+                } else {
+                    AGpsUiState.Error(result.errorMessage ?: "验证失败")
+                }
         }
     }
 
@@ -156,11 +160,12 @@ class AGpsViewModel(
             _uiState.value = AGpsUiState.Downloading
             val result = repository.validateCurrentSource()
             _validationResult.value = result
-            _uiState.value = if (result.isValid) {
-                AGpsUiState.Success("下载源验证通过")
-            } else {
-                AGpsUiState.Error(result.errorMessage ?: "验证失败")
-            }
+            _uiState.value =
+                if (result.isValid) {
+                    AGpsUiState.Success("下载源验证通过")
+                } else {
+                    AGpsUiState.Error(result.errorMessage ?: "验证失败")
+                }
         }
     }
 
@@ -171,8 +176,16 @@ class AGpsViewModel(
 
 sealed interface AGpsUiState {
     data object Idle : AGpsUiState
+
     data object Downloading : AGpsUiState
+
     data object Injecting : AGpsUiState
-    data class Success(val message: String) : AGpsUiState
-    data class Error(val message: String) : AGpsUiState
+
+    data class Success(
+        val message: String,
+    ) : AGpsUiState
+
+    data class Error(
+        val message: String,
+    ) : AGpsUiState
 }

@@ -29,68 +29,70 @@ import com.example.gpstest.ui.theme.SignalWeak
 fun SatelliteCard(
     satellite: GnssSatellite,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(8.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(8.dp),
+                ).clickable(onClick = onClick)
+                .padding(12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         // Left side: Constellation indicator and ID
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ConstellationIndicator(
                 constellation = satellite.constellation,
-                usedInFix = satellite.usedInFix
+                usedInFix = satellite.usedInFix,
             )
             Column {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = "${getConstellationName(satellite.constellation)}-${satellite.svid}",
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                     if (satellite.multipathIndicator == MultipathIndicator.DETECTED) {
                         Text(
                             text = stringResource(R.string.multipath_detected),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFF9800),
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
                         )
                     }
                 }
                 Text(
-                    text = stringResource(
-                        R.string.signal_strength_format,
-                        satellite.cn0DbHz.toInt()
-                    ),
+                    text =
+                        stringResource(
+                            R.string.signal_strength_format,
+                            satellite.cn0DbHz.toInt(),
+                        ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = getSignalColor(satellite.cn0DbHz)
+                    color = getSignalColor(satellite.cn0DbHz),
                 )
             }
         }
 
         // Right side: Azimuth and Elevation
         Text(
-            text = stringResource(
-                R.string.azimuth_elevation_format,
-                satellite.elevationDegrees.toInt(),
-                satellite.azimuthDegrees.toInt()
-            ),
+            text =
+                stringResource(
+                    R.string.azimuth_elevation_format,
+                    satellite.elevationDegrees.toInt(),
+                    satellite.azimuthDegrees.toInt(),
+                ),
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -98,18 +100,18 @@ fun SatelliteCard(
 @Composable
 private fun ConstellationIndicator(
     constellation: Constellation,
-    usedInFix: Boolean
+    usedInFix: Boolean,
 ) {
     val indicator = if (usedInFix) "🟢" else "⚪"
 
     Text(
         text = indicator,
-        style = MaterialTheme.typography.titleMedium
+        style = MaterialTheme.typography.titleMedium,
     )
 }
 
-private fun getConstellationName(constellation: Constellation): String {
-    return when (constellation) {
+private fun getConstellationName(constellation: Constellation): String =
+    when (constellation) {
         Constellation.GPS -> "GPS"
         Constellation.GLONASS -> "GLN"
         Constellation.GALILEO -> "GAL"
@@ -118,12 +120,10 @@ private fun getConstellationName(constellation: Constellation): String {
         Constellation.SBAS -> "SBAS"
         Constellation.UNKNOWN -> "UNK"
     }
-}
 
-private fun getSignalColor(cn0: Float): Color {
-    return when {
+private fun getSignalColor(cn0: Float): Color =
+    when {
         cn0 >= 35f -> SignalStrong
         cn0 >= 25f -> SignalMedium
         else -> SignalWeak
     }
-}

@@ -33,46 +33,49 @@ import com.example.gpstest.ui.theme.SignalWeak
 @Composable
 fun ConstellationStatCard(
     usedInFix: List<GnssSatellite>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (usedInFix.isEmpty()) return
 
-    val constellationCounts = usedInFix
-        .groupBy { it.constellation }
-        .mapValues { it.value.size }
+    val constellationCounts =
+        usedInFix
+            .groupBy { it.constellation }
+            .mapValues { it.value.size }
 
-    val signalCounts = usedInFix
-        .groupBy { it.signalStrength }
-        .mapValues { it.value.size }
+    val signalCounts =
+        usedInFix
+            .groupBy { it.signalStrength }
+            .mapValues { it.value.size }
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                ).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             text = "在用卫星统计",
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
         )
 
         // Constellation row
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            val constellationOrder = listOf(
-                Constellation.GPS to "GPS" to GpsColor,
-                Constellation.BEIDOU to "BDS" to BeidouColor,
-                Constellation.GLONASS to "GLO" to GlonassColor,
-                Constellation.GALILEO to "GAL" to GalileoColor,
-                Constellation.QZSS to "QZS" to QzssColor,
-                Constellation.SBAS to "SBAS" to SbasColor,
-            )
+            val constellationOrder =
+                listOf(
+                    Constellation.GPS to "GPS" to GpsColor,
+                    Constellation.BEIDOU to "BDS" to BeidouColor,
+                    Constellation.GLONASS to "GLO" to GlonassColor,
+                    Constellation.GALILEO to "GAL" to GalileoColor,
+                    Constellation.QZSS to "QZS" to QzssColor,
+                    Constellation.SBAS to "SBAS" to SbasColor,
+                )
 
             for ((pair, color) in constellationOrder) {
                 val (constellation, name) = pair
@@ -84,73 +87,81 @@ fun ConstellationStatCard(
         // Signal strength row
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             SignalChip(
                 label = "强",
                 count = signalCounts[SignalStrength.STRONG] ?: 0,
-                color = SignalStrong
+                color = SignalStrong,
             )
             SignalChip(
                 label = "中",
                 count = signalCounts[SignalStrength.MEDIUM] ?: 0,
-                color = SignalMedium
+                color = SignalMedium,
             )
             SignalChip(
                 label = "弱",
                 count = signalCounts[SignalStrength.WEAK] ?: 0,
-                color = SignalWeak
+                color = SignalWeak,
             )
         }
     }
 }
 
 @Composable
-private fun ConstellationChip(name: String, count: Int, color: Color) {
+private fun ConstellationChip(
+    name: String,
+    count: Int,
+    color: Color,
+) {
     Row(
-        modifier = Modifier
-            .background(
-                color = color.copy(alpha = if (count > 0) 0.2f else 0.08f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .background(
+                    color = color.copy(alpha = if (count > 0) 0.2f else 0.08f),
+                    shape = RoundedCornerShape(16.dp),
+                ).padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = name,
             style = MaterialTheme.typography.labelMedium,
-            color = if (count > 0) color else color.copy(alpha = 0.5f)
+            color = if (count > 0) color else color.copy(alpha = 0.5f),
         )
         Text(
             text = "$count",
             style = MaterialTheme.typography.labelLarge,
-            color = if (count > 0) color else color.copy(alpha = 0.5f)
+            color = if (count > 0) color else color.copy(alpha = 0.5f),
         )
     }
 }
 
 @Composable
-private fun SignalChip(label: String, count: Int, color: Color) {
+private fun SignalChip(
+    label: String,
+    count: Int,
+    color: Color,
+) {
     Row(
-        modifier = Modifier
-            .background(
-                color = color.copy(alpha = if (count > 0) 0.2f else 0.08f),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .background(
+                    color = color.copy(alpha = if (count > 0) 0.2f else 0.08f),
+                    shape = RoundedCornerShape(16.dp),
+                ).padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = if (count > 0) color else color.copy(alpha = 0.5f)
+            color = if (count > 0) color else color.copy(alpha = 0.5f),
         )
         Text(
             text = "$count",
             style = MaterialTheme.typography.labelLarge,
-            color = if (count > 0) color else color.copy(alpha = 0.5f)
+            color = if (count > 0) color else color.copy(alpha = 0.5f),
         )
     }
 }

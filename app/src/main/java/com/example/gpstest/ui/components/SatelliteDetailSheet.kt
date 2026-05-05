@@ -25,20 +25,22 @@ import java.util.Locale
 fun SatelliteDetailSheet(
     satellite: GnssSatellite,
     signalHistory: List<SignalReading> = emptyList(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
     ) {
         Text(
-            text = stringResource(
-                R.string.satellite_details,
-                "${getConstellationName(satellite.constellation)}-${satellite.svid}"
-            ),
-            style = MaterialTheme.typography.titleLarge
+            text =
+                stringResource(
+                    R.string.satellite_details,
+                    "${getConstellationName(satellite.constellation)}-${satellite.svid}",
+                ),
+            style = MaterialTheme.typography.titleLarge,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -46,28 +48,31 @@ fun SatelliteDetailSheet(
         DetailSection(stringResource(R.string.basic_info)) {
             DetailRow(
                 stringResource(R.string.constellation_type),
-                getConstellationFullName(satellite.constellation)
+                getConstellationFullName(satellite.constellation),
             )
             DetailRow(
                 stringResource(R.string.satellite_id),
-                "${satellite.svid}"
+                "${satellite.svid}",
             )
             DetailRow(
                 stringResource(R.string.signal_strength),
-                "${satellite.cn0DbHz.toInt()} dB-Hz"
+                "${satellite.cn0DbHz.toInt()} dB-Hz",
             )
             DetailRow(
                 stringResource(R.string.azimuth),
-                "${satellite.azimuthDegrees.toInt()}°"
+                "${satellite.azimuthDegrees.toInt()}°",
             )
             DetailRow(
                 stringResource(R.string.elevation),
-                "${satellite.elevationDegrees.toInt()}°"
+                "${satellite.elevationDegrees.toInt()}°",
             )
             DetailRow(
                 stringResource(R.string.status),
-                if (satellite.usedInFix) stringResource(R.string.used_in_fix_yes)
-                else stringResource(R.string.used_in_fix_no)
+                if (satellite.usedInFix) {
+                    stringResource(R.string.used_in_fix_yes)
+                } else {
+                    stringResource(R.string.used_in_fix_no)
+                },
             )
         }
 
@@ -77,23 +82,23 @@ fun SatelliteDetailSheet(
             DetailRow(
                 stringResource(R.string.carrier_frequency),
                 satellite.carrierFrequencyHz?.let { "%.2f MHz".format(it / 1_000_000) }
-                    ?: "N/A"
+                    ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.carrier_cycles),
-                satellite.carrierCycles?.let { "%.2f".format(it) } ?: "N/A"
+                satellite.carrierCycles?.let { "%.2f".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.doppler_shift),
-                satellite.dopplerShiftHz?.let { "%.2f Hz".format(it) } ?: "N/A"
+                satellite.dopplerShiftHz?.let { "%.2f Hz".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.agc_level),
-                satellite.agcLevelDb?.let { "%.1f dB".format(it) } ?: "N/A"
+                satellite.agcLevelDb?.let { "%.1f dB".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.baseband_cn0),
-                satellite.basebandCn0DbHz?.let { "%.1f dB-Hz".format(it) } ?: "N/A"
+                satellite.basebandCn0DbHz?.let { "%.1f dB-Hz".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.multipath_detected),
@@ -101,35 +106,35 @@ fun SatelliteDetailSheet(
                     MultipathIndicator.DETECTED -> stringResource(R.string.yes)
                     MultipathIndicator.NOT_DETECTED -> stringResource(R.string.no)
                     else -> "N/A"
-                }
+                },
             )
             DetailRow(
                 stringResource(R.string.timestamp),
-                formatTimestamp(satellite.timeNanos)
+                formatTimestamp(satellite.timeNanos),
             )
             DetailRow(
                 stringResource(R.string.has_ephemeris),
-                if (satellite.hasEphemeris) stringResource(R.string.yes) else stringResource(R.string.no)
+                if (satellite.hasEphemeris) stringResource(R.string.yes) else stringResource(R.string.no),
             )
             DetailRow(
                 stringResource(R.string.has_almanac),
-                if (satellite.hasAlmanac) stringResource(R.string.yes) else stringResource(R.string.no)
+                if (satellite.hasAlmanac) stringResource(R.string.yes) else stringResource(R.string.no),
             )
             DetailRow(
                 stringResource(R.string.pseudorange_rate),
-                satellite.pseudorangeRateMetersPerSecond?.let { "%.3f m/s".format(it) } ?: "N/A"
+                satellite.pseudorangeRateMetersPerSecond?.let { "%.3f m/s".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.measurement_cn0),
-                satellite.measurementCn0DbHz?.let { "%.1f dB-Hz".format(it) } ?: "N/A"
+                satellite.measurementCn0DbHz?.let { "%.1f dB-Hz".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.received_sv_time),
-                satellite.receivedSvTimeNanos?.let { "%,d ns".format(it) } ?: "N/A"
+                satellite.receivedSvTimeNanos?.let { "%,d ns".format(it) } ?: "N/A",
             )
             DetailRow(
                 stringResource(R.string.received_sv_time_uncertainty),
-                satellite.receivedSvTimeUncertaintyNanos?.let { "%.3f ns".format(it) } ?: "N/A"
+                satellite.receivedSvTimeUncertaintyNanos?.let { "%.3f ns".format(it) } ?: "N/A",
             )
         }
 
@@ -137,19 +142,19 @@ fun SatelliteDetailSheet(
 
         if (signalHistory.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             DetailSection(stringResource(R.string.signal_chart)) {
                 SignalChart(
                     readings = signalHistory,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                
+
                 if (signalHistory.size > 1) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.signal_chart_subtitle, signalHistory.size),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -160,13 +165,13 @@ fun SatelliteDetailSheet(
 @Composable
 private fun DetailSection(
     title: String,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Column {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
         )
         Spacer(modifier = Modifier.height(8.dp))
         content()
@@ -174,28 +179,32 @@ private fun DetailSection(
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(
+    label: String,
+    value: String,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
     ) {
         Text(
             text = "$label: ",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         )
     }
 }
 
-private fun getConstellationName(constellation: com.example.gpstest.domain.model.Constellation): String {
-    return when (constellation) {
+private fun getConstellationName(constellation: com.example.gpstest.domain.model.Constellation): String =
+    when (constellation) {
         com.example.gpstest.domain.model.Constellation.GPS -> "GPS"
         com.example.gpstest.domain.model.Constellation.GLONASS -> "GLN"
         com.example.gpstest.domain.model.Constellation.GALILEO -> "GAL"
@@ -204,11 +213,10 @@ private fun getConstellationName(constellation: com.example.gpstest.domain.model
         com.example.gpstest.domain.model.Constellation.SBAS -> "SBAS"
         com.example.gpstest.domain.model.Constellation.UNKNOWN -> "UNK"
     }
-}
 
 @Composable
-private fun getConstellationFullName(constellation: com.example.gpstest.domain.model.Constellation): String {
-    return when (constellation) {
+private fun getConstellationFullName(constellation: com.example.gpstest.domain.model.Constellation): String =
+    when (constellation) {
         com.example.gpstest.domain.model.Constellation.GPS -> stringResource(R.string.constellation_gps)
         com.example.gpstest.domain.model.Constellation.GLONASS -> stringResource(R.string.constellation_glonass)
         com.example.gpstest.domain.model.Constellation.GALILEO -> stringResource(R.string.constellation_galileo)
@@ -217,7 +225,6 @@ private fun getConstellationFullName(constellation: com.example.gpstest.domain.m
         com.example.gpstest.domain.model.Constellation.SBAS -> "SBAS"
         com.example.gpstest.domain.model.Constellation.UNKNOWN -> stringResource(R.string.constellation_unknown)
     }
-}
 
 private fun formatTimestamp(nanos: Long): String {
     val millis = nanos / 1_000_000

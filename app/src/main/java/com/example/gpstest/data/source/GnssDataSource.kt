@@ -5,5 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface GnssDataSource {
     fun getGnssData(): Flow<GnssData>
+
     fun isSupported(): Boolean
 }

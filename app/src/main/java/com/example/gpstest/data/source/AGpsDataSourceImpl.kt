@@ -9,9 +9,8 @@ import com.example.gpstest.domain.model.DataStatus
 import java.io.IOException
 
 class AGpsDataSourceImpl(
-    private val context: Context
+    private val context: Context,
 ) : AGpsDataSource {
-
     companion object {
         private const val TAG = "AGpsDataSource"
     }
@@ -40,23 +39,25 @@ class AGpsDataSourceImpl(
 
     override suspend fun clearApsData(): Result<Unit> {
         Log.d(TAG, "clearApsData: clearing A-GPS data")
-        
-        val commands = listOf(
-            "delete_aiding_data",
-            "delete_xtra_data",
-            "delete_all_data"
-        )
-        
+
+        val commands =
+            listOf(
+                "delete_aiding_data",
+                "delete_xtra_data",
+                "delete_all_data",
+            )
+
         var anySuccess = false
         val errors = mutableListOf<String>()
-        
+
         for (command in commands) {
             try {
-                val result = locationManager?.sendExtraCommand(
-                    LocationManager.GPS_PROVIDER,
-                    command,
-                    null
-                )
+                val result =
+                    locationManager?.sendExtraCommand(
+                        LocationManager.GPS_PROVIDER,
+                        command,
+                        null,
+                    )
                 Log.d(TAG, "clearApsData: command '$command' result: $result")
                 if (result == true) {
                     anySuccess = true
@@ -69,7 +70,7 @@ class AGpsDataSourceImpl(
                 errors.add("$command: ${e.message}")
             }
         }
-        
+
         return if (anySuccess) {
             Log.d(TAG, "clearApsData: At least one command succeeded")
             Result.success(Unit)
@@ -79,29 +80,31 @@ class AGpsDataSourceImpl(
         }
     }
 
-    override suspend fun checkStatus(): AGpsStatus {
-        return AGpsStatus(
+    override suspend fun checkStatus(): AGpsStatus =
+        AGpsStatus(
             timeStatus = DataStatus.UNKNOWN,
             ephemerisStatus = DataStatus.UNKNOWN,
             almanacStatus = DataStatus.UNKNOWN,
-            lastUpdateTime = null
+            lastUpdateTime = null,
         )
-    }
 
-    override fun isSupported(): Boolean {
-        return locationManager?.getProvider(LocationManager.GPS_PROVIDER) != null
-    }
+    override fun isSupported(): Boolean = locationManager?.getProvider(LocationManager.GPS_PROVIDER) != null
 
-    private fun sendGpsCommand(command: String, extras: Bundle?): Result<Unit> {
-        val manager = locationManager ?: return Result.failure(
-            IllegalStateException("LocationManager不可用")
-        )
-        return try {
-            val success = manager.sendExtraCommand(
-                LocationManager.GPS_PROVIDER,
-                command,
-                extras
+    private fun sendGpsCommand(
+        command: String,
+        extras: Bundle?,
+    ): Result<Unit> {
+        val manager =
+            locationManager ?: return Result.failure(
+                IllegalStateException("LocationManager不可用"),
             )
+        return try {
+            val success =
+                manager.sendExtraCommand(
+                    LocationManager.GPS_PROVIDER,
+                    command,
+                    extras,
+                )
             if (success) {
                 Log.d(TAG, "sendGpsCommand: '$command' command sent successfully")
                 Result.success(Unit)

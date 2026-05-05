@@ -13,15 +13,16 @@ typealias Satellite = GnssSatellite
  * Extension property for constellation type (Android API int)
  */
 val GnssSatellite.constellationType: Int
-    get() = when (constellation) {
-        Constellation.GPS -> 1
-        Constellation.SBAS -> 2
-        Constellation.GLONASS -> 3
-        Constellation.QZSS -> 4
-        Constellation.BEIDOU -> 5
-        Constellation.GALILEO -> 6
-        Constellation.UNKNOWN -> 0
-    }
+    get() =
+        when (constellation) {
+            Constellation.GPS -> 1
+            Constellation.SBAS -> 2
+            Constellation.GLONASS -> 3
+            Constellation.QZSS -> 4
+            Constellation.BEIDOU -> 5
+            Constellation.GALILEO -> 6
+            Constellation.UNKNOWN -> 0
+        }
 
 /**
  * Extension property for SNR/CN0 (alias for cn0DbHz)

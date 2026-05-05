@@ -9,5 +9,5 @@ data class LocationInfo(
     val bearing: Float,
     val timestamp: Long,
     val barometricAltitude: Double? = null,
-    val pressure: Float? = null
+    val pressure: Float? = null,
 )

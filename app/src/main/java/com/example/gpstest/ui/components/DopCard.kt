@@ -26,33 +26,33 @@ import com.example.gpstest.domain.model.DopInfo
 @Composable
 fun DopCard(
     dopInfo: DopInfo?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                ).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         // Title row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = stringResource(R.string.dop_title),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
             if (dopInfo != null) {
                 Text(
                     text = stringResource(R.string.dop_satellite_count, dopInfo.satelliteCount),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -65,44 +65,48 @@ fun DopCard(
             Text(
                 text = stringResource(R.string.dop_waiting),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
 @Composable
-private fun DopRow(label: String, value: Double) {
+private fun DopRow(
+    label: String,
+    value: Double,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val color = dopQualityColor(value)
         Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(color = color, shape = CircleShape)
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .background(color = color, shape = CircleShape),
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(48.dp)
+            modifier = Modifier.width(48.dp),
         )
         Text(
             text = String.format("%.1f", value),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Bold
-            )
+            style =
+                MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
         )
     }
 }
 
-private fun dopQualityColor(value: Double): Color {
-    return when {
-        value < 2 -> Color(0xFF4CAF50)   // Green - good
-        value < 5 -> Color(0xFFFFC107)   // Yellow - moderate
-        value < 10 -> Color(0xFFFF9800)  // Orange - fair
-        else -> Color(0xFFF44336)        // Red - poor
+private fun dopQualityColor(value: Double): Color =
+    when {
+        value < 2 -> Color(0xFF4CAF50) // Green - good
+        value < 5 -> Color(0xFFFFC107) // Yellow - moderate
+        value < 10 -> Color(0xFFFF9800) // Orange - fair
+        else -> Color(0xFFF44336) // Red - poor
     }
-}

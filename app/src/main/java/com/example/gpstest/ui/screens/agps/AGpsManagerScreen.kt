@@ -56,7 +56,7 @@ import java.util.Locale
 fun AGpsManagerScreen(
     viewModel: AGpsViewModel,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val status by viewModel.status.collectAsState()
@@ -64,11 +64,12 @@ fun AGpsManagerScreen(
     val history by viewModel.injectionHistory.collectAsState()
     val validationResult by viewModel.validationResult.collectAsState()
 
-    val fileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
-        uri?.let { viewModel.injectFromFile(it) }
-    }
+    val fileLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+        ) { uri: Uri? ->
+            uri?.let { viewModel.injectFromFile(it) }
+        }
 
     Scaffold(
         topBar = {
@@ -78,20 +79,21 @@ fun AGpsManagerScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
-                }
+                },
             )
         },
-        modifier = modifier
+        modifier = modifier,
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 AGpsStatusCard(status = status)
@@ -100,14 +102,14 @@ fun AGpsManagerScreen(
             item {
                 AutoUpdateCard(
                     settings = settings,
-                    onSettingsChange = { viewModel.updateSettings(it) }
+                    onSettingsChange = { viewModel.updateSettings(it) },
                 )
             }
 
             item {
                 ManualActionsCard(
                     onDownloadClick = { viewModel.downloadAndInject() },
-                    onFileClick = { 
+                    onFileClick = {
                         fileLauncher.launch(arrayOf("*/*"))
                     },
                     onValidateSourceClick = {
@@ -115,7 +117,7 @@ fun AGpsManagerScreen(
                     },
                     onTimeClick = { viewModel.injectTime() },
                     onClearClick = { viewModel.clearApsData() },
-                    isLoading = uiState is AGpsUiState.Downloading || uiState is AGpsUiState.Injecting
+                    isLoading = uiState is AGpsUiState.Downloading || uiState is AGpsUiState.Injecting,
                 )
             }
 
@@ -123,7 +125,7 @@ fun AGpsManagerScreen(
                 item {
                     ValidationResultCard(
                         result = result,
-                        onDismiss = { viewModel.clearValidationResult() }
+                        onDismiss = { viewModel.clearValidationResult() },
                     )
                 }
             }
@@ -132,7 +134,7 @@ fun AGpsManagerScreen(
                 item {
                     Text(
                         text = stringResource(R.string.injection_history),
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
                     )
                 }
 
@@ -149,7 +151,7 @@ fun AGpsManagerScreen(
                     viewModel.clearMessage()
                 }
                 Snackbar(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
                 ) {
                     Text(state.message)
                 }
@@ -161,7 +163,7 @@ fun AGpsManagerScreen(
                         TextButton(onClick = { viewModel.clearMessage() }) {
                             Text(stringResource(R.string.dismiss))
                         }
-                    }
+                    },
                 ) {
                     Text(state.message)
                 }
@@ -175,39 +177,39 @@ fun AGpsManagerScreen(
 private fun AutoUpdateCard(
     settings: AGpsSettings,
     onSettingsChange: (AGpsSettings) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(R.string.auto_update),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.enable_auto_update),
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
                         text = stringResource(R.string.auto_update_desc, settings.updateIntervalHours),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                
+
                 Switch(
                     checked = settings.autoUpdateEnabled,
                     onCheckedChange = { enabled ->
                         onSettingsChange(settings.copy(autoUpdateEnabled = enabled))
-                    }
+                    },
                 )
             }
         }
@@ -222,74 +224,74 @@ private fun ManualActionsCard(
     onTimeClick: () -> Unit,
     onClearClick: () -> Unit,
     isLoading: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = stringResource(R.string.manual_actions),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
                     onClick = onDownloadClick,
                     enabled = !isLoading,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
                         )
                     } else {
                         Text(stringResource(R.string.download_now))
                     }
                 }
-                
+
                 OutlinedButton(
                     onClick = onFileClick,
                     enabled = !isLoading,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(R.string.import_file))
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedButton(
                     onClick = onValidateSourceClick,
                     enabled = !isLoading,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text("验证下载源")
                 }
-                
+
                 OutlinedButton(
                     onClick = onTimeClick,
                     enabled = !isLoading,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text(stringResource(R.string.sync_time))
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             OutlinedButton(
                 onClick = onClearClick,
                 enabled = !isLoading,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.clear_agps_data))
             }
@@ -301,57 +303,62 @@ private fun ManualActionsCard(
 private fun ValidationResultCard(
     result: com.example.gpstest.domain.repository.FileValidationResult,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (result.isValid) 
-                MaterialTheme.colorScheme.primaryContainer 
-            else 
-                MaterialTheme.colorScheme.errorContainer
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (result.isValid) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer
+                    },
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = if (result.isValid) "验证成功" else "验证失败",
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (result.isValid)
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onErrorContainer
+                    color =
+                        if (result.isValid) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onErrorContainer
+                        },
                 )
                 TextButton(onClick = onDismiss) {
                     Text("关闭")
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = result.summary,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
-            
+
             if (!result.isValid && result.errorMessage != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "错误: ${result.errorMessage}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
-            
+
             if (result.details != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = result.details,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
@@ -361,40 +368,51 @@ private fun ValidationResultCard(
 @Composable
 private fun HistoryItem(
     record: AGpsInjectionRecord,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (record.success) 
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else 
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (record.success) {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                    },
+            ),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
                     text = formatTimestamp(record.timestamp),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    text = if (record.success) stringResource(R.string.success) 
-                           else stringResource(R.string.failed),
+                    text =
+                        if (record.success) {
+                            stringResource(R.string.success)
+                        } else {
+                            stringResource(R.string.failed)
+                        },
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (record.success) MaterialTheme.colorScheme.primary
-                           else MaterialTheme.colorScheme.error
+                    color =
+                        if (record.success) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
                 )
             }
-            
+
             record.errorMessage?.let { error ->
                 Text(
                     text = error,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
         }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,16 +36,16 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.ui.components.ClockInfoCard
-import com.example.gpstest.ui.components.ConstellationStatCard
 import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
+import com.example.gpstest.ui.components.ConstellationStatCard
 import com.example.gpstest.ui.components.DopCard
 import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
 import com.example.gpstest.ui.components.StatBar
 import com.example.gpstest.ui.components.TtffCard
-import com.example.gpstest.viewmodel.SatelliteViewModel
 import com.example.gpstest.viewmodel.SatelliteUiState
+import com.example.gpstest.viewmodel.SatelliteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +55,7 @@ fun SatelliteListScreen(
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
     onOpenDrawer: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val ttffState by viewModel.ttffState.collectAsState()
@@ -71,30 +70,31 @@ fun SatelliteListScreen(
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
                             imageVector = Icons.Filled.Menu,
-                            contentDescription = "菜单"
+                            contentDescription = "菜单",
                         )
                     }
-                }
+                },
             )
         },
-        modifier = modifier
+        modifier = modifier,
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             when (val state = uiState) {
                 is SatelliteUiState.Loading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
                 is SatelliteUiState.PermissionRequired -> {
                     PermissionRequiredContent(
                         permissionState = permissionState,
                         onRequestPermission = onRequestPermission,
-                        onOpenAppSettings = onOpenAppSettings
+                        onOpenAppSettings = onOpenAppSettings,
                     )
                 }
                 is SatelliteUiState.Success -> {
@@ -111,13 +111,13 @@ fun SatelliteListScreen(
                         dopInfo = state.dopInfo,
                         ttffState = ttffState,
                         onTtffReset = { viewModel.resetTtff() },
-                        onSatelliteClick = { selectedSatellite = it }
+                        onSatelliteClick = { selectedSatellite = it },
                     )
                 }
                 is SatelliteUiState.Error -> {
                     ErrorContent(
                         message = state.message,
-                        onRetry = { viewModel.startListening() }
+                        onRetry = { viewModel.startListening() },
                     )
                 }
             }
@@ -126,14 +126,14 @@ fun SatelliteListScreen(
 
     selectedSatellite?.let { satellite ->
         val signalHistory = viewModel.getSignalHistoryForSatellite(satellite)
-        
+
         ModalBottomSheet(
             onDismissRequest = { selectedSatellite = null },
-            sheetState = sheetState
+            sheetState = sheetState,
         ) {
             SatelliteDetailSheet(
                 satellite = satellite,
-                signalHistory = signalHistory
+                signalHistory = signalHistory,
             )
         }
     }
@@ -153,19 +153,19 @@ private fun SatelliteListContent(
     ttffState: com.example.gpstest.viewmodel.TtffState,
     onTtffReset: () -> Unit,
     onSatelliteClick: (GnssSatellite) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val visibleCount = usedInFix.size + visibleOnly.size
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
             TtffCard(
                 ttffState = ttffState,
-                onReset = onTtffReset
+                onReset = onTtffReset,
             )
         }
 
@@ -183,19 +183,20 @@ private fun SatelliteListContent(
 
         item {
             ClockInfoCard(
-                gnssData = com.example.gpstest.domain.model.GnssData(
-                    satellites = allSatellites,
-                    location = location,
-                    clock = clock,
-                    dumpsysData = dumpsysData
-                )
+                gnssData =
+                    com.example.gpstest.domain.model.GnssData(
+                        satellites = allSatellites,
+                        location = location,
+                        clock = clock,
+                        dumpsysData = dumpsysData,
+                    ),
             )
         }
 
         item {
             ConstellationHealthSummaryCard(
                 usedInFix = usedInFix,
-                allSatellites = allSatellites
+                allSatellites = allSatellites,
             )
         }
 
@@ -204,7 +205,7 @@ private fun SatelliteListContent(
                 usedInFixCount = usedInFix.size,
                 visibleCount = visibleCount,
                 totalCount = totalCount,
-                satellites = allSatellites
+                satellites = allSatellites,
             )
         }
 
@@ -212,18 +213,18 @@ private fun SatelliteListContent(
             item {
                 Text(
                     text = stringResource(R.string.used_in_fix),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
             }
             itemsIndexed(
                 items = usedInFix,
                 key = { index, satellite ->
                     "used_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
-                }
+                },
             ) { _, satellite ->
                 SatelliteCard(
                     satellite = satellite,
-                    onClick = { onSatelliteClick(satellite) }
+                    onClick = { onSatelliteClick(satellite) },
                 )
             }
         }
@@ -232,18 +233,18 @@ private fun SatelliteListContent(
             item {
                 Text(
                     text = stringResource(R.string.visible_not_in_fix),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
             }
             itemsIndexed(
                 items = visibleOnly,
                 key = { index, satellite ->
                     "visible_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
-                }
+                },
             ) { _, satellite ->
                 SatelliteCard(
                     satellite = satellite,
-                    onClick = { onSatelliteClick(satellite) }
+                    onClick = { onSatelliteClick(satellite) },
                 )
             }
         }
@@ -252,18 +253,18 @@ private fun SatelliteListContent(
             item {
                 Text(
                     text = stringResource(R.string.searching),
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
             }
             itemsIndexed(
                 items = searching,
                 key = { index, satellite ->
                     "searching_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
-                }
+                },
             ) { _, satellite ->
                 SatelliteCard(
                     satellite = satellite,
-                    onClick = { onSatelliteClick(satellite) }
+                    onClick = { onSatelliteClick(satellite) },
                 )
             }
         }
@@ -275,29 +276,31 @@ private fun PermissionRequiredContent(
     permissionState: com.example.gpstest.PermissionState,
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = stringResource(R.string.permission_required),
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = when (permissionState) {
-                com.example.gpstest.PermissionState.PERMANENTLY_DENIED ->
-                    stringResource(R.string.permission_permanently_denied_message)
-                else ->
-                    stringResource(R.string.permission_rationale)
-            },
+            text =
+                when (permissionState) {
+                    com.example.gpstest.PermissionState.PERMANENTLY_DENIED ->
+                        stringResource(R.string.permission_permanently_denied_message)
+                    else ->
+                        stringResource(R.string.permission_rationale)
+                },
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(24.dp))
         when (permissionState) {
@@ -319,22 +322,22 @@ private fun PermissionRequiredContent(
 private fun ErrorContent(
     message: String,
     onRetry: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Text(
             text = stringResource(R.string.error_occurred),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.error
+            color = MaterialTheme.colorScheme.error,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = message,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {

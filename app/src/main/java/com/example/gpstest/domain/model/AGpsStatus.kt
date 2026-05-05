@@ -5,7 +5,7 @@ data class AGpsStatus(
     val ephemerisStatus: DataStatus = DataStatus.UNKNOWN,
     val almanacStatus: DataStatus = DataStatus.UNKNOWN,
     val lastUpdateTime: Long? = null,
-    val lastInjectionTime: Long? = null
+    val lastInjectionTime: Long? = null,
 )
 
 enum class DataStatus {
@@ -13,7 +13,7 @@ enum class DataStatus {
     EXPIRED,
     PARTIAL,
     MISSING,
-    UNKNOWN
+    UNKNOWN,
 }
 
 data class AGpsInjectionRecord(
@@ -22,27 +22,27 @@ data class AGpsInjectionRecord(
     val source: InjectionSource,
     val timestamp: Long,
     val success: Boolean,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 )
 
 enum class InjectionType {
     TIME,
     EPHEMERIS,
     ALMANAC,
-    XTRA
+    XTRA,
 }
 
 enum class InjectionSource {
     MANUAL,
     AUTO_DOWNLOAD,
-    NETWORK
+    NETWORK,
 }
 
 data class AGpsSettings(
     val autoUpdateEnabled: Boolean = false,
     val updateIntervalHours: Int = 24,
     val lastAutoUpdateTime: Long? = null,
-    val downloadUrl: String = DEFAULT_XTRA_URL
+    val downloadUrl: String = DEFAULT_XTRA_URL,
 ) {
     companion object {
         const val DEFAULT_XTRA_URL = "https://xtrapath1.izatcloud.net/xtra3grc.bin"

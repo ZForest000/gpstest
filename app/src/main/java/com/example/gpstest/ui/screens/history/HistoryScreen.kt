@@ -46,7 +46,7 @@ import com.example.gpstest.viewmodel.SatelliteViewModel
 fun HistoryScreen(
     viewModel: SatelliteViewModel,
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val historySnapshots by viewModel.historySnapshots.collectAsState()
     var showClearDialog by remember { mutableStateOf(false) }
@@ -59,7 +59,7 @@ fun HistoryScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
+                            contentDescription = stringResource(R.string.back),
                         )
                     }
                 },
@@ -67,36 +67,37 @@ fun HistoryScreen(
                     IconButton(onClick = { viewModel.saveSnapshotNow() }) {
                         Icon(
                             imageVector = Icons.Filled.Save,
-                            contentDescription = stringResource(R.string.save_snapshot)
+                            contentDescription = stringResource(R.string.save_snapshot),
                         )
                     }
                     if (historySnapshots.isNotEmpty()) {
                         IconButton(onClick = { showClearDialog = true }) {
                             Icon(
                                 imageVector = Icons.Filled.Delete,
-                                contentDescription = stringResource(R.string.clear_history)
+                                contentDescription = stringResource(R.string.clear_history),
                             )
                         }
                     }
-                }
+                },
             )
         },
-        modifier = modifier
+        modifier = modifier,
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             if (historySnapshots.isEmpty()) {
                 EmptyHistoryContent(
                     onSaveSnapshot = { viewModel.saveSnapshotNow() },
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
                 )
             } else {
                 HistoryListContent(
                     snapshots = historySnapshots,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
@@ -108,7 +109,7 @@ fun HistoryScreen(
                 viewModel.clearHistory()
                 showClearDialog = false
             },
-            onDismiss = { showClearDialog = false }
+            onDismiss = { showClearDialog = false },
         )
     }
 }
@@ -116,21 +117,21 @@ fun HistoryScreen(
 @Composable
 private fun EmptyHistoryContent(
     onSaveSnapshot: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.no_history),
-            style = MaterialTheme.typography.titleLarge
+            style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.no_history_description),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onSaveSnapshot) {
@@ -142,23 +143,23 @@ private fun EmptyHistoryContent(
 @Composable
 private fun HistoryListContent(
     snapshots: List<SatelliteHistorySnapshot>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = stringResource(R.string.snapshot_count, snapshots.size),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -172,7 +173,7 @@ private fun HistoryListContent(
 @Composable
 private fun ClearHistoryDialog(
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -187,6 +188,6 @@ private fun ClearHistoryDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.cancel))
             }
-        }
+        },
     )
 }

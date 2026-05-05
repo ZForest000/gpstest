@@ -25,28 +25,28 @@ fun StatBar(
     visibleCount: Int,
     totalCount: Int,
     satellites: List<GnssSatellite> = emptyList(),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val withEphemeris = satellites.count { it.hasEphemeris }
     val withAlmanac = satellites.count { it.hasAlmanac }
-    
+
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = RoundedCornerShape(12.dp),
+                ).padding(16.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = stringResource(R.string.signal_stats),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 StatItem(label = stringResource(R.string.used_in_fix), count = usedInFixCount)
@@ -54,44 +54,48 @@ fun StatBar(
                 StatItem(label = stringResource(R.string.total), count = totalCount)
             }
         }
-        
+
         if (satellites.isNotEmpty()) {
             Spacer(modifier = Modifier.padding(top = 8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.ephemeris_short),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "$withEphemeris/$totalCount",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (withEphemeris > totalCount / 2) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.onPrimaryContainer
+                        color =
+                            if (withEphemeris > totalCount / 2) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            },
                     )
                 }
-                
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = stringResource(R.string.almanac_short),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "$withAlmanac/$totalCount",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (withAlmanac > totalCount / 2) 
-                            MaterialTheme.colorScheme.primary 
-                        else 
-                            MaterialTheme.colorScheme.onPrimaryContainer
+                        color =
+                            if (withAlmanac > totalCount / 2) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            },
                     )
                 }
             }
@@ -100,11 +104,14 @@ fun StatBar(
 }
 
 @Composable
-private fun StatItem(label: String, count: Int) {
+private fun StatItem(
+    label: String,
+    count: Int,
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = "$label: $count",
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
         )
     }
 }

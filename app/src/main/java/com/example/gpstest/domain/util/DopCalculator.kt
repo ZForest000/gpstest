@@ -12,17 +12,17 @@ import kotlin.math.sqrt
  * compute Q = (H^T * H)^-1, extract PDOP/HDOP/VDOP from diagonal.
  */
 object DopCalculator {
-
     private const val MIN_SATELLITES = 4
     private const val MATRIX_SIZE = 4
 
     fun calculate(satellites: List<GnssSatellite>): DopInfo? {
         // Filter: only usedInFix, valid elevation (>=0), not default (0,0)
-        val validSatellites = satellites.filter { sat ->
-            sat.usedInFix &&
-            sat.elevationDegrees >= 0f &&
-            !(sat.elevationDegrees == 0f && sat.azimuthDegrees == 0f)
-        }
+        val validSatellites =
+            satellites.filter { sat ->
+                sat.usedInFix &&
+                    sat.elevationDegrees >= 0f &&
+                    !(sat.elevationDegrees == 0f && sat.azimuthDegrees == 0f)
+            }
 
         if (validSatellites.size < MIN_SATELLITES) return null
 
@@ -66,7 +66,7 @@ object DopCalculator {
             pdop = pdop,
             hdop = hdop,
             vdop = vdop,
-            satelliteCount = validSatellites.size
+            satelliteCount = validSatellites.size,
         )
     }
 

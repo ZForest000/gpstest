@@ -32,7 +32,7 @@ private data class ConstellationHealthStat(
     val name: String,
     val color: Color,
     val availableCount: Int,
-    val totalCount: Int
+    val totalCount: Int,
 ) {
     val ratio: Float
         get() = if (totalCount == 0) 0f else availableCount.toFloat() / totalCount
@@ -42,29 +42,30 @@ private data class ConstellationHealthStat(
 fun ConstellationHealthSummaryCard(
     usedInFix: List<GnssSatellite>,
     allSatellites: List<GnssSatellite>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     if (allSatellites.isEmpty()) return
 
-    val stats = buildConstellationHealthStats(
-        usedInFix = usedInFix,
-        allSatellites = allSatellites
-    )
+    val stats =
+        buildConstellationHealthStats(
+            usedInFix = usedInFix,
+            allSatellites = allSatellites,
+        )
     if (stats.isEmpty()) return
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                shape = RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                ).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             text = stringResource(R.string.constellation_health_summary),
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
         )
 
         stats.forEach { stat ->
@@ -72,24 +73,26 @@ fun ConstellationHealthSummaryCard(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = stringResource(
-                            R.string.constellation_health_ratio,
-                            stat.name,
-                            stat.availableCount,
-                            stat.totalCount
-                        ),
-                        style = MaterialTheme.typography.bodyMedium
+                        text =
+                            stringResource(
+                                R.string.constellation_health_ratio,
+                                stat.name,
+                                stat.availableCount,
+                                stat.totalCount,
+                            ),
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
-                        text = stringResource(
-                            R.string.constellation_health_percent,
-                            (stat.ratio * 100).roundToInt()
-                        ),
+                        text =
+                            stringResource(
+                                R.string.constellation_health_percent,
+                                (stat.ratio * 100).roundToInt(),
+                            ),
                         style = MaterialTheme.typography.labelLarge,
-                        color = stat.color
+                        color = stat.color,
                     )
                 }
 
@@ -97,7 +100,7 @@ fun ConstellationHealthSummaryCard(
                     progress = { stat.ratio.coerceIn(0f, 1f) },
                     modifier = Modifier.fillMaxWidth(),
                     color = stat.color,
-                    trackColor = stat.color.copy(alpha = 0.2f)
+                    trackColor = stat.color.copy(alpha = 0.2f),
                 )
             }
         }
@@ -106,24 +109,27 @@ fun ConstellationHealthSummaryCard(
 
 private fun buildConstellationHealthStats(
     usedInFix: List<GnssSatellite>,
-    allSatellites: List<GnssSatellite>
+    allSatellites: List<GnssSatellite>,
 ): List<ConstellationHealthStat> {
-    val totalByConstellation = allSatellites
-        .groupBy { it.constellation }
-        .mapValues { it.value.size }
-    val availableByConstellation = usedInFix
-        .groupBy { it.constellation }
-        .mapValues { it.value.size }
+    val totalByConstellation =
+        allSatellites
+            .groupBy { it.constellation }
+            .mapValues { it.value.size }
+    val availableByConstellation =
+        usedInFix
+            .groupBy { it.constellation }
+            .mapValues { it.value.size }
 
-    val order = listOf(
-        Constellation.GPS,
-        Constellation.BEIDOU,
-        Constellation.GLONASS,
-        Constellation.GALILEO,
-        Constellation.QZSS,
-        Constellation.SBAS,
-        Constellation.UNKNOWN
-    )
+    val order =
+        listOf(
+            Constellation.GPS,
+            Constellation.BEIDOU,
+            Constellation.GLONASS,
+            Constellation.GALILEO,
+            Constellation.QZSS,
+            Constellation.SBAS,
+            Constellation.UNKNOWN,
+        )
 
     return order.mapNotNull { constellation ->
         val total = totalByConstellation[constellation] ?: 0
@@ -133,13 +139,13 @@ private fun buildConstellationHealthStats(
             name = constellation.shortName(),
             color = constellation.color(),
             availableCount = availableByConstellation[constellation] ?: 0,
-            totalCount = total
+            totalCount = total,
         )
     }
 }
 
-private fun Constellation.shortName(): String {
-    return when (this) {
+private fun Constellation.shortName(): String =
+    when (this) {
         Constellation.GPS -> "GPS"
         Constellation.BEIDOU -> "BDS"
         Constellation.GLONASS -> "GLO"
@@ -148,10 +154,9 @@ private fun Constellation.shortName(): String {
         Constellation.SBAS -> "SBAS"
         Constellation.UNKNOWN -> "UNKNOWN"
     }
-}
 
-private fun Constellation.color(): Color {
-    return when (this) {
+private fun Constellation.color(): Color =
+    when (this) {
         Constellation.GPS -> GpsColor
         Constellation.BEIDOU -> BeidouColor
         Constellation.GLONASS -> GlonassColor
@@ -160,4 +165,3 @@ private fun Constellation.color(): Color {
         Constellation.SBAS -> SbasColor
         Constellation.UNKNOWN -> UnknownConstellationColor
     }
-}

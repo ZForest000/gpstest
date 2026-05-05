@@ -7,13 +7,15 @@ data class GnssClockData(
     val driftNanosPerSecond: Double?,
     val biasUncertaintyNanos: Double?,
     val driftUncertaintyNanosPerSecond: Double?,
-    val hardwareClockDiscontinuityCount: Int
+    val hardwareClockDiscontinuityCount: Int,
 ) {
     val totalBiasNanos: Double?
         get() {
             return if (fullBiasNanos != null && biasNanos != null) {
                 fullBiasNanos.toDouble() + biasNanos
-            } else null
+            } else {
+                null
+            }
         }
 
     val totalBiasMicroseconds: Double?

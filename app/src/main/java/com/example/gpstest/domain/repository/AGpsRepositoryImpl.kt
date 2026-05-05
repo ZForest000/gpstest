@@ -25,9 +25,8 @@ class AGpsRepositoryImpl(
     private val downloader: AGpsDownloader,
     private val fileHandler: AGpsFileHandler,
     private val settingsStore: AGpsSettingsStore,
-    private val validator: XtraDataValidator = XtraDataValidator()
+    private val validator: XtraDataValidator = XtraDataValidator(),
 ) : AGpsRepository {
-
     companion object {
         private const val TAG = "AGpsRepository"
         private const val EPHEMERIS_VALID_HOURS = 4L
@@ -47,12 +46,13 @@ class AGpsRepositoryImpl(
     override suspend fun downloadAndInject(): Result<Unit> {
         Log.d(TAG, "downloadAndInject: Starting...")
         val currentSettings = settings.first()
-        val urls = (listOf(currentSettings.downloadUrl) + downloader.getDefaultUrls())
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val urls =
+            (listOf(currentSettings.downloadUrl) + downloader.getDefaultUrls())
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
         val errors = mutableListOf<String>()
-        
+
         for (url in urls) {
             Log.d(TAG, "downloadAndInject: Verifying download source: $url")
             val downloadResult = downloader.download(url)
@@ -97,48 +97,48 @@ class AGpsRepositoryImpl(
         Log.d(TAG, "injectFromFile: $fileUri")
         val uri = Uri.parse(fileUri)
         val readResult = fileHandler.readFile(uri)
-        
+
         if (readResult.isFailure) {
             val error = readResult.exceptionOrNull()?.message ?: "Failed to read file"
             Log.e(TAG, "injectFromFile: Failed to read file: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(readResult.exceptionOrNull() ?: Exception("Failed to read file"))
         }
-        
+
         val data = readResult.getOrThrow()
         Log.d(TAG, "injectFromFile: File read succeeded, size: ${data.size} bytes")
-        
+
         val injectResult = dataSource.injectXtraData(data)
-        
+
         addRecord(
-            InjectionType.XTRA, 
-            InjectionSource.MANUAL, 
+            InjectionType.XTRA,
+            InjectionSource.MANUAL,
             injectResult.isSuccess,
-            injectResult.exceptionOrNull()?.message
+            injectResult.exceptionOrNull()?.message,
         )
-        
+
         if (injectResult.isSuccess) {
             updateStatusAfterInjection()
         }
-        
+
         return injectResult
     }
 
     override suspend fun injectTime(): Result<Unit> {
         Log.d(TAG, "injectTime: Starting...")
         val result = dataSource.injectTime(System.currentTimeMillis())
-        
+
         addRecord(
             InjectionType.TIME,
             InjectionSource.MANUAL,
             result.isSuccess,
-            result.exceptionOrNull()?.message
+            result.exceptionOrNull()?.message,
         )
-        
+
         if (result.isSuccess) {
             updateTimeStatusAfterInjection()
         }
-        
+
         Log.d(TAG, "injectTime: Result: ${if (result.isSuccess) "success" else result.exceptionOrNull()?.message}")
         return result
     }
@@ -146,21 +146,21 @@ class AGpsRepositoryImpl(
     override suspend fun clearApsData(): Result<Unit> {
         Log.d(TAG, "clearApsData: Starting...")
         val result = dataSource.clearApsData()
-        
+
         if (result.isSuccess) {
             _status.update {
                 it.copy(
                     timeStatus = DataStatus.UNKNOWN,
                     ephemerisStatus = DataStatus.UNKNOWN,
                     almanacStatus = DataStatus.UNKNOWN,
-                    lastInjectionTime = null
+                    lastInjectionTime = null,
                 )
             }
             Log.d(TAG, "clearApsData: Success, status reset to UNKNOWN")
         } else {
             Log.e(TAG, "clearApsData: Failed: ${result.exceptionOrNull()?.message}")
         }
-        
+
         return result
     }
 
@@ -173,45 +173,51 @@ class AGpsRepositoryImpl(
                 totalSatellites = 0,
                 ephemerisRatio = 0f,
                 almanacRatio = 0f,
-                isSuccess = false
+                isSuccess = false,
             )
         }
-        
+
         val withEphemeris = satellites.count { it.hasEphemeris }
         val withAlmanac = satellites.count { it.hasAlmanac }
         val total = satellites.size
-        
+
         val ephemerisRatio = withEphemeris.toFloat() / total
         val almanacRatio = withAlmanac.toFloat() / total
-        
+
         val isSuccess = ephemerisRatio >= MIN_SUCCESS_RATIO || almanacRatio >= MIN_SUCCESS_RATIO
-        
-        Log.d(TAG, "verifyInjection: ephemeris=$withEphemeris/$total (${(ephemerisRatio*100).toInt()}%), " +
-                "almanac=$withAlmanac/$total (${(almanacRatio*100).toInt()}%), success=$isSuccess")
-        
-        val newStatus = _status.value.copy(
-            ephemerisStatus = when {
-                ephemerisRatio >= 0.7f -> DataStatus.VALID
-                ephemerisRatio >= 0.3f -> DataStatus.PARTIAL
-                total > 0 -> DataStatus.EXPIRED
-                else -> DataStatus.UNKNOWN
-            },
-            almanacStatus = when {
-                almanacRatio >= 0.7f -> DataStatus.VALID
-                almanacRatio >= 0.3f -> DataStatus.PARTIAL
-                total > 0 -> DataStatus.EXPIRED
-                else -> DataStatus.UNKNOWN
-            }
+
+        Log.d(
+            TAG,
+            "verifyInjection: ephemeris=$withEphemeris/$total (${(ephemerisRatio * 100).toInt()}%), " +
+                "almanac=$withAlmanac/$total (${(almanacRatio * 100).toInt()}%), success=$isSuccess",
         )
+
+        val newStatus =
+            _status.value.copy(
+                ephemerisStatus =
+                    when {
+                        ephemerisRatio >= 0.7f -> DataStatus.VALID
+                        ephemerisRatio >= 0.3f -> DataStatus.PARTIAL
+                        total > 0 -> DataStatus.EXPIRED
+                        else -> DataStatus.UNKNOWN
+                    },
+                almanacStatus =
+                    when {
+                        almanacRatio >= 0.7f -> DataStatus.VALID
+                        almanacRatio >= 0.3f -> DataStatus.PARTIAL
+                        total > 0 -> DataStatus.EXPIRED
+                        else -> DataStatus.UNKNOWN
+                    },
+            )
         _status.value = newStatus
-        
+
         return InjectionVerification(
             satellitesWithEphemeris = withEphemeris,
             satellitesWithAlmanac = withAlmanac,
             totalSatellites = total,
             ephemerisRatio = ephemerisRatio,
             almanacRatio = almanacRatio,
-            isSuccess = isSuccess
+            isSuccess = isSuccess,
         )
     }
 
@@ -219,33 +225,37 @@ class AGpsRepositoryImpl(
         val currentStatus = _status.value
         val now = System.currentTimeMillis()
         val timeReference = listOfNotNull(currentStatus.lastUpdateTime, currentStatus.lastInjectionTime).maxOrNull()
-        val timeStatus = if (timeReference != null) {
-            val elapsedHours = (now - timeReference) / (1000 * 60 * 60)
-            if (elapsedHours < TIME_VALID_HOURS) DataStatus.VALID else DataStatus.EXPIRED
-        } else {
-            DataStatus.UNKNOWN
-        }
-        val ephemerisStatus = if (currentStatus.lastInjectionTime != null) {
-            val elapsedHours = (now - currentStatus.lastInjectionTime) / (1000 * 60 * 60)
-            when {
-                elapsedHours < EPHEMERIS_VALID_HOURS -> DataStatus.VALID
-                elapsedHours < EPHEMERIS_VALID_HOURS * 2 -> DataStatus.PARTIAL
-                else -> DataStatus.EXPIRED
+        val timeStatus =
+            if (timeReference != null) {
+                val elapsedHours = (now - timeReference) / (1000 * 60 * 60)
+                if (elapsedHours < TIME_VALID_HOURS) DataStatus.VALID else DataStatus.EXPIRED
+            } else {
+                DataStatus.UNKNOWN
             }
-        } else {
-            DataStatus.UNKNOWN
-        }
-        val almanacStatus = if (currentStatus.lastInjectionTime != null) {
-            val elapsedHours = (now - currentStatus.lastInjectionTime) / (1000 * 60 * 60)
-            if (elapsedHours < ALMANAC_VALID_DAYS * 24) DataStatus.VALID else DataStatus.EXPIRED
-        } else {
-            DataStatus.UNKNOWN
-        }
-        val newStatus = currentStatus.copy(
-            timeStatus = timeStatus,
-            ephemerisStatus = ephemerisStatus,
-            almanacStatus = almanacStatus
-        )
+        val ephemerisStatus =
+            if (currentStatus.lastInjectionTime != null) {
+                val elapsedHours = (now - currentStatus.lastInjectionTime) / (1000 * 60 * 60)
+                when {
+                    elapsedHours < EPHEMERIS_VALID_HOURS -> DataStatus.VALID
+                    elapsedHours < EPHEMERIS_VALID_HOURS * 2 -> DataStatus.PARTIAL
+                    else -> DataStatus.EXPIRED
+                }
+            } else {
+                DataStatus.UNKNOWN
+            }
+        val almanacStatus =
+            if (currentStatus.lastInjectionTime != null) {
+                val elapsedHours = (now - currentStatus.lastInjectionTime) / (1000 * 60 * 60)
+                if (elapsedHours < ALMANAC_VALID_DAYS * 24) DataStatus.VALID else DataStatus.EXPIRED
+            } else {
+                DataStatus.UNKNOWN
+            }
+        val newStatus =
+            currentStatus.copy(
+                timeStatus = timeStatus,
+                ephemerisStatus = ephemerisStatus,
+                almanacStatus = almanacStatus,
+            )
         _status.value = newStatus
     }
 
@@ -261,49 +271,50 @@ class AGpsRepositoryImpl(
         type: InjectionType,
         source: InjectionSource,
         success: Boolean,
-        errorMessage: String? = null
+        errorMessage: String? = null,
     ) {
-        val record = AGpsInjectionRecord(
-            id = System.currentTimeMillis().toString(),
-            type = type,
-            source = source,
-            timestamp = System.currentTimeMillis(),
-            success = success,
-            errorMessage = errorMessage
-        )
-        
+        val record =
+            AGpsInjectionRecord(
+                id = System.currentTimeMillis().toString(),
+                type = type,
+                source = source,
+                timestamp = System.currentTimeMillis(),
+                success = success,
+                errorMessage = errorMessage,
+            )
+
         _injectionHistory.update { listOf(record) + it.take(49) }
     }
 
     private fun updateStatusAfterInjection() {
         val now = System.currentTimeMillis()
-        _status.update { 
+        _status.update {
             it.copy(
                 timeStatus = DataStatus.VALID,
                 ephemerisStatus = DataStatus.VALID,
                 almanacStatus = DataStatus.VALID,
                 lastUpdateTime = now,
-                lastInjectionTime = now
+                lastInjectionTime = now,
             )
         }
     }
 
     private fun updateTimeStatusAfterInjection() {
         val now = System.currentTimeMillis()
-        _status.update { 
+        _status.update {
             it.copy(
                 timeStatus = DataStatus.VALID,
-                lastUpdateTime = now
+                lastUpdateTime = now,
             )
         }
     }
 
     override suspend fun validateFile(fileUri: String): FileValidationResult {
         Log.d(TAG, "validateFile: $fileUri")
-        
+
         val uri = Uri.parse(fileUri)
         val readResult = fileHandler.readFile(uri)
-        
+
         if (readResult.isFailure) {
             val error = readResult.exceptionOrNull()?.message ?: "无法读取文件"
             Log.e(TAG, "validateFile: Failed to read file: $error")
@@ -311,15 +322,15 @@ class AGpsRepositoryImpl(
                 isValid = false,
                 fileSize = 0,
                 errorMessage = error,
-                errorType = "FILE_READ_ERROR"
+                errorType = "FILE_READ_ERROR",
             )
         }
-        
+
         val data = readResult.getOrThrow()
         Log.d(TAG, "validateFile: File read succeeded, size: ${data.size} bytes")
-        
+
         val validationResult = validator.validate(data, sourceUrl = fileUri)
-        
+
         if (!validationResult.isValid) {
             Log.e(TAG, "validateFile: Validation failed: ${validationResult.details}")
             return FileValidationResult(
@@ -327,15 +338,15 @@ class AGpsRepositoryImpl(
                 fileSize = data.size,
                 errorMessage = validationResult.details,
                 errorType = validationResult.errorType?.name ?: "UNKNOWN",
-                details = validator.getSizeStatistics(data)
+                details = validator.getSizeStatistics(data),
             )
         }
-        
+
         Log.i(TAG, "validateFile: File is valid | ${validator.getSizeStatistics(data)}")
         return FileValidationResult(
             isValid = true,
             fileSize = data.size,
-            details = validator.getSizeStatistics(data)
+            details = validator.getSizeStatistics(data),
         )
     }
 
@@ -343,20 +354,20 @@ class AGpsRepositoryImpl(
         Log.d(TAG, "validateCurrentSource: Starting...")
         val currentSettings = settings.first()
         val url = currentSettings.downloadUrl.trim()
-        
+
         if (url.isEmpty()) {
             Log.e(TAG, "validateCurrentSource: Download URL is empty")
             return FileValidationResult(
                 isValid = false,
                 fileSize = 0,
                 errorMessage = "下载地址为空",
-                errorType = "EMPTY_URL"
+                errorType = "EMPTY_URL",
             )
         }
-        
+
         Log.d(TAG, "validateCurrentSource: Downloading from $url")
         val downloadResult = downloader.download(url)
-        
+
         if (downloadResult.isFailure) {
             val error = downloadResult.exceptionOrNull()?.message ?: "下载失败"
             Log.e(TAG, "validateCurrentSource: Download failed: $error")
@@ -364,25 +375,25 @@ class AGpsRepositoryImpl(
                 isValid = false,
                 fileSize = 0,
                 errorMessage = error,
-                errorType = "DOWNLOAD_ERROR"
+                errorType = "DOWNLOAD_ERROR",
             )
         }
-        
+
         val data = downloadResult.getOrThrow()
-        
+
         if (data.isEmpty()) {
             Log.e(TAG, "validateCurrentSource: Downloaded data is empty")
             return FileValidationResult(
                 isValid = false,
                 fileSize = 0,
                 errorMessage = "下载的数据为空",
-                errorType = "EMPTY_DATA"
+                errorType = "EMPTY_DATA",
             )
         }
-        
+
         Log.d(TAG, "validateCurrentSource: Downloaded ${data.size} bytes, validating...")
         val validationResult = validator.validate(data, sourceUrl = url)
-        
+
         if (!validationResult.isValid) {
             Log.e(TAG, "validateCurrentSource: Validation failed: ${validationResult.details}")
             return FileValidationResult(
@@ -390,15 +401,15 @@ class AGpsRepositoryImpl(
                 fileSize = data.size,
                 errorMessage = validationResult.details,
                 errorType = validationResult.errorType?.name ?: "UNKNOWN",
-                details = validator.getSizeStatistics(data)
+                details = validator.getSizeStatistics(data),
             )
         }
-        
+
         Log.i(TAG, "validateCurrentSource: Source is valid | ${validator.getSizeStatistics(data)}")
         return FileValidationResult(
             isValid = true,
             fileSize = data.size,
-            details = validator.getSizeStatistics(data)
+            details = validator.getSizeStatistics(data),
         )
     }
 }
