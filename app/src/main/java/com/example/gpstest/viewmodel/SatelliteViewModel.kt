@@ -80,6 +80,8 @@ class SatelliteViewModel(
                         updateSignalHistory(satellites)
                         maybeSaveSnapshot(satellites)
                     }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     _uiState.value = SatelliteUiState.Error(e.message ?: "Unknown error")
                 }
