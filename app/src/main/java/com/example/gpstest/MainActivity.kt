@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
@@ -198,6 +199,12 @@ fun GpsTestApp(
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
 
+    val safeNavigateBack: () -> Unit = {
+        if (navController.previousBackStackEntry != null) {
+            navController.popBackStack()
+        }
+    }
+
     val navigateAndCloseDrawer: (String) -> Unit = { route ->
         navController.navigate(route) {
             popUpTo(Screen.SatelliteList.route) { saveState = true }
@@ -262,6 +269,9 @@ fun GpsTestApp(
             startDestination = Screen.SatelliteList.route,
         ) {
             composable(Screen.SatelliteList.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
                 SatelliteListScreen(
                     viewModel = satelliteViewModel,
                     permissionState = permissionState,
@@ -275,6 +285,9 @@ fun GpsTestApp(
                 )
             }
             composable(Screen.SkyChart.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
                 com.example.gpstest.ui.screens.skychart.SkyChartScreen(
                     viewModel = satelliteViewModel,
                     permissionState = permissionState,
@@ -288,20 +301,23 @@ fun GpsTestApp(
                 )
             }
             composable(Screen.History.route) {
+                BackHandler { safeNavigateBack() }
                 HistoryScreen(
                     viewModel = satelliteViewModel,
-                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateBack = safeNavigateBack,
                 )
             }
             composable(Screen.AGps.route) {
+                BackHandler { safeNavigateBack() }
                 AGpsManagerScreen(
                     viewModel = agpsViewModel,
-                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateBack = safeNavigateBack,
                 )
             }
             composable(Screen.Help.route) {
+                BackHandler { safeNavigateBack() }
                 HelpScreen(
-                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateBack = safeNavigateBack,
                 )
             }
         }
