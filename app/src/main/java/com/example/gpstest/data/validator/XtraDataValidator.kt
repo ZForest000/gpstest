@@ -23,7 +23,6 @@ enum class ValidationErrorType {
 class XtraDataValidator(
     private val minSizeBytes: Int = 1024,
     private val maxSizeBytes: Int = 2 * 1024 * 1024,
-    private val allowCompression: Boolean = true,
     private val strictMode: Boolean = BuildConfig.DEBUG,
 ) {
     companion object {
@@ -149,15 +148,6 @@ class XtraDataValidator(
         val normalizedMime = mimeType.lowercase().trim()
 
         if (normalizedMime in VALID_MIME_TYPES) {
-            return ValidationResult(isValid = true)
-        }
-
-        if (allowCompression &&
-            (
-                normalizedMime == "application/gzip" ||
-                    normalizedMime == "application/x-gzip"
-            )
-        ) {
             return ValidationResult(isValid = true)
         }
 

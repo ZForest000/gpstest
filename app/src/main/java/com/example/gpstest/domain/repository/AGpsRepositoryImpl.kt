@@ -93,37 +93,6 @@ class AGpsRepositoryImpl(
         return Result.failure(Exception("All download and injection methods failed: $allErrors"))
     }
 
-    override suspend fun injectFromFile(fileUri: String): Result<Unit> {
-        Log.d(TAG, "injectFromFile: $fileUri")
-        val uri = Uri.parse(fileUri)
-        val readResult = fileHandler.readFile(uri)
-
-        if (readResult.isFailure) {
-            val error = readResult.exceptionOrNull()?.message ?: "Failed to read file"
-            Log.e(TAG, "injectFromFile: Failed to read file: $error")
-            addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
-            return Result.failure(readResult.exceptionOrNull() ?: Exception("Failed to read file"))
-        }
-
-        val data = readResult.getOrThrow()
-        Log.d(TAG, "injectFromFile: File read succeeded, size: ${data.size} bytes")
-
-        val injectResult = dataSource.injectXtraData(data)
-
-        addRecord(
-            InjectionType.XTRA,
-            InjectionSource.MANUAL,
-            injectResult.isSuccess,
-            injectResult.exceptionOrNull()?.message,
-        )
-
-        if (injectResult.isSuccess) {
-            updateStatusAfterInjection()
-        }
-
-        return injectResult
-    }
-
     override suspend fun injectTime(): Result<Unit> {
         Log.d(TAG, "injectTime: Starting...")
         val result = dataSource.injectTime(System.currentTimeMillis())
@@ -263,9 +232,6 @@ class AGpsRepositoryImpl(
         settingsStore.updateSettings(settings)
     }
 
-    override suspend fun clearHistory() {
-        _injectionHistory.value = emptyList()
-    }
 
     private fun addRecord(
         type: InjectionType,

@@ -1,8 +1,5 @@
 package com.example.gpstest.ui.screens.agps
 
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,13 +61,6 @@ fun AGpsManagerScreen(
     val history by viewModel.injectionHistory.collectAsState()
     val validationResult by viewModel.validationResult.collectAsState()
 
-    val fileLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenDocument(),
-        ) { uri: Uri? ->
-            uri?.let { viewModel.injectFromFile(it) }
-        }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -109,9 +99,6 @@ fun AGpsManagerScreen(
             item {
                 ManualActionsCard(
                     onDownloadClick = { viewModel.downloadAndInject() },
-                    onFileClick = {
-                        fileLauncher.launch(arrayOf("*/*"))
-                    },
                     onValidateSourceClick = {
                         viewModel.validateCurrentSource()
                     },
@@ -219,7 +206,6 @@ private fun AutoUpdateCard(
 @Composable
 private fun ManualActionsCard(
     onDownloadClick: () -> Unit,
-    onFileClick: () -> Unit,
     onValidateSourceClick: () -> Unit,
     onTimeClick: () -> Unit,
     onClearClick: () -> Unit,
@@ -235,31 +221,18 @@ private fun ManualActionsCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
+            Button(
+                onClick = onDownloadClick,
+                enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Button(
-                    onClick = onDownloadClick,
-                    enabled = !isLoading,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Text(stringResource(R.string.download_now))
-                    }
-                }
-
-                OutlinedButton(
-                    onClick = onFileClick,
-                    enabled = !isLoading,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(stringResource(R.string.import_file))
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text(stringResource(R.string.download_now))
                 }
             }
 

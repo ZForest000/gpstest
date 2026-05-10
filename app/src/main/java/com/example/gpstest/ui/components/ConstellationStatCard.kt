@@ -19,12 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.SignalStrength
-import com.example.gpstest.ui.theme.BeidouColor
-import com.example.gpstest.ui.theme.GalileoColor
-import com.example.gpstest.ui.theme.GlonassColor
-import com.example.gpstest.ui.theme.GpsColor
-import com.example.gpstest.ui.theme.QzssColor
-import com.example.gpstest.ui.theme.SbasColor
+import com.example.gpstest.ui.components.color
 import com.example.gpstest.ui.theme.SignalMedium
 import com.example.gpstest.ui.theme.SignalStrong
 import com.example.gpstest.ui.theme.SignalWeak
@@ -68,14 +63,9 @@ fun ConstellationStatCard(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             val constellationOrder =
-                listOf(
-                    Constellation.GPS to "GPS" to GpsColor,
-                    Constellation.BEIDOU to "BDS" to BeidouColor,
-                    Constellation.GLONASS to "GLO" to GlonassColor,
-                    Constellation.GALILEO to "GAL" to GalileoColor,
-                    Constellation.QZSS to "QZS" to QzssColor,
-                    Constellation.SBAS to "SBAS" to SbasColor,
-                )
+                Constellation.entries
+                    .filter { it != Constellation.UNKNOWN }
+                    .map { it to it.shortName to it.color }
 
             for ((pair, color) in constellationOrder) {
                 val (constellation, name) = pair

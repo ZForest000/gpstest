@@ -10,8 +10,6 @@ data class DumpsysGnssData(
 )
 
 object ShizukuHelper {
-    private const val REQUEST_CODE = 1001
-
     val isShizukuAvailable: Boolean
         get() =
             try {
@@ -35,15 +33,4 @@ object ShizukuHelper {
             } catch (e: Exception) {
                 false
             }
-
-    fun requestPermission() {
-        try {
-            if (Shizuku.shouldShowRequestPermissionRationale()) {
-                return
-            }
-            Shizuku.requestPermission(REQUEST_CODE)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
 }

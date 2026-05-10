@@ -14,27 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.gpstest.ui.theme.BeidouColor
-import com.example.gpstest.ui.theme.GalileoColor
-import com.example.gpstest.ui.theme.GlonassColor
-import com.example.gpstest.ui.theme.GpsColor
-import com.example.gpstest.ui.theme.QzssColor
-import com.example.gpstest.ui.theme.SbasColor
-import com.example.gpstest.ui.theme.UnknownConstellationColor
+import com.example.gpstest.domain.model.Constellation
+import com.example.gpstest.ui.components.color
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SkyChartLegend(modifier: Modifier = Modifier) {
     val items =
-        listOf(
-            "GPS" to GpsColor,
-            "BDS" to BeidouColor,
-            "GLO" to GlonassColor,
-            "GAL" to GalileoColor,
-            "QZS" to QzssColor,
-            "SBAS" to SbasColor,
-            "UNK" to UnknownConstellationColor,
-        )
+        Constellation.entries.map { it.shortName to it.color }
 
     FlowRow(
         modifier = modifier,

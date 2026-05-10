@@ -1,25 +1,20 @@
 package com.example.gpstest.domain.model
 
-enum class Constellation {
-    GPS,
-    SBAS,
-    GLONASS,
-    GALILEO,
-    BEIDOU,
-    QZSS,
-    UNKNOWN,
+enum class Constellation(
+    val shortName: String,
+    val constellationType: Int,
+) {
+    GPS(shortName = "GPS", constellationType = 1),
+    SBAS(shortName = "SBAS", constellationType = 2),
+    GLONASS(shortName = "GLO", constellationType = 3),
+    GALILEO(shortName = "GAL", constellationType = 6),
+    BEIDOU(shortName = "BDS", constellationType = 5),
+    QZSS(shortName = "QZS", constellationType = 4),
+    UNKNOWN(shortName = "UNK", constellationType = -1),
     ;
 
     companion object {
         fun fromConstellationType(type: Int): Constellation =
-            when (type) {
-                1 -> GPS
-                2 -> SBAS
-                3 -> GLONASS
-                4 -> QZSS
-                5 -> BEIDOU
-                6 -> GALILEO
-                else -> UNKNOWN
-            }
+            entries.find { it.constellationType == type } ?: UNKNOWN
     }
 }

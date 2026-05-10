@@ -21,9 +21,6 @@ import com.example.gpstest.R
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.MultipathIndicator
-import com.example.gpstest.ui.theme.SignalMedium
-import com.example.gpstest.ui.theme.SignalStrong
-import com.example.gpstest.ui.theme.SignalWeak
 
 @Composable
 fun SatelliteCard(
@@ -58,7 +55,7 @@ fun SatelliteCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "${getConstellationName(satellite.constellation)}-${satellite.svid}",
+                        text = "${satellite.constellation.shortName}-${satellite.svid}",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                     )
@@ -109,21 +106,3 @@ private fun ConstellationIndicator(
         style = MaterialTheme.typography.titleMedium,
     )
 }
-
-private fun getConstellationName(constellation: Constellation): String =
-    when (constellation) {
-        Constellation.GPS -> "GPS"
-        Constellation.GLONASS -> "GLN"
-        Constellation.GALILEO -> "GAL"
-        Constellation.BEIDOU -> "BDS"
-        Constellation.QZSS -> "QZS"
-        Constellation.SBAS -> "SBAS"
-        Constellation.UNKNOWN -> "UNK"
-    }
-
-private fun getSignalColor(cn0: Float): Color =
-    when {
-        cn0 >= 35f -> SignalStrong
-        cn0 >= 25f -> SignalMedium
-        else -> SignalWeak
-    }

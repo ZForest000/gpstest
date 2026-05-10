@@ -42,7 +42,7 @@ fun HistorySnapshotCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = formatTimestamp(snapshot.timestamp),
+                text = formatMillisToDateTime(snapshot.timestamp),
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
@@ -92,15 +92,3 @@ private fun StatItemCompact(
         )
     }
 }
-
-private fun formatTimestamp(timestamp: Long): String {
-    val sdf = SimpleDateFormat("MM/dd HH:mm:ss", Locale.getDefault())
-    return sdf.format(Date(timestamp))
-}
-
-private fun getSignalColor(cn0: Float): androidx.compose.ui.graphics.Color =
-    when {
-        cn0 >= 35f -> com.example.gpstest.ui.theme.SignalStrong
-        cn0 >= 25f -> com.example.gpstest.ui.theme.SignalMedium
-        else -> com.example.gpstest.ui.theme.SignalWeak
-    }

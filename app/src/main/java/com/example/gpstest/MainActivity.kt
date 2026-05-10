@@ -63,22 +63,22 @@ enum class PermissionState {
 
 class MainActivity : ComponentActivity() {
     private val satelliteViewModel: SatelliteViewModel by viewModels {
-        val application = application as GpstestApplication
-        val dataSource = GnssDataSourceImpl(application)
+        val app = application
+        val dataSource = GnssDataSourceImpl(app)
         val gnssRepository = GnssRepositoryImpl(dataSource)
-        val historyDataStore = SatelliteHistoryDataStore(application)
+        val historyDataStore = SatelliteHistoryDataStore(app)
         val historyRepository = SatelliteHistoryRepositoryImpl(historyDataStore)
-        SatelliteViewModelFactory(application, gnssRepository, historyRepository)
+        SatelliteViewModelFactory(app, gnssRepository, historyRepository)
     }
 
     private val agpsViewModel: AGpsViewModel by viewModels {
-        val application = application as GpstestApplication
-        val dataSource = AGpsDataSourceImpl(application)
+        val app = application
+        val dataSource = AGpsDataSourceImpl(app)
         val downloader = AGpsDownloaderImpl()
-        val fileHandler = AGpsFileHandlerImpl(application)
-        val settingsStore = AGpsSettingsStore(application)
+        val fileHandler = AGpsFileHandlerImpl(app)
+        val settingsStore = AGpsSettingsStore(app)
         val repository = AGpsRepositoryImpl(dataSource, downloader, fileHandler, settingsStore)
-        AGpsViewModelFactory(application, repository)
+        AGpsViewModelFactory(app, repository)
     }
 
     private val _permissionState = MutableStateFlow(PermissionState.DENIED)

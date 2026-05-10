@@ -61,7 +61,6 @@ val Yellow40 = Color(0xFFFBC02D)
 val Purple40 = Color(0xFF7B1FA2)
 val Teal40 = Color(0xFF00796B)
 val Orange40 = Color(0xFFF57C00)
-val Pink40 = Color(0xFFC2185B)
 
 // Signal strength colors
 val SignalStrong = Color(0xFF4CAF50)

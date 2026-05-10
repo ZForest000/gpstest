@@ -19,13 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
-import com.example.gpstest.ui.theme.BeidouColor
-import com.example.gpstest.ui.theme.GalileoColor
-import com.example.gpstest.ui.theme.GlonassColor
-import com.example.gpstest.ui.theme.GpsColor
-import com.example.gpstest.ui.theme.QzssColor
-import com.example.gpstest.ui.theme.SbasColor
-import com.example.gpstest.ui.theme.UnknownConstellationColor
 import kotlin.math.roundToInt
 
 private data class ConstellationHealthStat(
@@ -136,32 +129,10 @@ private fun buildConstellationHealthStats(
         if (total == 0) return@mapNotNull null
 
         ConstellationHealthStat(
-            name = constellation.shortName(),
-            color = constellation.color(),
+            name = constellation.shortName,
+            color = constellation.color,
             availableCount = availableByConstellation[constellation] ?: 0,
             totalCount = total,
         )
     }
 }
-
-private fun Constellation.shortName(): String =
-    when (this) {
-        Constellation.GPS -> "GPS"
-        Constellation.BEIDOU -> "BDS"
-        Constellation.GLONASS -> "GLO"
-        Constellation.GALILEO -> "GAL"
-        Constellation.QZSS -> "QZS"
-        Constellation.SBAS -> "SBAS"
-        Constellation.UNKNOWN -> "UNKNOWN"
-    }
-
-private fun Constellation.color(): Color =
-    when (this) {
-        Constellation.GPS -> GpsColor
-        Constellation.BEIDOU -> BeidouColor
-        Constellation.GLONASS -> GlonassColor
-        Constellation.GALILEO -> GalileoColor
-        Constellation.QZSS -> QzssColor
-        Constellation.SBAS -> SbasColor
-        Constellation.UNKNOWN -> UnknownConstellationColor
-    }

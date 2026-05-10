@@ -73,25 +73,25 @@ fun ClockInfoCard(
 private fun ClockDataSection(clock: GnssClockData) {
     Column {
         clock.totalBiasMicroseconds?.let { bias ->
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.clock_bias),
                 "%.3f μs".format(bias),
             )
         }
         clock.driftMicrosecondsPerSecond?.let { drift ->
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.clock_drift),
                 "%.6f μs/s".format(drift),
             )
         }
         clock.biasUncertaintyNanos?.let { uncertainty ->
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.clock_bias_uncertainty),
                 "%.1f ns".format(uncertainty),
             )
         }
         clock.driftUncertaintyNanosPerSecond?.let { uncertainty ->
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.clock_drift_uncertainty),
                 "%.3f ns/s".format(uncertainty),
             )
@@ -106,13 +106,13 @@ private fun AvgBasebandCn0Section(gnssData: GnssData) {
 
     Column {
         if (avgBaseband > 0) {
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.avg_baseband_cn0),
                 "%.1f dB-Hz".format(avgBaseband),
             )
         }
         if (avgCn0 > 0) {
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.signal_strength),
                 "%.1f dB-Hz".format(avgCn0),
             )
@@ -124,19 +124,19 @@ private fun AvgBasebandCn0Section(gnssData: GnssData) {
 private fun DumpsysDataSection(dumpsysData: DumpsysGnssData) {
     Column {
         dumpsysData.avgBasebandCn0?.let { cn0 ->
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.avg_baseband_cn0) + " (dumpsys)",
                 "%.1f dB-Hz".format(cn0),
             )
         }
         if (dumpsysData.measurementCount > 0) {
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.measurement_count),
                 "${dumpsysData.measurementCount}",
             )
         }
         if (dumpsysData.usedInFixConstellations.isNotEmpty()) {
-            DetailRow(
+            CompactDetailRow(
                 stringResource(R.string.used_constellations),
                 dumpsysData.usedInFixConstellations.joinToString(", "),
             )
@@ -184,7 +184,7 @@ private fun ShizukuStatusSection() {
 }
 
 @Composable
-private fun DetailRow(
+private fun CompactDetailRow(
     label: String,
     value: String,
 ) {

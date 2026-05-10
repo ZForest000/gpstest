@@ -64,24 +64,4 @@ class SatelliteHistoryDataStore(
             preferences[SNAPSHOTS_KEY] = "[]"
         }
     }
-
-    suspend fun clearOldSnapshots(olderThanTimestamp: Long) {
-        context.historyDataStore.edit { preferences ->
-            val currentList =
-                try {
-                    val jsonString = preferences[SNAPSHOTS_KEY] ?: "[]"
-                    json.decodeFromString(ListSerializer(SatelliteHistorySnapshot.serializer()), jsonString)
-                } catch (e: Exception) {
-                    emptyList()
-                }
-
-            val filteredList = currentList.filter { it.timestamp >= olderThanTimestamp }
-
-            preferences[SNAPSHOTS_KEY] =
-                json.encodeToString(
-                    ListSerializer(SatelliteHistorySnapshot.serializer()),
-                    filteredList,
-                )
-        }
-    }
 }

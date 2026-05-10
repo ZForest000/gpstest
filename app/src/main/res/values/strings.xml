@@ -111,6 +111,7 @@
     <string name="constellation_galileo">Galileo (欧盟)</string>
     <string name="constellation_beidou">北斗 (中国)</string>
     <string name="constellation_qzss">QZSS (日本)</string>
+    <string name="constellation_sbas">SBAS (星基增强系统)</string>
     <string name="constellation_unknown">未知</string>
 
     <!-- Signal Stats -->

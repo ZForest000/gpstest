@@ -28,17 +28,8 @@ class SatelliteViewModel(
     private val _uiState = MutableStateFlow<SatelliteUiState>(SatelliteUiState.Loading)
     val uiState: StateFlow<SatelliteUiState> = _uiState.asStateFlow()
 
-    private val _selectedSatellite = MutableStateFlow<GnssSatellite?>(null)
-    val selectedSatellite: StateFlow<GnssSatellite?> = _selectedSatellite.asStateFlow()
-
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-
     private val _historySnapshots = MutableStateFlow<List<SatelliteHistorySnapshot>>(emptyList())
     val historySnapshots: StateFlow<List<SatelliteHistorySnapshot>> = _historySnapshots.asStateFlow()
-
-    private val _showHistory = MutableStateFlow(false)
-    val showHistory: StateFlow<Boolean> = _showHistory.asStateFlow()
 
     private val _signalHistory = MutableStateFlow<Map<String, MutableList<SignalReading>>>(emptyMap())
     val signalHistory: StateFlow<Map<String, List<SignalReading>>> = _signalHistory.asStateFlow()
@@ -152,14 +143,6 @@ class SatelliteViewModel(
         }
     }
 
-    fun toggleHistory() {
-        _showHistory.value = !_showHistory.value
-    }
-
-    fun setShowHistory(show: Boolean) {
-        _showHistory.value = show
-    }
-
     fun clearHistory() {
         viewModelScope.launch {
             historyRepository?.clearHistory()
@@ -170,30 +153,6 @@ class SatelliteViewModel(
     fun setPermissionDenied() {
         _uiState.value = SatelliteUiState.PermissionRequired
     }
-
-    fun selectSatellite(satellite: GnssSatellite) {
-        _selectedSatellite.value = satellite
-    }
-
-    fun clearSelection() {
-        _selectedSatellite.value = null
-    }
-
-    fun refreshSatellites() {
-        _isRefreshing.value = true
-        startListening()
-        _isRefreshing.value = false
-    }
-
-    val isLoading: Boolean
-        get() = _uiState.value is SatelliteUiState.Loading
-
-    fun endRefresh() {
-        _isRefreshing.value = false
-    }
-
-    val hasLocationPermission: Boolean
-        get() = _uiState.value is SatelliteUiState.Success
 
     override fun onCleared() {
         super.onCleared()

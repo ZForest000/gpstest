@@ -18,11 +18,6 @@ class AGpsDataSourceImpl(
     private val locationManager: LocationManager?
         get() = context.getSystemService(LocationManager::class.java)
 
-    override suspend fun injectXtraData(data: ByteArray): Result<Unit> {
-        Log.d(TAG, "injectXtraData: data size = ${data.size}")
-        return Result.failure(IOException("设备不支持直接注入本地XTRA数据，请使用网络URL注入"))
-    }
-
     override suspend fun injectXtraFromUrl(url: String): Result<Unit> {
         Log.d(TAG, "injectXtraFromUrl: url = $url")
         if (url.isBlank()) {

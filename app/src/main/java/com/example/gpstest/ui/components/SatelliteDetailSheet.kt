@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
+import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.ui.components.fullNameResId
 import com.example.gpstest.domain.model.MultipathIndicator
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,7 +40,7 @@ fun SatelliteDetailSheet(
             text =
                 stringResource(
                     R.string.satellite_details,
-                    "${getConstellationName(satellite.constellation)}-${satellite.svid}",
+                    "${satellite.constellation.shortName}-${satellite.svid}",
                 ),
             style = MaterialTheme.typography.titleLarge,
         )
@@ -48,7 +50,7 @@ fun SatelliteDetailSheet(
         DetailSection(stringResource(R.string.basic_info)) {
             DetailRow(
                 stringResource(R.string.constellation_type),
-                getConstellationFullName(satellite.constellation),
+                stringResource(satellite.constellation.fullNameResId),
             )
             DetailRow(
                 stringResource(R.string.satellite_id),
@@ -110,7 +112,7 @@ fun SatelliteDetailSheet(
             )
             DetailRow(
                 stringResource(R.string.timestamp),
-                formatTimestamp(satellite.timeNanos),
+                formatNanosToTime(satellite.timeNanos),
             )
             DetailRow(
                 stringResource(R.string.has_ephemeris),
@@ -178,56 +180,4 @@ private fun DetailSection(
     }
 }
 
-@Composable
-private fun DetailRow(
-    label: String,
-    value: String,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-    ) {
-        Text(
-            text = "$label: ",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
 
-private fun getConstellationName(constellation: com.example.gpstest.domain.model.Constellation): String =
-    when (constellation) {
-        com.example.gpstest.domain.model.Constellation.GPS -> "GPS"
-        com.example.gpstest.domain.model.Constellation.GLONASS -> "GLN"
-        com.example.gpstest.domain.model.Constellation.GALILEO -> "GAL"
-        com.example.gpstest.domain.model.Constellation.BEIDOU -> "BDS"
-        com.example.gpstest.domain.model.Constellation.QZSS -> "QZS"
-        com.example.gpstest.domain.model.Constellation.SBAS -> "SBAS"
-        com.example.gpstest.domain.model.Constellation.UNKNOWN -> "UNK"
-    }
-
-@Composable
-private fun getConstellationFullName(constellation: com.example.gpstest.domain.model.Constellation): String =
-    when (constellation) {
-        com.example.gpstest.domain.model.Constellation.GPS -> stringResource(R.string.constellation_gps)
-        com.example.gpstest.domain.model.Constellation.GLONASS -> stringResource(R.string.constellation_glonass)
-        com.example.gpstest.domain.model.Constellation.GALILEO -> stringResource(R.string.constellation_galileo)
-        com.example.gpstest.domain.model.Constellation.BEIDOU -> stringResource(R.string.constellation_beidou)
-        com.example.gpstest.domain.model.Constellation.QZSS -> stringResource(R.string.constellation_qzss)
-        com.example.gpstest.domain.model.Constellation.SBAS -> "SBAS"
-        com.example.gpstest.domain.model.Constellation.UNKNOWN -> stringResource(R.string.constellation_unknown)
-    }
-
-private fun formatTimestamp(nanos: Long): String {
-    val millis = nanos / 1_000_000
-    val sdf = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
-    return sdf.format(Date(millis))
-}

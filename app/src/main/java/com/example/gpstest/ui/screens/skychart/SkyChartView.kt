@@ -22,13 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
-import com.example.gpstest.ui.theme.BeidouColor
-import com.example.gpstest.ui.theme.GalileoColor
-import com.example.gpstest.ui.theme.GlonassColor
-import com.example.gpstest.ui.theme.GpsColor
-import com.example.gpstest.ui.theme.QzssColor
-import com.example.gpstest.ui.theme.SbasColor
-import com.example.gpstest.ui.theme.UnknownConstellationColor
+import com.example.gpstest.ui.components.color
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -170,7 +164,7 @@ fun SkyChartView(
             // 绘制卫星点
             for (plot in plots) {
                 val sat = plot.satellite
-                val color = getConstellationColor(sat.constellation)
+                val color = sat.constellation.color
                 val alpha = if (sat.usedInFix) 1f else nonFixAlpha
                 val borderWidth = if (sat.usedInFix) with(density) { 2.dp.toPx() } else with(density) { 1.dp.toPx() }
 
@@ -207,14 +201,3 @@ fun SkyChartView(
         }
     }
 }
-
-private fun getConstellationColor(constellation: Constellation): Color =
-    when (constellation) {
-        Constellation.GPS -> GpsColor
-        Constellation.BEIDOU -> BeidouColor
-        Constellation.GLONASS -> GlonassColor
-        Constellation.GALILEO -> GalileoColor
-        Constellation.QZSS -> QzssColor
-        Constellation.SBAS -> SbasColor
-        Constellation.UNKNOWN -> UnknownConstellationColor
-    }

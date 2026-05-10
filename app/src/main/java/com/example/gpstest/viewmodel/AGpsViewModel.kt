@@ -7,10 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.gpstest.domain.model.AGpsInjectionRecord
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.domain.model.AGpsStatus
-import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.repository.AGpsRepository
 import com.example.gpstest.domain.repository.FileValidationResult
-import com.example.gpstest.domain.repository.InjectionVerification
 import com.example.gpstest.service.AGpsUpdateWorker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,9 +46,6 @@ class AGpsViewModel(
         }
     }
 
-    private val _verification = MutableStateFlow<InjectionVerification?>(null)
-    val verification: StateFlow<InjectionVerification?> = _verification.asStateFlow()
-
     private val _validationResult = MutableStateFlow<FileValidationResult?>(null)
     val validationResult: StateFlow<FileValidationResult?> = _validationResult.asStateFlow()
 
@@ -63,19 +58,6 @@ class AGpsViewModel(
                     AGpsUiState.Success("A-GPS数据注入成功，请返回主界面查看卫星状态验证效果")
                 } else {
                     AGpsUiState.Error(result.exceptionOrNull()?.message ?: "下载失败")
-                }
-        }
-    }
-
-    fun injectFromFile(uri: Uri) {
-        viewModelScope.launch {
-            _uiState.value = AGpsUiState.Injecting
-            val result = repository.injectFromFile(uri.toString())
-            _uiState.value =
-                if (result.isSuccess) {
-                    AGpsUiState.Success("文件注入成功")
-                } else {
-                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "注入失败")
                 }
         }
     }
@@ -106,13 +88,6 @@ class AGpsViewModel(
         }
     }
 
-    fun verifyInjection(satellites: List<GnssSatellite>) {
-        viewModelScope.launch {
-            val result = repository.verifyInjection(satellites)
-            _verification.value = result
-        }
-    }
-
     fun updateSettings(settings: AGpsSettings) {
         viewModelScope.launch {
             repository.updateSettings(settings)
@@ -128,12 +103,6 @@ class AGpsViewModel(
     fun refreshStatus() {
         viewModelScope.launch {
             repository.refreshStatus()
-        }
-    }
-
-    fun clearHistory() {
-        viewModelScope.launch {
-            repository.clearHistory()
         }
     }
 

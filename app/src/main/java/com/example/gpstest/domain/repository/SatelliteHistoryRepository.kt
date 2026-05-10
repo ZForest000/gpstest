@@ -9,11 +9,5 @@ interface SatelliteHistoryRepository {
 
     suspend fun saveSnapshot(satellites: List<GnssSatellite>)
 
-    suspend fun getSnapshotsSince(timestamp: Long): List<SatelliteHistorySnapshot>
-
-    suspend fun getLatestSnapshot(): SatelliteHistorySnapshot?
-
     suspend fun clearHistory()
-
-    suspend fun clearOldSnapshots(olderThanTimestamp: Long)
 }

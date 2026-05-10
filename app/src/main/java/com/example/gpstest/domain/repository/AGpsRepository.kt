@@ -13,8 +13,6 @@ interface AGpsRepository {
 
     suspend fun downloadAndInject(): Result<Unit>
 
-    suspend fun injectFromFile(fileUri: String): Result<Unit>
-
     suspend fun injectTime(): Result<Unit>
 
     suspend fun clearApsData(): Result<Unit>
@@ -22,8 +20,6 @@ interface AGpsRepository {
     suspend fun refreshStatus()
 
     suspend fun updateSettings(settings: AGpsSettings)
-
-    suspend fun clearHistory()
 
     suspend fun verifyInjection(satellites: List<GnssSatellite>): InjectionVerification
 
