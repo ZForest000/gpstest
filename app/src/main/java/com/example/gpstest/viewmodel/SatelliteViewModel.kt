@@ -20,6 +20,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * 卫星监控 ViewModel。管理 GNSS 数据收集、信号历史、TTFF 跟踪和快照自动保存。
+ *
+ * 数据流：GNSS 数据流 → 分组过滤 → UI State + DOP 计算 + 信号历史 + 快照存储。
+ * 信号历史：每颗卫星维护一个 60 秒环形缓冲区（[maxSignalHistorySize]），用于信号图表。
+ * 快照：每分钟（[snapshotIntervalMs]）自动保存一次卫星状态到 DataStore。
+ */
 class SatelliteViewModel(
     application: Application,
     private val repository: GnssRepository,
@@ -38,10 +45,10 @@ class SatelliteViewModel(
     val ttffState: StateFlow<TtffState> = _ttffState.asStateFlow()
 
     private var lastSnapshotTime = 0L
-    private val snapshotIntervalMs = 60_000L
+    private val snapshotIntervalMs = 60_000L // 自动快照间隔：1 分钟（平衡粒度和存储量）
     private var collectionJob: Job? = null
 
-    private val maxSignalHistorySize = 60
+    private val maxSignalHistorySize = 60 // 每颗卫星保留 60 秒历史数据
 
     init {
         loadHistory()
@@ -79,6 +86,7 @@ class SatelliteViewModel(
             }
     }
 
+    // TTFF（Time To First Fix）：从 startListening 到首次有效位置的时间差
     private fun updateTtffState(location: LocationInfo?) {
         val currentState = _ttffState.value
         if (location != null && currentState is TtffState.Measuring) {
@@ -91,6 +99,8 @@ class SatelliteViewModel(
         _ttffState.value = TtffState.Measuring(System.currentTimeMillis())
     }
 
+    // 按"星座名称_SVID"为键，为每颗卫星维护信号历史环形缓冲区
+    // 超过 maxSignalHistorySize 的旧数据从头部移除
     private fun updateSignalHistory(satellites: List<GnssSatellite>) {
         val now = System.currentTimeMillis()
         val currentHistory = _signalHistory.value.toMutableMap()
@@ -114,6 +124,7 @@ class SatelliteViewModel(
         return _signalHistory.value[key] ?: emptyList()
     }
 
+    // 距离上次快照超过 snapshotIntervalMs 时异步保存新快照
     private fun maybeSaveSnapshot(satellites: List<GnssSatellite>) {
         val now = System.currentTimeMillis()
         if (now - lastSnapshotTime >= snapshotIntervalMs) {
@@ -154,12 +165,20 @@ class SatelliteViewModel(
         _uiState.value = SatelliteUiState.PermissionRequired
     }
 
+    // 取消收集 Job 防止 ViewModel 销毁后仍在发射值
     override fun onCleared() {
         super.onCleared()
         collectionJob?.cancel()
     }
 }
 
+/**
+ * 卫星列表界面状态。
+ * - Loading：初始加载中
+ * - PermissionRequired：缺少定位权限
+ * - Success：数据正常，包含分组后的卫星列表、位置、时钟、DOP 信息
+ * - Error：GNSS 数据流异常中断
+ */
 sealed interface SatelliteUiState {
     data object Loading : SatelliteUiState
 
@@ -181,6 +200,7 @@ sealed interface SatelliteUiState {
     ) : SatelliteUiState
 }
 
+/** 首次定位时间（Time To First Fix）状态：Measuring 测量中 / Completed 已完成。 */
 sealed interface TtffState {
     data class Measuring(
         val startTime: Long,

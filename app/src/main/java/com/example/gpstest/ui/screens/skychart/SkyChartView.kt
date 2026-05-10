@@ -33,6 +33,11 @@ private data class SatellitePlot(
     val visualRadius: Float,
 )
 
+/**
+ * 天空图极坐标画布。中心 = 天顶（仰角 90°），边缘 = 地平线（仰角 0°）。
+ * 卫星点半径与 CN0 成正比（信号越强，点越大）。
+ * 方位角 0° = 正北（坐标变换见 azimuthDegrees - 90 处注释）。
+ */
 @Composable
 fun SkyChartView(
     satellites: List<GnssSatellite>,
@@ -67,6 +72,8 @@ fun SkyChartView(
             plottableSatellites.map { sat ->
                 val elRad = sat.elevationDegrees.coerceIn(0f, 90f)
                 val azRad = Math.toRadians((sat.azimuthDegrees - 90.0))
+                // az - 90：数学坐标系角度 0 为 +X 轴（屏幕右方），
+                // 减 90° 使方位角 0°（正北）显示在屏幕顶部
                 val r = (1f - elRad / 90f) * maxRadius
                 val x = center.x + r * cos(azRad).toFloat()
                 val y = center.y + r * sin(azRad).toFloat()
@@ -85,6 +92,7 @@ fun SkyChartView(
                     }.pointerInput(plots) {
                         detectTapGestures { offset ->
                             val hit =
+                                // 最近邻命中检测（卫星点可能重叠，不使用严格的圆内判断）
                                 plots.minByOrNull { plot ->
                                     val dx = offset.x - plot.x
                                     val dy = offset.y - plot.y

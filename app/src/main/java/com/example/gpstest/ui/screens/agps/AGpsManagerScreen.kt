@@ -49,6 +49,7 @@ import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
+// 4 个区域：状态卡片 → 自动更新配置 → 手动操作按钮 → 注入历史（含验证结果卡片）
 @Composable
 fun AGpsManagerScreen(
     viewModel: AGpsViewModel,

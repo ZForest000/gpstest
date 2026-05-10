@@ -21,6 +21,19 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+/**
+ * Android GNSS 平台 API 的统一数据源实现。
+ *
+ * 将 4 个独立平台回调合并为单个 [Flow]：
+ * 1. [GnssStatus.Callback] — 卫星列表（星座、CN0、方位角、仰角、星历/历书状态）
+ * 2. [GnssMeasurementsEvent.Callback] — 原始测量值（多普勒、多路径、ADR、载波相位）
+ * 3. [LocationListener] — 位置信息（经纬度、海拔、精度）
+ * 4. [SensorEventListener] — 气压传感器（用于气压高度辅助）
+ *
+ * 合并策略：测量回调先触发，将每颗卫星的测量数据暂存到 [measurementMap]；
+ * 状态回调随后触发时，通过"星座类型_SVID"键将测量数据与卫星合并。
+ * 任一回调触发时都尝试通过 [trySend] 发射最新的 [GnssData]。
+ */
 class GnssDataSourceImpl(
     private val context: Context,
 ) : GnssDataSource {
@@ -39,6 +52,8 @@ class GnssDataSourceImpl(
             var currentClock: GnssClockData? = null
             var currentDumpsysData: DumpsysGnssData? = null
 
+            // 由于 Android 将 GNSS 测量值和状态分开在两个回调中传递，
+            // 此结构用于暂存测量数据，在状态回调通过"星座类型_SVID"键合并
             data class MeasurementExtras(
                 val carrierCycles: Long?,
                 val dopplerShiftHz: Double?,
@@ -70,6 +85,8 @@ class GnssDataSourceImpl(
                                 } else {
                                     null
                                 }
+                            // 多普勒频移 = -伪距率 × 载波频率 / 光速
+                            // 负号：卫星接近时伪距率负值 → 多普勒正值（蓝移）
                             val dopplerShift =
                                 if (carrierFreqHz != null) {
                                     -measurement.pseudorangeRateMetersPerSecond * carrierFreqHz / speedOfLight
@@ -89,22 +106,17 @@ class GnssDataSourceImpl(
                                             null
                                         },
                                     multipathIndicator = MultipathIndicator.fromInt(measurement.multipathIndicator),
+                                    // 仅 ADR_STATE_VALID 置位时使用 ADR 值，否则可能含周跳导致的整数跳变
                                     accumulatedDeltaRangeMeters =
-                                        if ((measurement.accumulatedDeltaRangeState and GnssMeasurement.ADR_STATE_VALID) !=
-                                            0
-                                        ) {
+                                        if ((measurement.accumulatedDeltaRangeState and GnssMeasurement.ADR_STATE_VALID) != 0) {
                                             measurement.accumulatedDeltaRangeMeters
                                         } else {
                                             null
                                         },
                                     accumulatedDeltaRangeState = measurement.accumulatedDeltaRangeState,
                                     accumulatedDeltaRangeUncertaintyMeters =
-                                        if ((
-                                                measurement.accumulatedDeltaRangeState and
-                                                    GnssMeasurement.ADR_STATE_VALID
-                                            ) !=
-                                            0
-                                        ) {
+                                        // ADR 无效时不确定性也无意义，一并置为 null
+                                        if ((measurement.accumulatedDeltaRangeState and GnssMeasurement.ADR_STATE_VALID) != 0) {
                                             measurement.accumulatedDeltaRangeUncertaintyMeters
                                         } else {
                                             null
@@ -250,7 +262,8 @@ class GnssDataSourceImpl(
 
                                 satellites.add(satellite)
                             } catch (e: Exception) {
-                                // Skip invalid satellite
+                                // 部分设备上报格式异常的卫星条目（如 constellationType = -1），
+                                // 单独跳过该条目而非让整个状态更新失败
                             }
                         }
 
@@ -278,6 +291,8 @@ class GnssDataSourceImpl(
                     }
                 }
 
+            // 气压计海拔使用标准大气压模型（SensorManager.PRESSURE_STANDARD_ATMOSPHERE）
+            // 缺乏当地海平面气压参考，高度值存在系统性偏差但趋势信息仍然可用
             val pressureListener =
                 object : SensorEventListener {
                     override fun onSensorChanged(event: SensorEvent?) {
@@ -346,6 +361,8 @@ class GnssDataSourceImpl(
             }
 
             awaitClose {
+                // callbackFlow 要求协程取消时注销所有监听器以防止泄漏
+                // 注销顺序不影响正确性，但必须全部移除
                 try {
                     locationManager?.unregisterGnssStatusCallback(callback)
                     locationManager?.unregisterGnssMeasurementsCallback(measurementCallback)
@@ -362,6 +379,8 @@ class GnssDataSourceImpl(
         return lm.allProviders.contains("gps")
     }
 
+    // 将 [Constellation] 枚举映射为 Android [GnssStatus] 的整型常量
+    // 1=GPS, 2=SBAS, 3=GLONASS, 4=QZSS, 5=北斗, 6=伽利略, 0=未知
     private fun toConstellationType(constellation: Constellation): Int =
         when (constellation) {
             Constellation.GPS -> 1

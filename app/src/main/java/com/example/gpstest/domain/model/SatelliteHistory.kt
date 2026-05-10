@@ -5,6 +5,10 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
+/**
+ * 历史快照中的单颗卫星记录。仅保存可跨时间对比的稳定字段，
+ * 原始测量值（多普勒、多路径等）因波动过快，不适合历史分析而排除。
+ */
 @Serializable
 data class SatelliteHistoryEntry(
     val timestamp: Long,
@@ -30,6 +34,10 @@ data class SatelliteHistoryEntry(
     }
 }
 
+/**
+ * 某一时刻所有可见卫星的快照。使用 JSON 编码的 entriesJson 存储卫星列表，
+ * 而非多键存储，因为 DataStore 操作是单键原子性的。
+ */
 @Serializable
 data class SatelliteHistorySnapshot(
     val timestamp: Long,
@@ -82,6 +90,7 @@ data class SatelliteHistorySnapshot(
     }
 }
 
+/** 历史快照存储配置。100 个快照 × 60 秒间隔 ≈ 1.7 小时，保留 7 天。 */
 data class SatelliteHistoryConfig(
     val maxSnapshots: Int = 100,
     val snapshotIntervalMs: Long = 60_000L,

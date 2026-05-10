@@ -10,6 +10,7 @@ data class ValidationResult(
     val details: String = "",
 )
 
+/** 验证失败类型：EMPTY_DATA/TOO_SMALL/TOO_LARGE（大小异常）、ERROR_PAGE_DETECTED（HTML/JSON 错误响应）、INVALID_FORMAT（非二进制内容）、INVALID_MIME_TYPE。 */
 enum class ValidationErrorType {
     EMPTY_DATA,
     TOO_SMALL,
@@ -20,6 +21,20 @@ enum class ValidationErrorType {
     VALIDATION_FAILED,
 }
 
+/**
+ * XTRA 数据文件验证器。
+ *
+ * 下载的 XTRA 数据在传递给 GPS HAL 前进行防御性检查，检测常见故障模式：
+ * - HTML 错误页面：CDN URL 过期后返回 404 页面而非 XTRA 二进制数据
+ * - JSON 错误响应：API 网关返回的错误信息
+ * - 非二进制内容：下载了错误的文件格式
+ *
+ * Android GPS HAL 对无效数据会静默忽略，因此注入前验证是必要的防线。
+ *
+ * @property minSizeBytes 最小有效大小，默认 1KB
+ * @property maxSizeBytes 最大有效大小，默认 2MB
+ * @property strictMode debug 模式下启用 MIME 类型检查
+ */
 class XtraDataValidator(
     private val minSizeBytes: Int = 1024,
     private val maxSizeBytes: Int = 2 * 1024 * 1024,
@@ -108,6 +123,10 @@ class XtraDataValidator(
         return ValidationResult(isValid = true)
     }
 
+    // 三种检测策略：
+    // 1. HTML 签名检查 — CDN 过期 URL 返回 HTML 错误页而非 404
+    // 2. JSON 签名检查 — API 网关返回 {"error":"..."}
+    // 3. 可打印字符比例 — 真实 XTRA 二进制 ~30-50%；>95% 且 >2KB 疑为文本
     private fun detectInvalidFormat(data: ByteArray): ValidationResult? {
         val header = data.take(100).toByteArray()
 
@@ -144,6 +163,8 @@ class XtraDataValidator(
         return null
     }
 
+    // debug 模式下拒绝 text/*、application/json 等可疑 MIME 类型
+    // release 模式下未知 MIME 仅记录日志不拦截（生产服务器可能使用非标准头）
     private fun validateMimeType(mimeType: String): ValidationResult {
         val normalizedMime = mimeType.lowercase().trim()
 

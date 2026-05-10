@@ -145,6 +145,7 @@ fun SatelliteDetailSheet(
         if (signalHistory.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
 
+// 信号图表显示该卫星最近 60 秒的 CN0 变化，用于评估信号稳定性
             DetailSection(stringResource(R.string.signal_chart)) {
                 SignalChart(
                     readings = signalHistory,

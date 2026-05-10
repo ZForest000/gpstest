@@ -15,6 +15,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * A-GPS 管理界面 ViewModel。管理下载注入、时间同步、数据清除和自动更新设置。
+ *
+ * 状态机：[AGpsUiState] 表示操作过程：
+ * Idle → Downloading/Injecting → Success(message) → Idle（UI 调用 [clearMessage]）
+ *                      ↘ Error(message)  → Idle（UI 调用 [clearMessage]）
+ */
 class AGpsViewModel(
     application: Application,
     private val repository: AGpsRepository,
@@ -88,6 +95,7 @@ class AGpsViewModel(
         }
     }
 
+    // 更新设置后立即调度或取消 WorkManager 周期性任务
     fun updateSettings(settings: AGpsSettings) {
         viewModelScope.launch {
             repository.updateSettings(settings)
@@ -143,6 +151,14 @@ class AGpsViewModel(
     }
 }
 
+/**
+ * A-GPS 管理界面操作状态。
+ * - Idle：空闲状态，无操作进行中
+ * - Downloading：正在下载 XTRA 数据
+ * - Injecting：正在执行注入/时间同步/清除等操作
+ * - Success：操作成功完成，message 为提示文本
+ * - Error：操作失败，message 为错误描述
+ */
 sealed interface AGpsUiState {
     data object Idle : AGpsUiState
 

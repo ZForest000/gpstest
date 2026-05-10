@@ -20,6 +20,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 
+/**
+ * A-GPS 仓库实现。核心编排器：下载 → 验证 → 注入 → 状态跟踪。
+ *
+ * 实现多 URL 回落策略：用户配置 URL → 3 个 Qualcomm 默认地址。
+ * 通过 [LocationManager.sendExtraCommand] 将 XTRA 数据的 URL 直接传递给
+ * GPS HAL（硬件层内部处理下载），避免在 Java/Kotlin 层复制大二进制数据。
+ */
 class AGpsRepositoryImpl(
     private val dataSource: AGpsDataSource,
     private val downloader: AGpsDownloader,
@@ -29,9 +36,14 @@ class AGpsRepositoryImpl(
 ) : AGpsRepository {
     companion object {
         private const val TAG = "AGpsRepository"
+        // GPS 广播星历每 2 小时更新，有效期约 4 小时；超期后卫星钟差预报发散，精度下降
         private const val EPHEMERIS_VALID_HOURS = 4L
+        // 历书为粗轨道信息，有效期数周至数月，保守用 30 天
         private const val ALMANAC_VALID_DAYS = 30L
+        // 时间注入后接收机内部时钟漂移约 1μs/天，24h 内可接受
         private const val TIME_VALID_HOURS = 24L
+        // 至少 50% 可见卫星有有效星历或历书才认为注入成功
+        // 低于此比例常意味着数据过期或下载了错误文件（如 HTML 错误页面）
         private const val MIN_SUCCESS_RATIO = 0.5f
     }
 
@@ -43,6 +55,8 @@ class AGpsRepositoryImpl(
     private val _injectionHistory = MutableStateFlow<List<AGpsInjectionRecord>>(emptyList())
     override val injectionHistory: Flow<List<AGpsInjectionRecord>> = _injectionHistory.asStateFlow()
 
+    // 回落策略：先尝试用户配置的 URL，失败后依次尝试 3 个默认地址
+    // 每种 URL 的下载 + 注入均失败后才切换下一个
     override suspend fun downloadAndInject(): Result<Unit> {
         Log.d(TAG, "downloadAndInject: Starting...")
         val currentSettings = settings.first()
@@ -133,6 +147,8 @@ class AGpsRepositoryImpl(
         return result
     }
 
+    // 间接验证法：Android LocationManager API 不提供"注入是否成功"的反馈，
+    // 因此改为统计注入后可见卫星中 hasEphemeris/hasAlmanac 的比例来推断
     override suspend fun verifyInjection(satellites: List<GnssSatellite>): InjectionVerification {
         if (satellites.isEmpty()) {
             Log.d(TAG, "verifyInjection: No satellites to verify")
@@ -190,6 +206,9 @@ class AGpsRepositoryImpl(
         )
     }
 
+    // 基于时间衰减模型更新数据状态，不查询 GPS 硬件
+    // 星历 4h 内 VALID，4-8h PARTIAL，之后 EXPIRED
+    // 历书 30 天内 VALID，之后 EXPIRED
     override suspend fun refreshStatus() {
         val currentStatus = _status.value
         val now = System.currentTimeMillis()
@@ -249,6 +268,7 @@ class AGpsRepositoryImpl(
                 errorMessage = errorMessage,
             )
 
+        // 历史记录上限 50 条，新的插入头部，最旧的移除
         _injectionHistory.update { listOf(record) + it.take(49) }
     }
 

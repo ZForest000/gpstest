@@ -13,10 +13,18 @@ import com.example.gpstest.domain.repository.AGpsRepositoryImpl
 import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
+/**
+ * WorkManager 周期性后台任务，定期下载并注入 A-GPS 预测数据。
+ *
+ * 自动更新间隔由 [AGpsSettings.updateIntervalHours] 控制。
+ * 失败时 WorkManager 自动以指数退避重试。
+ * 未启用自动更新时直接返回 [Result.success] 跳过执行。
+ */
 class AGpsUpdateWorker(
     context: Context,
     workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams) {
+    // WorkManager 反序列化 Worker 时无法注入依赖，因此在此处重建全部依赖链
     override suspend fun doWork(): Result {
         val settingsStore = AGpsSettingsStore(applicationContext)
         val settings = settingsStore.settings.first()
@@ -50,6 +58,7 @@ class AGpsUpdateWorker(
     companion object {
         private const val WORK_NAME = "agps_update_work"
 
+        // UPDATE 策略：更改间隔时替换旧的周期性任务而非创建重复任务
         fun schedule(
             context: Context,
             intervalHours: Int,
