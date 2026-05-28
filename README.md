@@ -9,7 +9,6 @@
 - **实时卫星追踪**：显示当前可见的所有 GNSS 卫星，按「已定位」「可见」「搜索中」分组展示
 - **多星座支持**：GPS、GLONASS、Galileo、BeiDou、QZSS、SBAS
 - **星座健康摘要**：以进度条形式展示各星座卫星可用比例
-- **星座统计**：各星座卫星数量统计卡片
 - **信号强度图表**：60 秒滚动历史信号强度（C/N0）可视化
 - **卫星详情**：底部弹窗查看每颗卫星的方位角、高度角、信噪比等详细信息
 - **星历/历书状态**：指示卫星是否拥有有效星历和历书数据
@@ -23,7 +22,7 @@
 
 ### 精度因子 (DOP)
 
-- **PDOP**：位置精度衰减因子，综合评估定位精度
+- **PDOP**：位置精度衰减因子，综合评估定位精度（4×4 Gauss-Jordan 矩阵求逆）
 - **HDOP**：水平精度衰减因子
 - **VDOP**：垂直精度衰减因子
 - **质量等级**：根据 DOP 值自动评估定位质量（优秀/良好/中等/较差/差）
@@ -52,20 +51,21 @@
 - **状态检测**：检测 Shizuku 是否运行及权限状态
 - **模式识别**：识别 ROOT 或 ADB 模式
 - **dumpsys 数据**：通过 Shizuku 获取 GNSS dumpsys 系统级测量数据（基带 C/N0、测量计数、参与定位的星座列表）
+- **非侵入式设计**：Shizuku 不可用时不影响基本功能
 
 ### A-GPS 管理
 
-- **XTRA 数据下载**：自动下载 Qualcomm XTRA 辅助定位数据
+- **XTRA 数据下载**：自动下载 Qualcomm XTRA 辅助定位数据（OhHttp + 多 URL 回退）
 - **数据注入**：下载后自动验证并注入到定位引擎
-- **定时更新**：支持设置自动更新间隔（WorkManager 后台任务）
+- **定时更新**：支持设置自动更新间隔（WorkManager 后台任务，指数退避重试）
 - **数据验证**：验证下载数据的完整性和格式
 - **状态监控**：显示 A-GPS 数据的有效期和状态
 - **文件导入**：支持从文件导入 A-GPS 数据
 
 ### 历史记录
 
-- **卫星历史快照**：自动定期保存卫星状态快照
-- **数据持久化**：使用 DataStore 保存历史数据
+- **卫星历史快照**：自动定期保存卫星状态快照（每 60 秒）
+- **数据持久化**：使用 DataStore Preferences + kotlinx-serialization JSON
 - **历史浏览**：查看历史卫星分布和信号强度
 
 ### 帮助系统
@@ -80,6 +80,7 @@
 ## 导航
 
 应用采用 **导航抽屉（Navigation Drawer）**，包含五个页面：
+
 - **卫星列表** — 实时卫星数据、定位信息、TTFF、DOP、时钟、星座健康概览
 - **天空图** — 卫星位置极坐标可视化
 - **A-GPS 管理** — A-GPS 下载、注入、定时更新配置
@@ -88,128 +89,151 @@
 
 ## 技术栈
 
-- **UI 框架**：Jetpack Compose + Material Design 3
-- **架构模式**：MVVM（Model-View-ViewModel）
-- **异步处理**：Kotlin Coroutines + Flow
-- **依赖注入**：手动注入（Factory 模式）
-- **数据存储**：DataStore Preferences
-- **后台任务**：WorkManager
-- **网络请求**：OkHttp
-- **权限增强**：Shizuku API（可选，用于系统级权限和 dumpsys 数据）
-- **最低 SDK**：API 24 (Android 7.0)
-- **目标 SDK**：API 35 (Android 15)
+| 分类 | 技术 | 版本 |
+|------|------|------|
+| **语言** | Kotlin | 2.1.0 |
+| **UI** | Jetpack Compose + Material 3 | BOM 2024.10.01 |
+| **构建** | Android Gradle Plugin | 8.7.3 |
+| **构建** | Gradle | 8.9 |
+| **JDK（源码兼容）** | JDK | 17 |
+| **JDK（构建运行时）** | JDK | 21 |
+| **最低 SDK** | Android | API 24 (Android 7.0) |
+| **目标 SDK** | Android | API 35 (Android 15) |
+| **架构** | Clean MVVM | — |
+| **异步** | Kotlin Coroutines + Flow | 1.9.0 |
+| **序列化** | kotlinx-serialization-json | 1.7.3 |
+| **DI** | 手动注入（Factory 模式） | — |
+| **网络** | OkHttp | 4.12.0 |
+| **存储** | DataStore Preferences | 1.1.1 |
+| **后台任务** | WorkManager | 2.10.0 |
+| **权限增强** | Shizuku API | 13.1.5 |
+| **代码风格** | Kotlin official | — |
+| **代码检查** | ktlint（android 模式） | 1.5.0 |
 
 ## 项目结构
 
 ```
 app/src/main/java/com/example/gpstest/
-├── data/                          # 数据层
-│   ├── local/                     # 本地数据源
-│   │   ├── AGpsFileHandler.kt     # A-GPS 文件处理
-│   │   ├── AGpsSettingsStore.kt   # A-GPS 设置存储
-│   │   └── SatelliteHistoryDataStore.kt  # 卫星历史数据存储
-│   ├── source/                    # 远程/设备数据源
-│   │   ├── AGpsDataSource.kt      # A-GPS 数据源接口
-│   │   ├── AGpsDataSourceImpl.kt  # A-GPS 数据源实现
-│   │   ├── AGpsDownloader.kt      # A-GPS 下载器
-│   │   ├── GnssDataSource.kt      # GNSS 数据源接口
-│   │   ├── GnssDataSourceImpl.kt  # GNSS 数据源实现
-│   │   └── ShizukuHelper.kt       # Shizuku 权限辅助类
-│   └── validator/                 # 数据验证
-│       └── XtraDataValidator.kt   # XTRA 数据验证
-├── domain/                        # 领域层
-│   ├── model/                     # 领域模型
-│   │   ├── AGpsStatus.kt          # A-GPS 状态
-│   │   ├── Constellation.kt       # 卫星星座枚举
-│   │   ├── DopInfo.kt             # 精度衰减因子数据
-│   │   ├── GnssClockData.kt       # GNSS 时钟数据
-│   │   ├── GnssData.kt            # GNSS 数据聚合
-│   │   ├── GnssSatellite.kt       # 卫星信息（含 AGC、多路径、基带信噪比等）
-│   │   ├── LocationInfo.kt        # 定位信息
-│   │   ├── SatelliteGroup.kt      # 卫星分组枚举（已定位/可见/搜索中）
-│   │   └── SatelliteHistory.kt    # 卫星历史
-│   ├── repository/                # 仓库接口和实现
-│   │   ├── AGpsRepository.kt      # A-GPS 仓库接口
-│   │   ├── AGpsRepositoryImpl.kt
-│   │   ├── GnssRepository.kt      # GNSS 仓库接口
-│   │   ├── GnssRepositoryImpl.kt
-│   │   ├── SatelliteHistoryRepository.kt
-│   │   └── SatelliteHistoryRepositoryImpl.kt
-│   └── util/                      # 工具类
-│       └── DopCalculator.kt       # 精度因子计算
-├── service/                       # 后台服务
-│   └── AGpsUpdateWorker.kt        # A-GPS 更新工作器
-├── ui/                            # UI 层
-│   ├── components/                # 可复用组件
-│   │   ├── AGpsStatusCard.kt      # A-GPS 状态卡片
-│   │   ├── ClockInfoCard.kt       # 时钟信息卡片
-│   │   ├── ConstellationHealthSummaryCard.kt  # 星座健康摘要
-│   │   ├── ConstellationStatCard.kt           # 星座统计卡片
-│   │   ├── ConstellationUiExt.kt  # 星座 UI 扩展
-│   │   ├── DopCard.kt             # 精度因子卡片
-│   │   ├── HistorySnapshotCard.kt # 历史快照卡片
-│   │   ├── LocationCard.kt        # 位置信息卡片
-│   │   ├── SatelliteCard.kt       # 卫星信息卡片
-│   │   ├── SatelliteDetailSheet.kt # 卫星详情底部弹窗
-│   │   ├── SharedComponents.kt    # 共享 UI 组件
-│   │   ├── SignalChart.kt         # 信号强度图表
-│   │   ├── StatBar.kt             # 统计信息栏
-│   │   ├── TtffCard.kt            # 首次定位时间卡片
-│   │   └── UiUtils.kt             # UI 工具函数
-│   ├── screens/                   # 页面
-│   │   ├── agps/                  # A-GPS 管理页面
-│   │   ├── help/                  # 帮助页面
-│   │   ├── history/               # 历史记录页面
-│   │   ├── satellite/             # 卫星列表页面
-│   │   └── skychart/              # 卫星天空图页面
-│   └── theme/                     # 主题配置
+├── MainActivity.kt                # 唯一 Activity，Compose 入口，DI 装配，权限，导航
 ├── viewmodel/                     # ViewModel
-│   ├── AGpsViewModel.kt           # A-GPS ViewModel
-│   └── SatelliteViewModel.kt      # 卫星 ViewModel
-├── MainActivity.kt                # 主 Activity（导航、权限、DI）
-└── GpstestApplication.kt          # Application 类
+│   ├── SatelliteViewModel.kt      # GNSS 数据收集、信号历史、TTFF、自动快照、DOP
+│   └── AGpsViewModel.kt           # A-GPS 下载/注入生命周期，WorkManager 调度
+├── domain/                        # 领域层
+│   ├── model/                     # GnssData, GnssSatellite, Constellation, LocationInfo,
+│   │                              #   GnssClockData, DopInfo, AGpsStatus, AGpsSettings,
+│   │                              #   SatelliteHistory, SatelliteGroup
+│   ├── repository/                # 仓库接口 + Impl 实现
+│   │   ├── GnssRepository.kt / GnssRepositoryImpl.kt
+│   │   ├── AGpsRepository.kt / AGpsRepositoryImpl.kt
+│   │   └── SatelliteHistoryRepository.kt / SatelliteHistoryRepositoryImpl.kt
+│   └── util/                      # DopCalculator（4×4 Gauss-Jordan 矩阵求逆）
+├── data/                          # 数据层
+│   ├── source/                    # GnssDataSource, AGpsDataSource, ShizukuHelper
+│   │                              #   (Interface + Impl)
+│   ├── local/                     # SatelliteHistoryDataStore, AGpsSettingsStore,
+│   │                              #   AGpsFileHandler (Interface + Impl)
+│   └── validator/                 # XtraDataValidator
+├── service/                       # AGpsUpdateWorker (WorkManager CoroutineWorker)
+└── ui/                            # 表现层
+    ├── screens/                   # 页面（各页面独立子包）
+    │   ├── satellite/             # SatelliteListScreen
+    │   ├── skychart/              # SkyChartView
+    │   ├── agps/                  # AGpsManagerScreen
+    │   ├── history/               # HistoryScreen
+    │   └── help/                  # HelpScreen
+    ├── navigation/                # 导航配置
+    ├── permission/                # 权限处理
+    ├── components/                # 可复用组件（SatelliteCard, SignalChart,
+    │                              #   LocationCard, DopCard, ClockInfoCard,
+    │                              #   TtffCard, ConstellationHealthSummaryCard 等 15 个）
+    └── theme/                     # Color, Type, Theme
 ```
+
+## 架构与数据流
+
+### Clean MVVM + 单向数据流
+
+```
+data layer ──→ domain layer ──→ presentation layer
+(sources,       (repo interfaces,   (ViewModels +
+ persistence,     models, utils)      Compose UI)
+ validators)
+```
+
+**关键数据管线**：
+
+- **GNSS**：Android 平台回调 (GnssStatus + GnssMeasurements + Location + barometer) → `callbackFlow` merge → `Flow<GnssData>` → `GnssRepositoryImpl` → `SatelliteViewModel` → `StateFlow<SatelliteUiState>` → `collectAsState()` → UI
+- **A-GPS**：用户操作 / WorkManager 触发 → `AGpsViewModel` → `AGpsRepositoryImpl` 协调下载 (OkHttp) → 验证 (`XtraDataValidator`) → 注入 (`LocationManager.sendExtraCommand`)。多 URL 回退：用户 URL → 3 个 Qualcomm izatcloud 默认地址。
+- **历史**：`SatelliteViewModel.maybeSaveSnapshot()` (每 60s) → `SatelliteHistoryRepositoryImpl` → `SatelliteHistoryDataStore` (DataStore + JSON) → `StateFlow` → `HistoryScreen`
+
+**状态管理**：`MutableStateFlow` 在 ViewModel 中，暴露为只读 `StateFlow`。UI sealed states：
+- `SatelliteUiState`：Loading → PermissionRequired → Success(...) → Error(message)
+- `AGpsUiState`：Idle → Downloading → Injecting → Success(message) → Error(message)
+
+**错误处理**：全链路 `Result<T>`。ViewModel 层 `try/catch` + sealed error states。A-GPS 多 URL 回退。WorkManager 指数退避重试。
+
+## 开发命令
+
+```bash
+# 构建
+./gradlew assembleDebug          # Debug APK
+./gradlew assembleRelease        # Release APK（无签名配置，需自行设置）
+
+# 测试
+./gradlew test                   # 运行全部单元测试
+./gradlew testDebugUnitTest      # 显式 Debug 单元测试
+
+# 代码检查
+./gradlew ktlintCheck            # ktlint 代码风格检查
+
+# 安装
+./gradlew installDebug           # 安装 Debug APK 到设备
+```
+
+## 测试
+
+**框架**：JUnit 4.13.2。无 mocking 库，无 Robolectric，无 Truth。
+
+**范围**：6 个测试文件覆盖领域层：
+- `domain/model/`：DopInfo, SatelliteHistory, Constellation, GnssData, GnssClockData
+- `domain/util/`：DopCalculator
+
+**测试命名**：反引号描述性名称，如 `` `quality is EXCELLENT when pdop less than 1` ``
+
+**未测试**：ViewModels、DataSources、Repositories（除领域逻辑外）、UI、Services、Workers、Validators。
+
+## CI/CD
+
+GitHub Actions（`.github/workflows/ci.yml`）：push / PR 到 `master` 分支时触发：
+- JDK 21 构建环境
+- `./gradlew test` 运行所有单元测试
+- `assembleDebug` + `assembleRelease` 构建
+- 上传 APK 和测试结果
 
 ## 权限要求
 
-应用需要以下权限：
-
-- `ACCESS_FINE_LOCATION` - 精确定位权限
-- `ACCESS_COARSE_LOCATION` - 粗略定位权限
-- `ACCESS_LOCATION_EXTRA_COMMANDS` - 发送定位相关命令（用于注入 A-GPS 数据）
-- `INTERNET` - 网络访问权限（下载 A-GPS 数据）
+- `ACCESS_FINE_LOCATION` — 精确定位权限
+- `ACCESS_COARSE_LOCATION` — 粗略定位权限
+- `ACCESS_LOCATION_EXTRA_COMMANDS` — 发送定位相关命令（注入 A-GPS 数据）
+- `INTERNET` — 网络访问（下载 A-GPS 数据）
 
 ## 安装说明
 
 ### 环境要求
 
 - Android Studio Ladybug 或更高版本
-- JDK 17 或更高版本
-- Android SDK API 24-35
+- JDK 21（构建运行时）；源码兼容 JDK 17
+- Android SDK Platform 35
 
 ### 构建步骤
-
-1. 克隆仓库
 
 ```bash
 git clone <repository-url>
 cd gpstest
-```
-
-2. 使用 Android Studio 打开项目
-3. 同步 Gradle 依赖
-
-```bash
-./gradlew sync
-```
-
-4. 构建 APK
-
-```bash
 ./gradlew assembleDebug
 ```
 
-或直接在 Android Studio 中点击 "Run" 按钮安装到设备。
+或使用 Android Studio 打开项目，同步 Gradle 后点击 "Run"。
 
 ## 使用指南
 
@@ -243,7 +267,7 @@ cd gpstest
 
 ### 查看历史记录
 
-1. 进入「历史」页面
+1. 进入「历史记录」页面
 2. 查看已保存的卫星状态快照
 3. 点击快照查看详细信息
 
@@ -251,21 +275,21 @@ cd gpstest
 
 ### 响应式 UI
 
-- 使用 Kotlin Flow 实现数据流的响应式更新
-- Compose 的 remember 和 derivedStateOf 优化性能
+- Kotlin Flow 实现数据流响应式更新
+- Compose `remember` 和 `derivedStateOf` 优化性能
 - 自动处理配置变更（屏幕旋转等）
 
 ### 模块化架构
 
-- 清晰的分层架构（Data/Domain/UI）
-- 依赖反转原则，便于测试和维护
+- 三层分离（Data / Domain / UI）
+- 依赖反转原则（Interface + Impl），便于测试和维护
 - Repository 模式统一管理数据来源
 
 ### 后台任务
 
 - WorkManager 实现可靠的定时 A-GPS 更新
-- 支持设备重启后继续任务
-- 智能的重试机制和退避策略
+- 设备重启后继续任务
+- 指数退避重试策略
 
 ### 数据验证
 
@@ -277,11 +301,11 @@ cd gpstest
 
 - 通过 Shizuku 获取系统级 GNSS dumpsys 数据
 - 支持 ROOT 和 ADB 两种运行模式
-- 非侵入式设计：Shizuku 不可用时不影响基本功能
+- 非侵入式：Shizuku 不可用时不影响基本功能
 
 ## 注意事项
 
-1. **GPS 信号**：在室内或遮挡严重的地方可能无法获取卫星信号
+1. **GPS 信号**：室内或遮挡严重的地方可能无法获取卫星信号
 2. **A-GPS 数据**：需要网络连接下载辅助定位数据
 3. **电池消耗**：持续 GPS 定位会增加电量消耗
 4. **Android 版本**：部分高级 GNSS 功能需要 Android 7.0+ 和硬件支持
@@ -289,7 +313,7 @@ cd gpstest
 
 ## 开源协议
 
-本项目采用 MIT 协议开源 - 详见 [LICENSE](LICENSE) 文件
+本项目采用 MIT 协议开源 — 详见 [LICENSE](LICENSE) 文件
 
 ## 贡献指南
 
