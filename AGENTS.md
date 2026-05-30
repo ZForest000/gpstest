@@ -1,133 +1,169 @@
-# Repository Guidelines
+# 仓库指南
 
-## Project Overview
+## 项目概述
 
-Android GPS debug tool for real-time GNSS satellite monitoring and A-GPS management. Supports GPS, GLONASS, Galileo, BeiDou, QZSS, and SBAS constellations. Features include a sky chart, DOP calculation, TTFF tracking, A-GPS XTRA download/injection, satellite history snapshots, and optional Shizuku/root diagnostics.
+Android GPS 调试工具，用于实时 GNSS 卫星监控和 A-GPS 管理。支持 GPS、GLONASS、Galileo、北斗、QZSS 和 SBAS 星座。功能包括天空图、DOP 计算、TTFF 追踪、A-GPS XTRA 下载/注入、卫星历史快照，以及可选的 Shizuku/root 诊断。
 
-**Language**: Kotlin 2.1.0 | **UI**: Jetpack Compose (BOM 2024.10.01) + Material 3 | **Min SDK**: 24 | **Target SDK**: 35
+**语言**: Kotlin 2.1.0 | **UI**: Jetpack Compose (BOM 2024.10.01) + Material 3 | **Min SDK**: 24 | **Target SDK**: 35
 
-## Architecture & Data Flow
+## 架构与数据流
 
-**Pattern**: Clean MVVM with unidirectional data flow. Single Activity, no Fragments.
+**模式**: Clean MVVM，单向数据流。单 Activity，无 Fragment。
 
 ```
-data layer ──→ domain layer ──→ presentation layer
-(sources,       (repo interfaces,   (ViewModels +
- persistence,     models, utils)      Compose UI)
- validators)
+数据层 ──→ 领域层 ──→ 表现层
+(数据源、     (仓库接口、    (ViewModel +
+ 持久化、      模型、工具)     Compose UI)
+ 验证器)
 ```
 
-**Key data pipelines**:
+**核心数据管道**:
 
-- **GNSS**: Android platform callbacks (GnssStatus + GnssMeasurements + Location + barometer) → `callbackFlow` merge in `GnssDataSourceImpl` → `Flow<GnssData>` → `GnssRepositoryImpl` → `SatelliteViewModel` → `StateFlow<SatelliteUiState>` → `collectAsState()` → UI
-- **A-GPS**: User action / WorkManager trigger → `AGpsViewModel` → `AGpsRepositoryImpl` orchestrates download (OkHttp) → validate (`XtraDataValidator`) → inject (`LocationManager.sendExtraCommand`). Multi-URL fallback: user URL → 3 Qualcomm izatcloud defaults.
-- **History**: `SatelliteViewModel.maybeSaveSnapshot()` (every 60s) → `SatelliteHistoryRepositoryImpl` → `SatelliteHistoryDataStore` (DataStore Preferences + kotlinx-serialization JSON) → `StateFlow` → `HistoryScreen`
+- **GNSS**: Android 平台回调 (GnssStatus + GnssMeasurements + Location + 气压计) → `GnssDataSourceImpl` 中的 `callbackFlow` 合并 → `Flow<GnssData>` → `GnssRepositoryImpl` → `SatelliteViewModel` → `StateFlow<SatelliteUiState>` → `collectAsState()` → UI
+- **A-GPS**: 用户操作 / WorkManager 触发 → `AGpsViewModel` → `AGpsRepositoryImpl` 编排下载 (OkHttp) → 验证 (`XtraDataValidator`) → 注入 (`LocationManager.sendExtraCommand`)。多 URL 回退：用户 URL → 3 个 Qualcomm izatcloud 默认地址。
+- **历史**: `SatelliteViewModel.maybeSaveSnapshot()` (每 60 秒) → `SatelliteHistoryRepositoryImpl` → `SatelliteHistoryDataStore` (DataStore Preferences + kotlinx-serialization JSON) → `StateFlow` → `HistoryScreen`
 
-**State management**: `MutableStateFlow` in ViewModels, exposed as read-only `StateFlow`. UI sealed states:
+**状态管理**: ViewModel 中使用 `MutableStateFlow`，对外暴露为只读 `StateFlow`。UI 使用密封状态：
 - `SatelliteUiState`: Loading → PermissionRequired → Success(...) → Error(message)
 - `AGpsUiState`: Idle → Downloading → Injecting → Success(message) → Error(message)
 
-**Dependency injection**: Manual DI via `ViewModelProvider.Factory`. No Hilt/Dagger/Koin. Dependencies constructed in `MainActivity`, passed to factory classes (`SatelliteViewModelFactory`, `AGpsViewModelFactory`). `AGpsUpdateWorker` rebuilds its own dependency chain.
+**依赖注入**: 通过 `ViewModelProvider.Factory` 手动 DI。无 Hilt/Dagger/Koin。依赖在 `MainActivity` 中构建，传入工厂类 (`SatelliteViewModelFactory`, `AGpsViewModelFactory`)。`AGpsUpdateWorker` 自行重建依赖链。
 
-**Error handling**: `Result<T>` throughout repositories and data sources. `try/catch` in ViewModel coroutine scopes with sealed error states. Multi-URL fallback in A-GPS downloads. WorkManager exponential backoff retry.
+**错误处理**: 仓库和数据源中全面使用 `Result<T>`。ViewModel 协程作用域内 `try/catch` 配合密封错误状态。A-GPS 下载支持多 URL 回退。WorkManager 指数退避重试。
 
-## Key Directories
+## 导航
+
+单 Activity (`MainActivity`) + Navigation Compose。三个底部标签页：
+- **SatelliteListScreen** — 实时卫星列表，按状态分组（定位中 / 可见 / 搜索中）
+- **AGpsManagerScreen** — A-GPS 下载、导入、注入、自动更新配置
+- **HistoryScreen** — 浏览保存的卫星数据快照
+
+## 关键目录
 
 ```
 app/src/main/java/com/example/gpstest/
-├── MainActivity.kt              # Sole Activity, Compose entry, DI wiring, permissions, navigation
+├── MainActivity.kt              # 唯一 Activity，Compose 入口，DI 连线，权限，导航
 ├── viewmodel/                   # SatelliteViewModel, AGpsViewModel
 ├── domain/
 │   ├── model/                   # GnssData, GnssSatellite, Constellation, LocationInfo, GnssClockData, DopInfo, AGpsStatus, AGpsSettings, SatelliteHistory, SatelliteGroup
-│   ├── repository/              # Interface + Impl pairs: GnssRepository, AGpsRepository, SatelliteHistoryRepository
-│   └── util/                    # DopCalculator (4×4 Gauss-Jordan matrix inversion)
+│   ├── repository/              # 接口 + 实现配对：GnssRepository, AGpsRepository, SatelliteHistoryRepository
+│   └── util/                    # DopCalculator (4×4 Gauss-Jordan 矩阵求逆)
 ├── data/
-│   ├── source/                  # GnssDataSource, AGpsDataSource, AGpsDownloader, ShizukuHelper (interface + Impl pairs)
+│   ├── source/                  # GnssDataSource, AGpsDataSource, AGpsDownloader, ShizukuHelper (接口 + 实现配对)
 │   ├── local/                   # SatelliteHistoryDataStore, AGpsSettingsStore, AGpsFileHandler/Impl
 │   └── validator/               # XtraDataValidator
 ├── service/                     # AGpsUpdateWorker (WorkManager CoroutineWorker)
 └── ui/
     ├── screens/                 # SatelliteListScreen, SkyChartScreen, AGpsManagerScreen, HistoryScreen, HelpScreen
-    ├── components/              # 15 composables (SatelliteCard, SignalChart, LocationCard, DopCard, etc.)
+    ├── components/              # 15 个可组合组件 (SatelliteCard, SignalChart, LocationCard, DopCard 等)
     └── theme/                   # Color.kt, Type.kt, Theme.kt
 ```
 
-## Development Commands
+## 开发命令
 
 ```bash
-# Build
+# 构建
 ./gradlew assembleDebug          # Debug APK
-./gradlew assembleRelease        # Release APK (no signing config — needs manual setup)
+./gradlew assembleRelease        # Release APK (无签名配置 — 需手动设置)
 
-# Test
-./gradlew test                   # Unit tests only (50 tests, domain layer only)
-./gradlew testDebugUnitTest      # Explicit debug unit tests
+# 测试
+./gradlew test                   # 仅单元测试 (50 个测试，仅领域层)
+./gradlew testDebugUnitTest      # 显式 debug 单元测试
 
-# Lint
-./gradlew ktlintCheck            # Run ktlint (1.5.0, android mode)
+# 代码检查
+./gradlew ktlintCheck            # 运行 ktlint (1.5.0, android 模式)
 
-# Install
-./gradlew installDebug           # Install debug APK on device
+# 安装
+./gradlew installDebug           # 安装 debug APK 到设备
+
+# 清理
+./gradlew clean                  # 清理构建产物
 ```
 
-**CI** (`.github/workflows/ci.yml`): Runs on push/PR to `master` — JDK 21, `./gradlew test`, `assembleDebug`, `assembleRelease`, uploads APKs and test results.
+**JDK 路径**: `C:\Program Files\Java\jdk-21` — 构建前需设置 `JAVA_HOME`：
+```bash
+export JAVA_HOME="/c/Program Files/Java/jdk-21"
+```
 
-## Code Conventions & Common Patterns
+**Android SDK 路径**: `D:\android_sdk` — ADB 等工具路径：
+```bash
+export PATH="$PATH:/d/android_sdk/platform-tools"
+```
 
-### Naming
-- **Files/Classes**: PascalCase. Interfaces unsuffixed (`GnssDataSource`), implementations suffixed with `Impl` (`GnssDataSourceImpl`)
-- **Methods**: camelCase, verb-first (`startListening()`, `downloadAndInject()`, `maybeSaveSnapshot()`)
-- **Variables**: camelCase. Private backing fields prefixed `_` (`_uiState`, `_ttffState`). Constants `SCREAMING_SNAKE_CASE`
-- **Composables**: PascalCase functions (`SatelliteCard`, `DopCard`). State via `remember { mutableStateOf() }`
-- **Sealed interfaces**: `SatelliteUiState`, `AGpsUiState`, `TtffState` with nested data class/object variants
+**CI** (`.github/workflows/ci.yml`): push/PR 到 `master` 时触发 — JDK 21，`./gradlew test`、`assembleDebug`、`assembleRelease`，上传 APK 和测试结果。
 
-### Architecture patterns
-- **Interface + Impl** throughout: every DataSource, Repository, Downloader, FileHandler follows this pattern
-- **callbackFlow** to convert Android platform callbacks into Kotlin Flow
-- **viewModelScope.launch** for all ViewModel async work (auto-cancelled in `onCleared()`)
-- **Dispatchers.IO** for file I/O and network operations
-- **60s ring buffer** per satellite for signal history (`Map<String, List<SignalReading>>`)
+## 关键技术细节
 
-### Language
-- Comments and documentation: mixed Chinese (中文) and English. Chinese for domain knowledge, architecture decisions, and user-facing docs
-- User-facing strings: Chinese via Android string resources
+- **Compose + Material3** 用于所有 UI；无 XML 布局
+- **信号历史追踪**: 每颗卫星维护 60 秒的 `SignalHistory` 环形缓冲区
+- **自动快照**: WorkManager 驱动的周期性卫星状态保存
+- **A-GPS 流程**: 下载 → 验证 → 通过 `LocationManager.sendExtraCommand("delete_aiding_data" / "force_time_injection")` 注入
+- **持久化**: DataStore (preferences)，Kotlin Serialization (JSON 快照)
+- **权限**: `ACCESS_FINE_LOCATION`、`ACCESS_COARSE_LOCATION`、`ACCESS_LOCATION_EXTRA_COMMANDS`、`INTERNET`
+- **Java 17** 目标；compileSdk/targetSdk 35；minSdk 24
 
-## Important Files
+## 代码规范与常用模式
 
-| File | Purpose |
-|------|---------|
-| `app/src/main/java/com/example/gpstest/MainActivity.kt` | Entry point, navigation host, DI wiring, permission handling |
-| `app/src/main/java/com/example/gpstest/viewmodel/SatelliteViewModel.kt` | GNSS data collection, signal history, TTFF, auto-snapshots, DOP |
-| `app/src/main/java/com/example/gpstest/viewmodel/AGpsViewModel.kt` | A-GPS download/inject lifecycle, WorkManager scheduling |
-| `app/src/main/java/com/example/gpstest/data/source/GnssDataSourceImpl.kt` | Core sensor fusion — merges 4 Android callbacks into single Flow |
-| `app/src/main/java/com/example/gpstest/domain/util/DopCalculator.kt` | DOP matrix math (PDOP/HDOP/VDOP) |
-| `app/src/main/java/com/example/gpstest/domain/repository/AGpsRepositoryImpl.kt` | A-GPS orchestrator with multi-URL fallback and time-decay status |
-| `app/build.gradle.kts` | App module build config, all dependencies |
-| `app/proguard-rules.pro` | Keeps GNSS reflection APIs |
+### 命名
+- **文件/类**: PascalCase。接口无后缀 (`GnssDataSource`)，实现类加 `Impl` 后缀 (`GnssDataSourceImpl`)
+- **方法**: camelCase，动词开头 (`startListening()`, `downloadAndInject()`, `maybeSaveSnapshot()`)
+- **变量**: camelCase。私有后备字段加 `_` 前缀 (`_uiState`, `_ttffState`)。常量使用 `SCREAMING_SNAKE_CASE`
+- **Composable 函数**: PascalCase (`SatelliteCard`, `DopCard`)。状态通过 `remember { mutableStateOf() }`
+- **密封接口**: `SatelliteUiState`、`AGpsUiState`、`TtffState` 使用嵌套 data class/object 变体
 
-## Runtime/Tooling Preferences
+### 架构模式
+- **接口 + 实现** 贯穿全项目：所有 DataSource、Repository、Downloader、FileHandler 均遵循此模式
+- **callbackFlow** 将 Android 平台回调转换为 Kotlin Flow
+- **viewModelScope.launch** 用于所有 ViewModel 异步工作 (在 `onCleared()` 中自动取消)
+- **Dispatchers.IO** 用于文件 I/O 和网络操作
+- **60 秒环形缓冲区** 每颗卫星的信号历史 (`Map<String, List<SignalReading>>`)
 
-- **JDK**: 17 (source/target compatibility). JDK 21 used as build JDK locally and on CI
-- **Gradle**: 8.9 with configuration cache, parallel builds, build caching enabled
-- **Kotlin code style**: `official`
-- **Linting**: ktlint 1.5.0 via `org.jlleitschuh.gradle.ktlint` plugin (12.1.2), android mode
-- **Gradle properties**: `org.gradle.java.home=C:/Program Files/Java/jdk-21` (local only; CI removes this via `sed`)
-- **No product flavors** — only `debug` and `release` build types
-- **Release minification disabled** (`isMinifyEnabled = false`)
+### 通用约定
+- Repository 模式：接口在 `domain/repository/`，实现在同包中
+- Compose 组件无状态；状态提升至屏幕级可组合组件或 ViewModel
+- 所有异步工作使用协程；无 RxJava
+- 颜色和主题集中在 `ui/theme/`
 
-## Testing & QA
+### 语言
+- 注释和文档：中英混合。领域知识、架构决策和面向用户的文档使用中文
+- 面向用户的字符串：通过 Android 字符串资源使用中文
 
-**Framework**: JUnit 4.13.2. No mocking libraries, no Robolectric, no Truth.
+## 重要文件
 
-**Scope**: 50 unit tests covering domain layer only:
-- `domain/model/`: DopInfo (10 tests), SatelliteHistory (9), Constellation (9), GnssData (8), GnssClockData (7)
-- `domain/util/`: DopCalculator (7 tests)
+| 文件 | 用途 |
+|------|------|
+| `app/src/main/java/com/example/gpstest/MainActivity.kt` | 入口点，导航宿主，DI 连线，权限处理 |
+| `app/src/main/java/com/example/gpstest/viewmodel/SatelliteViewModel.kt` | GNSS 数据采集，信号历史，TTFF，自动快照，DOP |
+| `app/src/main/java/com/example/gpstest/viewmodel/AGpsViewModel.kt` | A-GPS 下载/注入生命周期，WorkManager 调度 |
+| `app/src/main/java/com/example/gpstest/data/source/GnssDataSourceImpl.kt` | 核心传感器融合 — 将 4 个 Android 回调合并为单个 Flow |
+| `app/src/main/java/com/example/gpstest/domain/util/DopCalculator.kt` | DOP 矩阵运算 (PDOP/HDOP/VDOP) |
+| `app/src/main/java/com/example/gpstest/domain/repository/AGpsRepositoryImpl.kt` | A-GPS 编排器，多 URL 回退和时间衰减状态 |
+| `app/build.gradle.kts` | 应用模块构建配置，所有依赖 |
+| `app/proguard-rules.pro` | 保留 GNSS 反射 API |
 
-**Test conventions**:
-- File naming: `<SourceClass>Test.kt` — 1:1 with source file
-- Package mirroring: test packages match source packages exactly
-- Method naming: backtick descriptive names — `` `quality is EXCELLENT when pdop less than 1` ``
-- Test style: direct instantiation of data classes, assert computed properties. No test base classes, no `@Before`/`@After`
-- Fixtures: private `makeSatellite()` helper functions per test class
+## 运行时/工具配置
 
-**Not tested**: ViewModels, DataSources, Repositories (except domain logic), UI/screens, services, AGpsUpdateWorker, XtraDataValidator.
+- **JDK**: 17 (源码/目标兼容性)。本地和 CI 使用 JDK 21 作为构建 JDK
+- **Gradle**: 8.9，启用配置缓存、并行构建、构建缓存
+- **Kotlin 代码风格**: `official`
+- **代码检查**: ktlint 1.5.0，通过 `org.jlleitschuh.gradle.ktlint` 插件 (12.1.2)，android 模式
+- **Gradle 属性**: `org.gradle.java.home=C:/Program Files/Java/jdk-21` (仅本地；CI 通过 `sed` 移除)
+- **无 product flavors** — 仅 `debug` 和 `release` 构建类型
+- **Release 代码混淆已禁用** (`isMinifyEnabled = false`)
+
+## 测试与质量保证
+
+**框架**: JUnit 4.13.2。无 mock 库，无 Robolectric，无 Truth。
+
+**范围**: 50 个单元测试，仅覆盖领域层：
+- `domain/model/`: DopInfo (10), SatelliteHistory (9), Constellation (9), GnssData (8), GnssClockData (7)
+- `domain/util/`: DopCalculator (7)
+
+**测试约定**:
+- 文件命名: `<源类名>Test.kt` — 与源文件 1:1 对应
+- 包镜像: 测试包与源码包完全一致
+- 方法命名: 反引号描述性名称 — `` `quality is EXCELLENT when pdop less than 1` ``
+- 测试风格: 直接实例化 data class，断言计算属性。无测试基类，无 `@Before`/`@After`
+- 测试数据: 每个测试类的私有 `makeSatellite()` 辅助函数
+
+**未测试**: ViewModel、DataSource、Repository (领域逻辑除外)、UI/屏幕、Service、AGpsUpdateWorker、XtraDataValidator。
