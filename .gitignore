@@ -94,3 +94,8 @@ compose_generated/
 .trae/skills/
 .claude/skills/
 .trae/rules/
+
+# Tool configs
+.agents/
+.omc/
+skills-lock.json
