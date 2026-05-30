@@ -41,6 +41,7 @@ enum class MultipathIndicator {
 data class GnssSatellite(
     val svid: Int,
     val constellation: Constellation,
+    val rawConstellationType: Int,
     val cn0DbHz: Float,
     val azimuthDegrees: Float,
     val elevationDegrees: Float,

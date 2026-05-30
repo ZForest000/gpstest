@@ -40,7 +40,7 @@ fun SatelliteDetailSheet(
             text =
                 stringResource(
                     R.string.satellite_details,
-                    "${satellite.constellation.shortName}-${satellite.svid}",
+                    "${satellite.getDisplayName()}-${satellite.svid}",
                 ),
             style = MaterialTheme.typography.titleLarge,
         )

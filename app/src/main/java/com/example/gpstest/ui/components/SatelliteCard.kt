@@ -55,7 +55,7 @@ fun SatelliteCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "${satellite.constellation.shortName}-${satellite.svid}",
+                        text = "${satellite.getDisplayName()}-${satellite.svid}",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                     )

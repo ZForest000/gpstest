@@ -12,6 +12,7 @@ class GnssDataTest {
         GnssSatellite(
             svid = 1,
             constellation = Constellation.GPS,
+            rawConstellationType = Constellation.GPS.constellationType,
             cn0DbHz = cn0DbHz,
             azimuthDegrees = 0f,
             elevationDegrees = 45f,

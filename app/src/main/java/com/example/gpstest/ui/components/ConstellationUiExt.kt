@@ -10,6 +10,7 @@ import com.example.gpstest.ui.theme.GlonassColor
 import com.example.gpstest.ui.theme.GpsColor
 import com.example.gpstest.ui.theme.QzssColor
 import com.example.gpstest.ui.theme.SbasColor
+import com.example.gpstest.ui.theme.IrnssColor
 import com.example.gpstest.ui.theme.UnknownConstellationColor
 
 val Constellation.color: Color
@@ -20,6 +21,7 @@ val Constellation.color: Color
         Constellation.GALILEO -> GalileoColor
         Constellation.QZSS -> QzssColor
         Constellation.SBAS -> SbasColor
+        Constellation.IRNSS -> IrnssColor
         Constellation.UNKNOWN -> UnknownConstellationColor
     }
 
@@ -32,5 +34,23 @@ val Constellation.fullNameResId: Int
         Constellation.BEIDOU -> R.string.constellation_beidou
         Constellation.QZSS -> R.string.constellation_qzss
         Constellation.SBAS -> R.string.constellation_sbas
+        Constellation.IRNSS -> R.string.constellation_irnss
         Constellation.UNKNOWN -> R.string.constellation_unknown
     }
+
+fun com.example.gpstest.domain.model.GnssSatellite.getDisplayName(): String {
+    return if (this.constellation == Constellation.UNKNOWN && this.rawConstellationType != -1) {
+        "UNK(${this.rawConstellationType})"
+    } else {
+        this.constellation.shortName
+    }
+}
+
+fun com.example.gpstest.domain.model.SatelliteHistoryEntry.getDisplayName(): String {
+    return if (this.constellationName == Constellation.UNKNOWN.name && this.rawConstellationType != null && this.rawConstellationType != -1) {
+        "UNK(${this.rawConstellationType})"
+    } else {
+        val constell = runCatching { Constellation.valueOf(this.constellationName) }.getOrNull()
+        constell?.shortName ?: this.constellationName
+    }
+}

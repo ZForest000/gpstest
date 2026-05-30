@@ -10,6 +10,7 @@ enum class Constellation(
     GALILEO(shortName = "GAL", constellationType = 6),
     BEIDOU(shortName = "BDS", constellationType = 5),
     QZSS(shortName = "QZS", constellationType = 4),
+    IRNSS(shortName = "IRN", constellationType = 7),
     UNKNOWN(shortName = "UNK", constellationType = -1),
     ;
 

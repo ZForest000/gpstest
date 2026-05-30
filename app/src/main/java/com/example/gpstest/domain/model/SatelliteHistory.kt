@@ -14,6 +14,7 @@ data class SatelliteHistoryEntry(
     val timestamp: Long,
     val svid: Int,
     val constellationName: String,
+    val rawConstellationType: Int? = null,
     val cn0DbHz: Float,
     val usedInFix: Boolean,
 ) {
@@ -28,6 +29,7 @@ data class SatelliteHistoryEntry(
                 timestamp = timestamp,
                 svid = satellite.svid,
                 constellationName = satellite.constellation.name,
+                rawConstellationType = satellite.rawConstellationType,
                 cn0DbHz = satellite.cn0DbHz,
                 usedInFix = satellite.usedInFix,
             )

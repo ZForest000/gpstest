@@ -231,6 +231,7 @@ class GnssDataSourceImpl(
                                     GnssSatellite(
                                         svid = status.getSvid(i),
                                         constellation = constellation,
+                                        rawConstellationType = status.getConstellationType(i),
                                         cn0DbHz = status.getCn0DbHz(i),
                                         azimuthDegrees = status.getAzimuthDegrees(i),
                                         elevationDegrees = status.getElevationDegrees(i),
@@ -389,6 +390,7 @@ class GnssDataSourceImpl(
             Constellation.QZSS -> 4
             Constellation.BEIDOU -> 5
             Constellation.GALILEO -> 6
+            Constellation.IRNSS -> 7
             Constellation.UNKNOWN -> 0
         }
 }

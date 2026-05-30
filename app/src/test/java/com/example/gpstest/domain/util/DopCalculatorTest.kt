@@ -17,6 +17,7 @@ class DopCalculatorTest {
         GnssSatellite(
             svid = svid,
             constellation = Constellation.GPS,
+            rawConstellationType = Constellation.GPS.constellationType,
             cn0DbHz = 40f,
             azimuthDegrees = azimuth,
             elevationDegrees = elevation,

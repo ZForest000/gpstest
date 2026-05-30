@@ -14,6 +14,7 @@ class SatelliteHistoryTest {
         GnssSatellite(
             svid = svid,
             constellation = constellation,
+            rawConstellationType = constellation.constellationType,
             cn0DbHz = cn0DbHz,
             azimuthDegrees = 45f,
             elevationDegrees = 30f,
