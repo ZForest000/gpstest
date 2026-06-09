@@ -66,6 +66,20 @@ class XtraDataValidator(
             )
     }
 
+    private fun logInfo(message: String) {
+        try {
+            Log.i(TAG, message)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun logWarn(message: String) {
+        try {
+            Log.w(TAG, message)
+        } catch (_: Exception) {
+        }
+    }
+
     fun validate(
         data: ByteArray,
         mimeType: String? = null,
@@ -110,8 +124,7 @@ class XtraDataValidator(
         }
 
         val hash = calculateHash(data)
-        Log.i(
-            TAG,
+        logInfo(
             String.format(
                 "数据验证通过 | 来源: %s | 大小: %d字节 | SHA-256: %s",
                 sourceUrl ?: "unknown",
@@ -183,7 +196,7 @@ class XtraDataValidator(
             )
         }
 
-        Log.w(TAG, "未知的MIME类型: $mimeType (非严格模式下允许)")
+        logWarn("未知的MIME类型: $mimeType (非严格模式下允许)")
         return ValidationResult(isValid = true)
     }
 
