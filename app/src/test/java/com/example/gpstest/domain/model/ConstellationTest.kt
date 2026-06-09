@@ -53,4 +53,55 @@ class ConstellationTest {
     fun `maps large type to UNKNOWN`() {
         assertEquals(Constellation.UNKNOWN, Constellation.fromConstellationType(99))
     }
+
+    @Test
+    fun `GPS shortName is GPS`() {
+        assertEquals("GPS", Constellation.GPS.shortName)
+    }
+
+    @Test
+    fun `SBAS shortName is SBAS`() {
+        assertEquals("SBAS", Constellation.SBAS.shortName)
+    }
+
+    @Test
+    fun `GLONASS shortName is GLO`() {
+        assertEquals("GLO", Constellation.GLONASS.shortName)
+    }
+
+    @Test
+    fun `GALILEO shortName is GAL`() {
+        assertEquals("GAL", Constellation.GALILEO.shortName)
+    }
+
+    @Test
+    fun `BEIDOU shortName is BDS`() {
+        assertEquals("BDS", Constellation.BEIDOU.shortName)
+    }
+
+    @Test
+    fun `QZSS shortName is QZS`() {
+        assertEquals("QZS", Constellation.QZSS.shortName)
+    }
+
+    @Test
+    fun `IRNSS shortName is IRN`() {
+        assertEquals("IRN", Constellation.IRNSS.shortName)
+    }
+
+    @Test
+    fun `UNKNOWN shortName is UNK`() {
+        assertEquals("UNK", Constellation.UNKNOWN.shortName)
+    }
+
+    @Test
+    fun `fromConstellationType round-trips for all known constellations`() {
+        for (constellation in Constellation.entries) {
+            if (constellation == Constellation.UNKNOWN) continue
+            assertEquals(
+                constellation,
+                Constellation.fromConstellationType(constellation.constellationType),
+            )
+        }
+    }
 }
