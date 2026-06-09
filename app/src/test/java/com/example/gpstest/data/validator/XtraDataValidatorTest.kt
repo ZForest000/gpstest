@@ -160,4 +160,108 @@ class XtraDataValidatorTest {
         assertTrue(result.isValid)
         assertEquals("", result.details)
     }
+
+    // --- MIME type validation (strictMode) ---
+
+    @Test
+    fun `validate accepts valid MIME type application slash octet-stream in strict mode`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "application/octet-stream")
+        assertTrue(result.isValid)
+    }
+
+    @Test
+    fun `validate accepts valid MIME type application slash vnd qualcomm xtra in strict mode`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "application/vnd.qualcomm.xtra")
+        assertTrue(result.isValid)
+    }
+
+    @Test
+    fun `validate rejects text slash html MIME type in strict mode`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "text/html")
+        assertFalse(result.isValid)
+        assertEquals(ValidationErrorType.INVALID_MIME_TYPE, result.errorType)
+    }
+
+    @Test
+    fun `validate rejects application slash json MIME type in strict mode`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "application/json")
+        assertFalse(result.isValid)
+        assertEquals(ValidationErrorType.INVALID_MIME_TYPE, result.errorType)
+    }
+
+    @Test
+    fun `validate rejects application slash html MIME type in strict mode`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "application/html")
+        assertFalse(result.isValid)
+        assertEquals(ValidationErrorType.INVALID_MIME_TYPE, result.errorType)
+    }
+
+    @Test
+    fun `validate skips MIME check when mimeType is null`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = null)
+        assertTrue(result.isValid)
+    }
+
+    @Test
+    fun `validate skips MIME check when strictMode is false`() {
+        val validator = makeValidator(strictMode = false)
+        val result = validator.validate(makeValidData(), mimeType = "text/html")
+        assertTrue(result.isValid)
+    }
+
+    @Test
+    fun `MIME type comparison is case insensitive`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "Application/OCTET-Stream")
+        assertTrue(result.isValid)
+    }
+
+    @Test
+    fun `MIME type with whitespace is trimmed`() {
+        val validator = makeValidator(strictMode = true)
+        val result = validator.validate(makeValidData(), mimeType = "  application/octet-stream  ")
+        assertTrue(result.isValid)
+    }
+
+    // --- getSizeStatistics ---
+
+    @Test
+    fun `getSizeStatistics includes size in KB`() {
+        val data = ByteArray(2048)
+        val stats = XtraDataValidator().getSizeStatistics(data)
+        assertTrue(stats.contains("2.00 KB"))
+    }
+
+    @Test
+    fun `getSizeStatistics includes first byte hex`() {
+        val data = ByteArray(2048)
+        data[0] = 0xAB.toByte()
+        val stats = XtraDataValidator().getSizeStatistics(data)
+        assertTrue(stats.contains("0xAB"))
+    }
+
+    @Test
+    fun `getSizeStatistics includes magic bytes when data has 4 or more bytes`() {
+        val data = ByteArray(2048)
+        data[0] = 0x01
+        data[1] = 0x02
+        data[2] = 0x03
+        data[3] = 0x04
+        val stats = XtraDataValidator().getSizeStatistics(data)
+        assertTrue(stats.contains("Magic:"))
+        assertTrue(stats.contains("01 02 03 04"))
+    }
+
+    @Test
+    fun `getSizeStatistics omits magic bytes when data has fewer than 4 bytes`() {
+        val data = byteArrayOf(0x01.toByte(), 0x02.toByte())
+        val stats = XtraDataValidator().getSizeStatistics(data)
+        assertFalse(stats.contains("Magic:"))
+    }
 }
