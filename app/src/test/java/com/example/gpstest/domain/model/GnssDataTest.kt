@@ -113,4 +113,32 @@ class GnssDataTest {
         )
         assertEquals(0f, data.avgBasebandCn0DbHz, 0.01f)
     }
+
+    @Test
+    fun `avgCn0DbHz excludes negative values`() {
+        val data = GnssData(
+            satellites = listOf(
+                makeSatellite(cn0DbHz = 30f),
+                makeSatellite(cn0DbHz = -5f),
+            ),
+        )
+        assertEquals(30f, data.avgCn0DbHz, 0.01f)
+    }
+
+    @Test
+    fun `avgBasebandCn0DbHz returns 0 for empty satellite list`() {
+        val data = GnssData(satellites = emptyList())
+        assertEquals(0f, data.avgBasebandCn0DbHz, 0.01f)
+    }
+
+    @Test
+    fun `avgBasebandCn0DbHz excludes negative baseband values`() {
+        val data = GnssData(
+            satellites = listOf(
+                makeSatellite(basebandCn0DbHz = 20f),
+                makeSatellite(basebandCn0DbHz = -10f),
+            ),
+        )
+        assertEquals(20f, data.avgBasebandCn0DbHz, 0.01f)
+    }
 }
