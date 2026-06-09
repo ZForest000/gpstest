@@ -138,4 +138,122 @@ class GnssSatelliteTest {
     fun `MultipathIndicator fromInt 99 is UNKNOWN`() {
         assertEquals(MultipathIndicator.UNKNOWN, MultipathIndicator.fromInt(99))
     }
+
+    // --- bitmask: isAdrValid / hasCycleSlip ---
+
+    @Test
+    fun `isAdrValid is true when ADR_STATE_VALID bit is set`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = 1)
+        assertEquals(true, sat.isAdrValid)
+    }
+
+    @Test
+    fun `isAdrValid is true when multiple bits including ADR_STATE_VALID are set`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = 5)
+        assertEquals(true, sat.isAdrValid)
+    }
+
+    @Test
+    fun `isAdrValid is false when ADR_STATE_VALID bit is not set`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = 4)
+        assertEquals(false, sat.isAdrValid)
+    }
+
+    @Test
+    fun `isAdrValid is false when accumulatedDeltaRangeState is null`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = null)
+        assertEquals(false, sat.isAdrValid)
+    }
+
+    @Test
+    fun `hasCycleSlip is true when ADR_STATE_CYCLE_SLIP bit is set`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = 4)
+        assertEquals(true, sat.hasCycleSlip)
+    }
+
+    @Test
+    fun `hasCycleSlip is false when ADR_STATE_CYCLE_SLIP bit is not set`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = 1)
+        assertEquals(false, sat.hasCycleSlip)
+    }
+
+    @Test
+    fun `hasCycleSlip is false when accumulatedDeltaRangeState is null`() {
+        val sat = makeSatellite(accumulatedDeltaRangeState = null)
+        assertEquals(false, sat.hasCycleSlip)
+    }
+
+    // --- bitmask: measurementState properties ---
+
+    @Test
+    fun `hasCarrierPhaseLock is true when STATE_TOW_DECODED bit is set`() {
+        val sat = makeSatellite(measurementState = 8)
+        assertEquals(true, sat.hasCarrierPhaseLock)
+    }
+
+    @Test
+    fun `hasCarrierPhaseLock is false when STATE_TOW_DECODED bit is not set`() {
+        val sat = makeSatellite(measurementState = 1)
+        assertEquals(false, sat.hasCarrierPhaseLock)
+    }
+
+    @Test
+    fun `hasCarrierPhaseLock is false when measurementState is null`() {
+        val sat = makeSatellite(measurementState = null)
+        assertEquals(false, sat.hasCarrierPhaseLock)
+    }
+
+    @Test
+    fun `hasCodeLock is true when STATE_CODE_LOCK bit is set`() {
+        val sat = makeSatellite(measurementState = 1)
+        assertEquals(true, sat.hasCodeLock)
+    }
+
+    @Test
+    fun `hasCodeLock is false when STATE_CODE_LOCK bit is not set`() {
+        val sat = makeSatellite(measurementState = 2)
+        assertEquals(false, sat.hasCodeLock)
+    }
+
+    @Test
+    fun `hasBitSync is true when STATE_BIT_SYNC bit is set`() {
+        val sat = makeSatellite(measurementState = 2)
+        assertEquals(true, sat.hasBitSync)
+    }
+
+    @Test
+    fun `hasBitSync is false when STATE_BIT_SYNC bit is not set`() {
+        val sat = makeSatellite(measurementState = 1)
+        assertEquals(false, sat.hasBitSync)
+    }
+
+    @Test
+    fun `hasSubframeSync is true when STATE_SUBFRAME_SYNC bit is set`() {
+        val sat = makeSatellite(measurementState = 4)
+        assertEquals(true, sat.hasSubframeSync)
+    }
+
+    @Test
+    fun `hasSubframeSync is false when STATE_SUBFRAME_SYNC bit is not set`() {
+        val sat = makeSatellite(measurementState = 8)
+        assertEquals(false, sat.hasSubframeSync)
+    }
+
+    @Test
+    fun `multiple measurementState bits can be set simultaneously`() {
+        val sat = makeSatellite(measurementState = 15)
+        assertEquals(true, sat.hasCarrierPhaseLock)
+        assertEquals(true, sat.hasCodeLock)
+        assertEquals(true, sat.hasBitSync)
+        assertEquals(true, sat.hasSubframeSync)
+    }
+
+    @Test
+    fun `all bitmask properties are false when measurementState is zero`() {
+        val sat = makeSatellite(measurementState = 0)
+        assertEquals(false, sat.hasCarrierPhaseLock)
+        assertEquals(false, sat.hasCodeLock)
+        assertEquals(false, sat.hasBitSync)
+        assertEquals(false, sat.hasSubframeSync)
+    }
 }
