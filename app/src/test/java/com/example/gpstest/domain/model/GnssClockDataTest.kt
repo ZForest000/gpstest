@@ -102,4 +102,60 @@ class GnssClockDataTest {
         )
         assertNull(clock.driftMicrosecondsPerSecond)
     }
+
+    @Test
+    fun `totalBiasNanos handles negative bias values`() {
+        val clock = GnssClockData(
+            timeNanos = 1000L,
+            biasNanos = -500.0,
+            fullBiasNanos = -2000L,
+            driftNanosPerSecond = null,
+            biasUncertaintyNanos = null,
+            driftUncertaintyNanosPerSecond = null,
+            hardwareClockDiscontinuityCount = 0,
+        )
+        assertEquals(-2500.0, clock.totalBiasNanos!!, 0.001)
+    }
+
+    @Test
+    fun `totalBiasNanos returns null when both are null`() {
+        val clock = GnssClockData(
+            timeNanos = 1000L,
+            biasNanos = null,
+            fullBiasNanos = null,
+            driftNanosPerSecond = null,
+            biasUncertaintyNanos = null,
+            driftUncertaintyNanosPerSecond = null,
+            hardwareClockDiscontinuityCount = 0,
+        )
+        assertNull(clock.totalBiasNanos)
+    }
+
+    @Test
+    fun `driftMicrosecondsPerSecond handles zero drift`() {
+        val clock = GnssClockData(
+            timeNanos = 1000L,
+            biasNanos = null,
+            fullBiasNanos = null,
+            driftNanosPerSecond = 0.0,
+            biasUncertaintyNanos = null,
+            driftUncertaintyNanosPerSecond = null,
+            hardwareClockDiscontinuityCount = 0,
+        )
+        assertEquals(0.0, clock.driftMicrosecondsPerSecond!!, 0.001)
+    }
+
+    @Test
+    fun `driftMicrosecondsPerSecond handles negative drift`() {
+        val clock = GnssClockData(
+            timeNanos = 1000L,
+            biasNanos = null,
+            fullBiasNanos = null,
+            driftNanosPerSecond = -3000.0,
+            biasUncertaintyNanos = null,
+            driftUncertaintyNanosPerSecond = null,
+            hardwareClockDiscontinuityCount = 0,
+        )
+        assertEquals(-3.0, clock.driftMicrosecondsPerSecond!!, 0.001)
+    }
 }
