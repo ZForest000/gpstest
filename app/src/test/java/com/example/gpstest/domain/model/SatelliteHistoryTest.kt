@@ -31,13 +31,14 @@ class SatelliteHistoryTest {
 
     @Test
     fun `toStorageKey combines constellation name and svid`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 5,
-            constellationName = "GPS",
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 5,
+                constellationName = "GPS",
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("GPS_5", entry.toStorageKey())
     }
 
@@ -66,11 +67,12 @@ class SatelliteHistoryTest {
 
     @Test
     fun `fromSatellites creates snapshot with correct counts`() {
-        val satellites = listOf(
-            makeSatellite(svid = 1, cn0DbHz = 30f, usedInFix = true),
-            makeSatellite(svid = 2, cn0DbHz = 25f, usedInFix = false),
-            makeSatellite(svid = 3, cn0DbHz = 0f, usedInFix = false),
-        )
+        val satellites =
+            listOf(
+                makeSatellite(svid = 1, cn0DbHz = 30f, usedInFix = true),
+                makeSatellite(svid = 2, cn0DbHz = 25f, usedInFix = false),
+                makeSatellite(svid = 3, cn0DbHz = 0f, usedInFix = false),
+            )
         val snapshot = SatelliteHistorySnapshot.fromSatellites(satellites, timestamp = 1000L)
 
         assertEquals(1000L, snapshot.timestamp)
@@ -80,21 +82,23 @@ class SatelliteHistoryTest {
 
     @Test
     fun `fromSatellites calculates average signal strength of visible satellites`() {
-        val satellites = listOf(
-            makeSatellite(svid = 1, cn0DbHz = 20f),
-            makeSatellite(svid = 2, cn0DbHz = 40f),
-            makeSatellite(svid = 3, cn0DbHz = 0f),
-        )
+        val satellites =
+            listOf(
+                makeSatellite(svid = 1, cn0DbHz = 20f),
+                makeSatellite(svid = 2, cn0DbHz = 40f),
+                makeSatellite(svid = 3, cn0DbHz = 0f),
+            )
         val snapshot = SatelliteHistorySnapshot.fromSatellites(satellites, timestamp = 1000L)
         assertEquals(30f, snapshot.averageSignalStrength, 0.01f)
     }
 
     @Test
     fun `fromSatellites returns 0 average when all signals are zero`() {
-        val satellites = listOf(
-            makeSatellite(svid = 1, cn0DbHz = 0f),
-            makeSatellite(svid = 2, cn0DbHz = 0f),
-        )
+        val satellites =
+            listOf(
+                makeSatellite(svid = 1, cn0DbHz = 0f),
+                makeSatellite(svid = 2, cn0DbHz = 0f),
+            )
         val snapshot = SatelliteHistorySnapshot.fromSatellites(satellites, timestamp = 1000L)
         assertEquals(0f, snapshot.averageSignalStrength, 0.01f)
         assertEquals(0, snapshot.visibleCount)
@@ -102,10 +106,11 @@ class SatelliteHistoryTest {
 
     @Test
     fun `getEntries deserializes valid JSON`() {
-        val satellites = listOf(
-            makeSatellite(svid = 1, constellation = Constellation.GPS, cn0DbHz = 30f),
-            makeSatellite(svid = 2, constellation = Constellation.BEIDOU, cn0DbHz = 25f),
-        )
+        val satellites =
+            listOf(
+                makeSatellite(svid = 1, constellation = Constellation.GPS, cn0DbHz = 30f),
+                makeSatellite(svid = 2, constellation = Constellation.BEIDOU, cn0DbHz = 25f),
+            )
         val snapshot = SatelliteHistorySnapshot.fromSatellites(satellites, timestamp = 1000L)
         val entries = snapshot.getEntries()
 
@@ -118,13 +123,14 @@ class SatelliteHistoryTest {
 
     @Test
     fun `getEntries returns empty list for invalid JSON`() {
-        val snapshot = SatelliteHistorySnapshot(
-            timestamp = 1000L,
-            entriesJson = "not valid json",
-            usedInFixCount = 0,
-            visibleCount = 0,
-            averageSignalStrength = 0f,
-        )
+        val snapshot =
+            SatelliteHistorySnapshot(
+                timestamp = 1000L,
+                entriesJson = "not valid json",
+                usedInFixCount = 0,
+                visibleCount = 0,
+                averageSignalStrength = 0f,
+            )
         assertTrue(snapshot.getEntries().isEmpty())
     }
 
@@ -165,21 +171,22 @@ class SatelliteHistoryTest {
 
     @Test
     fun `fromGnssSatellite preserves UNKNOWN rawConstellationType`() {
-        val sat = GnssSatellite(
-            svid = 1,
-            constellation = Constellation.UNKNOWN,
-            rawConstellationType = 99,
-            cn0DbHz = 0f,
-            azimuthDegrees = 0f,
-            elevationDegrees = 0f,
-            hasAlmanac = false,
-            hasEphemeris = false,
-            usedInFix = false,
-            carrierFrequencyHz = null,
-            carrierCycles = null,
-            dopplerShiftHz = null,
-            timeNanos = 0L,
-        )
+        val sat =
+            GnssSatellite(
+                svid = 1,
+                constellation = Constellation.UNKNOWN,
+                rawConstellationType = 99,
+                cn0DbHz = 0f,
+                azimuthDegrees = 0f,
+                elevationDegrees = 0f,
+                hasAlmanac = false,
+                hasEphemeris = false,
+                usedInFix = false,
+                carrierFrequencyHz = null,
+                carrierCycles = null,
+                dopplerShiftHz = null,
+                timeNanos = 0L,
+            )
         val entry = SatelliteHistoryEntry.fromGnssSatellite(sat, timestamp = 1000L)
         assertEquals(99, entry.rawConstellationType)
     }

@@ -137,34 +137,37 @@ class DopCalculatorTest {
 
     @Test
     fun `returns null when all satellites have zero elevation`() {
-        val sats = listOf(
-            makeSatellite(1, 0f, 0f),
-            makeSatellite(2, 90f, 0f),
-            makeSatellite(3, 180f, 0f),
-            makeSatellite(4, 270f, 0f),
-        )
+        val sats =
+            listOf(
+                makeSatellite(1, 0f, 0f),
+                makeSatellite(2, 90f, 0f),
+                makeSatellite(3, 180f, 0f),
+                makeSatellite(4, 270f, 0f),
+            )
         assertNull(DopCalculator.calculate(sats))
     }
 
     @Test
     fun `returns null when all satellites share the same azimuth`() {
-        val sats = listOf(
-            makeSatellite(1, 90f, 30f),
-            makeSatellite(2, 90f, 45f),
-            makeSatellite(3, 90f, 60f),
-            makeSatellite(4, 90f, 75f),
-        )
+        val sats =
+            listOf(
+                makeSatellite(1, 90f, 30f),
+                makeSatellite(2, 90f, 45f),
+                makeSatellite(3, 90f, 60f),
+                makeSatellite(4, 90f, 75f),
+            )
         assertNull(DopCalculator.calculate(sats))
     }
 
     @Test
     fun `succeeds with exactly 4 used satellites`() {
-        val sats = listOf(
-            makeSatellite(1, 0f, 30f),
-            makeSatellite(2, 90f, 60f),
-            makeSatellite(3, 180f, 45f),
-            makeSatellite(4, 270f, 15f),
-        )
+        val sats =
+            listOf(
+                makeSatellite(1, 0f, 30f),
+                makeSatellite(2, 90f, 60f),
+                makeSatellite(3, 180f, 45f),
+                makeSatellite(4, 270f, 15f),
+            )
         val result = DopCalculator.calculate(sats)
         assertNotNull(result)
         assertEquals(4, result!!.satelliteCount)

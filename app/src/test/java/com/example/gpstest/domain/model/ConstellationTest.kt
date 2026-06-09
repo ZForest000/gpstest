@@ -33,11 +33,11 @@ class ConstellationTest {
     fun `maps type 6 to GALILEO`() {
         assertEquals(Constellation.GALILEO, Constellation.fromConstellationType(6))
     }
+
     @Test
     fun `maps type 7 to IRNSS`() {
         assertEquals(Constellation.IRNSS, Constellation.fromConstellationType(7))
     }
-
 
     @Test
     fun `maps unknown type 0 to UNKNOWN`() {

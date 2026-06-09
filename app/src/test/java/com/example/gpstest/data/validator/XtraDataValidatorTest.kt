@@ -11,11 +11,12 @@ class XtraDataValidatorTest {
         minSizeBytes: Int = 1024,
         maxSizeBytes: Int = 2 * 1024 * 1024,
         strictMode: Boolean = true,
-    ): XtraDataValidator = XtraDataValidator(
-        minSizeBytes = minSizeBytes,
-        maxSizeBytes = maxSizeBytes,
-        strictMode = strictMode,
-    )
+    ): XtraDataValidator =
+        XtraDataValidator(
+            minSizeBytes = minSizeBytes,
+            maxSizeBytes = maxSizeBytes,
+            strictMode = strictMode,
+        )
 
     private fun makeValidData(size: Int = 2048): ByteArray = ByteArray(size) { (it % 256).toByte() }
 

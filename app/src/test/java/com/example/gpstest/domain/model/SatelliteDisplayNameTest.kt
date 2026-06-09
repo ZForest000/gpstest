@@ -67,76 +67,82 @@ class SatelliteDisplayNameTest {
 
     @Test
     fun `SatelliteHistoryEntry getDisplayName returns shortName for GPS constellation`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 1,
-            constellationName = "GPS",
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 1,
+                constellationName = "GPS",
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("GPS", entry.getDisplayName())
     }
 
     @Test
     fun `SatelliteHistoryEntry getDisplayName returns shortName for BEIDOU`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 1,
-            constellationName = "BEIDOU",
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 1,
+                constellationName = "BEIDOU",
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("BDS", entry.getDisplayName())
     }
 
     @Test
     fun `SatelliteHistoryEntry getDisplayName returns UNK with raw type for UNKNOWN with raw type`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 1,
-            constellationName = "UNKNOWN",
-            rawConstellationType = 8,
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 1,
+                constellationName = "UNKNOWN",
+                rawConstellationType = 8,
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("UNK(8)", entry.getDisplayName())
     }
 
     @Test
     fun `SatelliteHistoryEntry getDisplayName returns UNK for UNKNOWN with null raw type`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 1,
-            constellationName = "UNKNOWN",
-            rawConstellationType = null,
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 1,
+                constellationName = "UNKNOWN",
+                rawConstellationType = null,
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("UNK", entry.getDisplayName())
     }
 
     @Test
     fun `SatelliteHistoryEntry getDisplayName returns UNK for UNKNOWN with raw type -1`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 1,
-            constellationName = "UNKNOWN",
-            rawConstellationType = -1,
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 1,
+                constellationName = "UNKNOWN",
+                rawConstellationType = -1,
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("UNK", entry.getDisplayName())
     }
 
     @Test
     fun `SatelliteHistoryEntry getDisplayName returns raw name for invalid constellation name`() {
-        val entry = SatelliteHistoryEntry(
-            timestamp = 1000L,
-            svid = 1,
-            constellationName = "FUTURE_CONSTELLATION",
-            cn0DbHz = 30f,
-            usedInFix = true,
-        )
+        val entry =
+            SatelliteHistoryEntry(
+                timestamp = 1000L,
+                svid = 1,
+                constellationName = "FUTURE_CONSTELLATION",
+                cn0DbHz = 30f,
+                usedInFix = true,
+            )
         assertEquals("FUTURE_CONSTELLATION", entry.getDisplayName())
     }
 }
