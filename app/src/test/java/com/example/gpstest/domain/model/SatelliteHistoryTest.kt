@@ -137,4 +137,50 @@ class SatelliteHistoryTest {
         assertEquals(0f, snapshot.averageSignalStrength, 0.01f)
         assertTrue(snapshot.getEntries().isEmpty())
     }
+
+    @Test
+    fun `SatelliteHistoryConfig default maxSnapshots is 100`() {
+        val config = SatelliteHistoryConfig()
+        assertEquals(100, config.maxSnapshots)
+    }
+
+    @Test
+    fun `SatelliteHistoryConfig default snapshotIntervalMs is 60000`() {
+        val config = SatelliteHistoryConfig()
+        assertEquals(60_000L, config.snapshotIntervalMs)
+    }
+
+    @Test
+    fun `SatelliteHistoryConfig default retentionDays is 7`() {
+        val config = SatelliteHistoryConfig()
+        assertEquals(7, config.retentionDays)
+    }
+
+    @Test
+    fun `fromGnssSatellite preserves rawConstellationType from source satellite`() {
+        val sat = makeSatellite(constellation = Constellation.GPS)
+        val entry = SatelliteHistoryEntry.fromGnssSatellite(sat, timestamp = 1000L)
+        assertEquals(Constellation.GPS.constellationType, entry.rawConstellationType)
+    }
+
+    @Test
+    fun `fromGnssSatellite preserves UNKNOWN rawConstellationType`() {
+        val sat = GnssSatellite(
+            svid = 1,
+            constellation = Constellation.UNKNOWN,
+            rawConstellationType = 99,
+            cn0DbHz = 0f,
+            azimuthDegrees = 0f,
+            elevationDegrees = 0f,
+            hasAlmanac = false,
+            hasEphemeris = false,
+            usedInFix = false,
+            carrierFrequencyHz = null,
+            carrierCycles = null,
+            dopplerShiftHz = null,
+            timeNanos = 0L,
+        )
+        val entry = SatelliteHistoryEntry.fromGnssSatellite(sat, timestamp = 1000L)
+        assertEquals(99, entry.rawConstellationType)
+    }
 }
