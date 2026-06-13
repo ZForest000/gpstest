@@ -1,6 +1,33 @@
 # GPS Debug Tool
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF.svg)](https://kotlinlang.org)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202024.10.01-4285F4.svg)](https://developer.android.com/jetpack/compose)
+[![Platform](https://img.shields.io/badge/Android-7.0%2B%20(API%2024)-3DDC84.svg)](https://www.android.com)
+[![Target](https://img.shields.io/badge/Target-Android%2015%20(API%2035)-3DDC84.svg)](https://www.android.com)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF.svg)](.github/workflows/ci.yml)
+
 一个功能强大的 Android GPS 调试工具，用于实时监测和分析 GNSS（全球导航卫星系统）数据。支持多星座卫星追踪、信号质量分析、精度因子评估、A-GPS 数据管理和历史记录功能。
+
+面向 Android 开发者与 GNSS 爱好者，可在单机上完成卫星可见性排查、信号质量评估与 A-GPS 辅助数据注入。
+
+## 目录
+
+- [功能特性](#功能特性)
+- [导航](#导航)
+- [技术栈](#技术栈)
+- [项目结构](#项目结构)
+- [架构与数据流](#架构与数据流)
+- [开发命令](#开发命令)
+- [测试](#测试)
+- [CI/CD](#cicd)
+- [权限要求](#权限要求)
+- [安装说明](#安装说明)
+- [使用指南](#使用指南)
+- [技术亮点](#技术亮点)
+- [注意事项](#注意事项)
+- [开源协议](#开源协议)
+- [贡献指南](#贡献指南)
 
 ## 功能特性
 
@@ -55,7 +82,7 @@
 
 ### A-GPS 管理
 
-- **XTRA 数据下载**：自动下载 Qualcomm XTRA 辅助定位数据（OhHttp + 多 URL 回退）
+- **XTRA 数据下载**：自动下载 Qualcomm XTRA 辅助定位数据（OkHttp + 多 URL 回退）
 - **数据注入**：下载后自动验证并注入到定位引擎
 - **定时更新**：支持设置自动更新间隔（WorkManager 后台任务，指数退避重试）
 - **数据验证**：验证下载数据的完整性和格式
@@ -137,12 +164,10 @@ app/src/main/java/com/example/gpstest/
 └── ui/                            # 表现层
     ├── screens/                   # 页面（各页面独立子包）
     │   ├── satellite/             # SatelliteListScreen
-    │   ├── skychart/              # SkyChartView
+    │   ├── skychart/              # SkyChartScreen + SkyChartView + SkyChartLegend
     │   ├── agps/                  # AGpsManagerScreen
     │   ├── history/               # HistoryScreen
     │   └── help/                  # HelpScreen
-    ├── navigation/                # 导航配置
-    ├── permission/                # 权限处理
     ├── components/                # 可复用组件（SatelliteCard, SignalChart,
     │                              #   LocationCard, DopCard, ClockInfoCard,
     │                              #   TtffCard, ConstellationHealthSummaryCard 等 15 个）
@@ -194,36 +219,59 @@ data layer ──→ domain layer ──→ presentation layer
 
 **框架**：JUnit 4.13.2。无 mocking 库，无 Robolectric，无 Truth。
 
-**范围**：6 个测试文件覆盖领域层：
-- `domain/model/`：DopInfo, SatelliteHistory, Constellation, GnssData, GnssClockData
-- `domain/util/`：DopCalculator
+**范围**：9 个测试文件，共 151 个单元测试，覆盖领域层与数据校验层：
 
-**测试命名**：反引号描述性名称，如 `` `quality is EXCELLENT when pdop less than 1` ``
+| 测试文件 | 用例数 | 说明 |
+|----------|--------|------|
+| `domain/model/GnssSatelliteTest` | 36 | 卫星属性、星座判定、显示名称 |
+| `domain/model/SatelliteHistoryTest` | 14 | 历史快照数据模型 |
+| `domain/model/ConstellationTest` | 19 | 星座类型映射与短名 |
+| `domain/model/SatelliteDisplayNameTest` | 12 | 卫星显示名称生成 |
+| `domain/model/GnssClockDataTest` | 11 | 时钟偏差与漂移计算 |
+| `domain/model/GnssDataTest` | 11 | GNSS 聚合数据模型 |
+| `domain/model/DopInfoTest` | 10 | DOP 质量等级判定 |
+| `domain/util/DopCalculatorTest` | 10 | DOP 矩阵运算（PDOP/HDOP/VDOP） |
+| `data/validator/XtraDataValidatorTest` | 28 | XTRA 数据完整性与格式校验 |
 
-**未测试**：ViewModels、DataSources、Repositories（除领域逻辑外）、UI、Services、Workers、Validators。
+**测试命名**：反引号描述性名称，如 `` `quality is EXCELLENT when pdop less than 1` ``。直接实例化 data class，断言计算属性，无测试基类，无 `@Before`/`@After`。
+
+**未测试**：ViewModels、DataSources、Repositories（除领域逻辑外）、UI/屏幕、Services、`AGpsUpdateWorker`、`ShizukuHelper`、`AGpsDownloader`。
 
 ## CI/CD
 
 GitHub Actions（`.github/workflows/ci.yml`）：push / PR 到 `master` 分支时触发：
-- JDK 21 构建环境
+- JDK 21（Temurin）+ Android SDK 构建环境
+- 自动移除本地 `gradle.properties` 中的 `org.gradle.java.home` 覆盖（避免路径在 CI 上失效）
 - `./gradlew test` 运行所有单元测试
 - `assembleDebug` + `assembleRelease` 构建
-- 上传 APK 和测试结果
+- 上传产物：`debug-apk`、`release-apk`、`test-results`（`app/build/reports/tests/`）
+
+**下载构建产物**：在对应 commit 的 GitHub Actions 运行页面，滚动至页面底部「Artifacts」区域，点击 `debug-apk` / `release-apk` / `test-results` 即可下载。注意：产物在运行记录保留一段时间后会过期。
+
+> 提示：CI 仅运行单元测试与构建，**不包含** `ktlintCheck` 步骤；代码风格检查需在本地手动执行 `./gradlew ktlintCheck`。
 
 ## 权限要求
+
+### 运行时权限
 
 - `ACCESS_FINE_LOCATION` — 精确定位权限
 - `ACCESS_COARSE_LOCATION` — 粗略定位权限
 - `ACCESS_LOCATION_EXTRA_COMMANDS` — 发送定位相关命令（注入 A-GPS 数据）
 - `INTERNET` — 网络访问（下载 A-GPS 数据）
 
+### Shizuku 组件声明
+
+`AndroidManifest.xml` 中注册了 `rikka.shizuku.ShizukuProvider`（authorities 为 `${applicationId}.shizuku`），并由系统权限 `android.permission.INTERACT_ACROSS_USERS_FULL` 守护。这是获取系统级 GNSS dumpsys 数据所必需的组件声明；Shizuku 未安装/未授权时，该功能自动降级，不影响基础定位与卫星显示。
+
 ## 安装说明
 
 ### 环境要求
 
 - Android Studio Ladybug 或更高版本
-- JDK 21（构建运行时）；源码兼容 JDK 17
-- Android SDK Platform 35
+- JDK 21（构建运行时）；源码兼容 JDK 17（`sourceCompatibility`/`targetCompatibility = 17`）
+- Android SDK Platform 35、Build-Tools 对应版本
+
+> **本地构建注意**：仓库的 `gradle.properties` 包含一行机器相关的本地路径 `org.gradle.java.home=C:/Program Files/Java/jdk-21`。若你的 JDK 安装路径不同，请按本机情况修改或删除该行（CI 会自动移除它，故不影响云端构建）。
 
 ### 构建步骤
 
