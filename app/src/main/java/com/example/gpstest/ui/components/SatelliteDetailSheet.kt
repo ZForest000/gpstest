@@ -91,6 +91,10 @@ fun SatelliteDetailSheet(
                 satellite.carrierCycles?.let { "%.2f".format(it) } ?: "N/A",
             )
             DetailRow(
+                stringResource(R.string.full_carrier_phase),
+                satellite.fullCarrierPhaseCycleCount?.let { "%,d".format(it) } ?: "N/A",
+            )
+            DetailRow(
                 stringResource(R.string.doppler_shift),
                 satellite.dopplerShiftHz?.let { "%.2f Hz".format(it) } ?: "N/A",
             )

@@ -96,6 +96,7 @@
     <string name="raw_measurement">原始测量数据</string>
     <string name="carrier_frequency">载波频率</string>
     <string name="carrier_cycles">载波周期</string>
+    <string name="full_carrier_phase">完整载波相位</string>
     <string name="doppler_shift">多普勒频移</string>
     <string name="timestamp">时间戳</string>
     <string name="has_ephemeris">星历数据</string>

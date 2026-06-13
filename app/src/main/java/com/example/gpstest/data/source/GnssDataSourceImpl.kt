@@ -17,9 +17,17 @@ import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.MultipathIndicator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+// dumpsys location 轮询间隔。该命令开销较大（数百 ms），过长则数据陈旧，过短则耗电
+private const val DUMPSYS_POLL_INTERVAL_MS = 5000L
 
 /**
  * Android GNSS 平台 API 的统一数据源实现。
@@ -126,7 +134,18 @@ class GnssDataSourceImpl(
                                     pseudorangeRateMetersPerSecond = measurement.pseudorangeRateMetersPerSecond,
                                     measurementState = measurement.state,
                                     measurementCn0DbHz = measurement.cn0DbHz,
-                                    fullCarrierPhaseCycleCount = null,
+                                    // 完整载波相位周期数 — RTK/PPP 整数模糊度解算的核心输入
+                                    //
+                                    // 理想来源是 API 34+ 的 getFullCarrierPhaseCycleCount()，但当前
+                                    // android-35 stub 未暴露该方法（仅暴露已废弃的 getCarrierCycles()）。
+                                    // 过渡策略：复用 carrierCycles 的值（语义一致，均为完整周期计数）。
+                                    // 待项目升级到暴露新 API 的 SDK 后可直接切换数据源。
+                                    fullCarrierPhaseCycleCount =
+                                        if (measurement.hasCarrierCycles()) {
+                                            measurement.carrierCycles
+                                        } else {
+                                            null
+                                        },
                                 )
                         }
                         measurementMap = newMap
@@ -361,9 +380,26 @@ class GnssDataSourceImpl(
                 return@callbackFlow
             }
 
+            // dumpsys location 是开销较大的 shell 命令（数百 ms），且需 Shizuku/root 权限。
+            // 用独立协程每 5 秒轮询一次：无权限时 fetchDumpsysGnssData() 首步即返回 null，
+            // 开销可忽略；有权限时在 IO 线程执行并刷新 currentDumpsysData，驱动 ClockInfoCard
+            // 的 DumpsysDataSection 显示基带 C/N0、测量计数、定位星座列表。
+            val dumpsysJob =
+                launch {
+                    while (isActive) {
+                        val data = withContext(Dispatchers.IO) { ShizukuHelper.fetchDumpsysGnssData() }
+                        if (data != null) {
+                            currentDumpsysData = data
+                            trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
+                        }
+                        delay(DUMPSYS_POLL_INTERVAL_MS)
+                    }
+                }
+
             awaitClose {
                 // callbackFlow 要求协程取消时注销所有监听器以防止泄漏
                 // 注销顺序不影响正确性，但必须全部移除
+                dumpsysJob.cancel()
                 try {
                     locationManager?.unregisterGnssStatusCallback(callback)
                     locationManager?.unregisterGnssMeasurementsCallback(measurementCallback)
