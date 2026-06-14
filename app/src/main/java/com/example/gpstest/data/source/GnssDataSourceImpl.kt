@@ -318,6 +318,9 @@ class GnssDataSourceImpl(
                     override fun onSensorChanged(event: SensorEvent?) {
                         event?.let {
                             if (it.sensor.type == Sensor.TYPE_PRESSURE && it.values.isNotEmpty()) {
+                                // 气压是位置（LocationInfo）的辅助字段，静默更新即可；
+                                // 下次位置回调（1Hz）会自然带上最新值。气压计可达数十 Hz，
+                                // 若由它驱动 trySend 会高频重发整条数据，拖垮 UI。
                                 currentPressure = it.values[0]
                                 currentBaroAltitude =
                                     SensorManager
@@ -325,15 +328,6 @@ class GnssDataSourceImpl(
                                             SensorManager.PRESSURE_STANDARD_ATMOSPHERE,
                                             it.values[0],
                                         ).toDouble()
-
-                                currentLocation?.let { loc ->
-                                    currentLocation =
-                                        loc.copy(
-                                            barometricAltitude = currentBaroAltitude,
-                                            pressure = currentPressure,
-                                        )
-                                    trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
-                                }
                             }
                         }
                     }
