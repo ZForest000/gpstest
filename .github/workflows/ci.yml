@@ -1,10 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  # 仅手动触发：在 Actions 页面点击 "Run workflow" 时运行。
+  # 不再随 push / PR 自动编译，避免每次推送都消耗构建资源。
+  workflow_dispatch:
 
 jobs:
   build:
