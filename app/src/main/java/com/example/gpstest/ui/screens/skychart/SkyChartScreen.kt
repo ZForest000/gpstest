@@ -138,6 +138,11 @@ private fun SkyChartContent(
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Minimal Task 5 compile wiring; full screen integration is a later task.
+    val transformState = rememberSkyChartTransformState()
+    val animatedSatellites = rememberAnimatedSatellites(satellites)
+    val headingDegrees = rememberCompassHeading(enabled = transformState.northUp)
+
     Column(
         modifier =
             modifier
@@ -148,7 +153,9 @@ private fun SkyChartContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         SkyChartView(
-            satellites = satellites,
+            satellites = animatedSatellites,
+            transformState = transformState,
+            headingDegrees = headingDegrees,
             onSatelliteClick = onSatelliteClick,
             modifier =
                 Modifier
