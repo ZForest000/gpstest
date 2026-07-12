@@ -9,11 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -138,10 +141,9 @@ private fun SkyChartContent(
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Minimal Task 5 compile wiring; full screen integration is a later task.
     val transformState = rememberSkyChartTransformState()
-    val animatedSatellites = rememberAnimatedSatellites(satellites)
-    val headingDegrees = rememberCompassHeading(enabled = transformState.northUp)
+    val animated = rememberAnimatedSatellites(satellites)
+    val heading = rememberCompassHeading(enabled = transformState.northUp)
 
     Column(
         modifier =
@@ -152,16 +154,46 @@ private fun SkyChartContent(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        SkyChartView(
-            satellites = animatedSatellites,
-            transformState = transformState,
-            headingDegrees = headingDegrees,
-            onSatelliteClick = onSatelliteClick,
+        Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f),
-        )
+        ) {
+            SkyChartView(
+                satellites = animated,
+                transformState = transformState,
+                headingDegrees = heading,
+                onSatelliteClick = onSatelliteClick,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+            IconButton(
+                onClick = { transformState.setNorthUp(!transformState.northUp) },
+                modifier = Modifier.align(Alignment.TopStart),
+            ) {
+                Icon(
+                    imageVector =
+                        if (transformState.northUp) {
+                            Icons.Filled.Explore
+                        } else {
+                            Icons.Outlined.Explore
+                        },
+                    contentDescription =
+                        if (transformState.northUp) {
+                            "关闭北向上"
+                        } else {
+                            "开启北向上"
+                        },
+                    tint =
+                        if (transformState.northUp) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
