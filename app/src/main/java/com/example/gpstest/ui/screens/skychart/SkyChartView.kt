@@ -101,10 +101,11 @@ fun SkyChartView(
                         contentDescription = "卫星天空图，显示 ${plottableSatellites.size} 颗卫星的位置分布"
                     }.pointerInput(
                         transformState.northUp,
-                        headingDegrees,
                         center,
                         maxRadius,
                     ) {
+                        // headingDegrees/scale/offset read via rememberUpdatedState so
+                        // ~60Hz heading updates and live pan/zoom do not restart gestures.
                         detectTransformGestures { centroid, pan, zoom, _ ->
                             val ts = latestTransformState.value
                             val heading = latestHeadingDegrees.value
@@ -127,10 +128,7 @@ fun SkyChartView(
                             }
                         }
                     }.pointerInput(
-                        transformState.scale,
-                        transformState.offset,
                         transformState.northUp,
-                        headingDegrees,
                         center,
                         maxRadius,
                     ) {

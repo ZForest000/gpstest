@@ -37,98 +37,19 @@ fun rememberAnimatedSatellites(satellites: List<GnssSatellite>): List<AnimatedSa
     val tracks = remember { mutableMapOf<String, TrackedSat>() }
     var frame by remember { mutableStateOf(0L) }
 
-    // Sync tracks when satellite list identity/content changes
+    // Sync tracks on satellite list changes, then tick frames only while animating.
+    // First withFrameMillis establishes a real clock so appear/move start times are valid
+    // (frame starts at 0; using 0 as startMs makes the next real frame jump progress to 1).
     LaunchedEffect(satellites) {
-        val now = frame
-        val incoming = satellites.associateBy { satelliteKey(it) }
-        // Appear / update
-        for ((key, sat) in incoming) {
-            val existing = tracks[key]
-            if (existing == null) {
-                tracks[key] =
-                    TrackedSat(
-                        satellite = sat,
-                        fromAz = sat.azimuthDegrees,
-                        fromEl = sat.elevationDegrees,
-                        toAz = sat.azimuthDegrees,
-                        toEl = sat.elevationDegrees,
-                        moveStartMs = now,
-                        alphaFrom = 0f,
-                        alphaTo = 1f,
-                        alphaStartMs = now,
-                        removing = false,
-                    )
-            } else {
-                val currentAz =
-                    shortestArcAzimuthLerp(
-                        existing.fromAz,
-                        existing.toAz,
-                        progress(now, existing.moveStartMs, MOVE_DURATION_MS),
-                    )
-                val currentEl =
-                    elevationLerp(
-                        existing.fromEl,
-                        existing.toEl,
-                        progress(now, existing.moveStartMs, MOVE_DURATION_MS),
-                    )
-                existing.satellite = sat
-                existing.removing = false
-                if (sat.azimuthDegrees != existing.toAz || sat.elevationDegrees != existing.toEl) {
-                    existing.fromAz = currentAz
-                    existing.fromEl = currentEl
-                    existing.toAz = sat.azimuthDegrees
-                    existing.toEl = sat.elevationDegrees
-                    existing.moveStartMs = now
-                }
-                // If was fading out, reverse to fade in
-                if (existing.alphaTo < 1f) {
-                    val currentAlpha =
-                        lerp(
-                            existing.alphaFrom,
-                            existing.alphaTo,
-                            progress(now, existing.alphaStartMs, FADE_DURATION_MS),
-                        )
-                    existing.alphaFrom = currentAlpha
-                    existing.alphaTo = 1f
-                    existing.alphaStartMs = now
-                }
-            }
+        withFrameMillis { ms ->
+            frame = ms
+            syncTracks(tracks, satellites, ms)
         }
-        // Disappear — mark removing
-        val toRemoveKeys = tracks.keys.filter { it !in incoming }
-        for (key in toRemoveKeys) {
-            val existing = tracks[key] ?: continue
-            if (!existing.removing) {
-                val currentAlpha =
-                    lerp(
-                        existing.alphaFrom,
-                        existing.alphaTo,
-                        progress(now, existing.alphaStartMs, FADE_DURATION_MS),
-                    )
-                existing.alphaFrom = currentAlpha
-                existing.alphaTo = 0f
-                existing.alphaStartMs = now
-                existing.removing = true
-            }
-        }
-    }
 
-    // Frame ticker while any animation is active, or always while tracks non-empty
-    LaunchedEffect(Unit) {
-        while (true) {
+        while (hasActiveAnimations(tracks, frame)) {
             withFrameMillis { ms ->
                 frame = ms
-                // Purge fully faded
-                val keys = tracks.keys.toList()
-                for (key in keys) {
-                    val t = tracks[key] ?: continue
-                    if (t.removing) {
-                        val p = progress(ms, t.alphaStartMs, FADE_DURATION_MS)
-                        if (p >= 1f && t.alphaTo == 0f) {
-                            tracks.remove(key)
-                        }
-                    }
-                }
+                purgeFullyFaded(tracks, ms)
             }
         }
     }
@@ -148,6 +69,110 @@ fun rememberAnimatedSatellites(satellites: List<GnssSatellite>): List<AnimatedSa
         )
     }
 }
+
+private fun syncTracks(
+    tracks: MutableMap<String, TrackedSat>,
+    satellites: List<GnssSatellite>,
+    now: Long,
+) {
+    val incoming = satellites.associateBy { satelliteKey(it) }
+    // Appear / update
+    for ((key, sat) in incoming) {
+        val existing = tracks[key]
+        if (existing == null) {
+            tracks[key] =
+                TrackedSat(
+                    satellite = sat,
+                    fromAz = sat.azimuthDegrees,
+                    fromEl = sat.elevationDegrees,
+                    toAz = sat.azimuthDegrees,
+                    toEl = sat.elevationDegrees,
+                    moveStartMs = now,
+                    alphaFrom = 0f,
+                    alphaTo = 1f,
+                    alphaStartMs = now,
+                    removing = false,
+                )
+        } else {
+            val currentAz =
+                shortestArcAzimuthLerp(
+                    existing.fromAz,
+                    existing.toAz,
+                    progress(now, existing.moveStartMs, MOVE_DURATION_MS),
+                )
+            val currentEl =
+                elevationLerp(
+                    existing.fromEl,
+                    existing.toEl,
+                    progress(now, existing.moveStartMs, MOVE_DURATION_MS),
+                )
+            existing.satellite = sat
+            existing.removing = false
+            if (sat.azimuthDegrees != existing.toAz || sat.elevationDegrees != existing.toEl) {
+                existing.fromAz = currentAz
+                existing.fromEl = currentEl
+                existing.toAz = sat.azimuthDegrees
+                existing.toEl = sat.elevationDegrees
+                existing.moveStartMs = now
+            }
+            // If was fading out, reverse to fade in
+            if (existing.alphaTo < 1f) {
+                val currentAlpha =
+                    lerp(
+                        existing.alphaFrom,
+                        existing.alphaTo,
+                        progress(now, existing.alphaStartMs, FADE_DURATION_MS),
+                    )
+                existing.alphaFrom = currentAlpha
+                existing.alphaTo = 1f
+                existing.alphaStartMs = now
+            }
+        }
+    }
+    // Disappear — mark removing
+    val toRemoveKeys = tracks.keys.filter { it !in incoming }
+    for (key in toRemoveKeys) {
+        val existing = tracks[key] ?: continue
+        if (!existing.removing) {
+            val currentAlpha =
+                lerp(
+                    existing.alphaFrom,
+                    existing.alphaTo,
+                    progress(now, existing.alphaStartMs, FADE_DURATION_MS),
+                )
+            existing.alphaFrom = currentAlpha
+            existing.alphaTo = 0f
+            existing.alphaStartMs = now
+            existing.removing = true
+        }
+    }
+}
+
+private fun purgeFullyFaded(
+    tracks: MutableMap<String, TrackedSat>,
+    now: Long,
+) {
+    val keys = tracks.keys.toList()
+    for (key in keys) {
+        val t = tracks[key] ?: continue
+        if (t.removing) {
+            val p = progress(now, t.alphaStartMs, FADE_DURATION_MS)
+            if (p >= 1f && t.alphaTo == 0f) {
+                tracks.remove(key)
+            }
+        }
+    }
+}
+
+private fun hasActiveAnimations(
+    tracks: Map<String, TrackedSat>,
+    now: Long,
+): Boolean =
+    tracks.values.any { t ->
+        progress(now, t.moveStartMs, MOVE_DURATION_MS) < 1f ||
+            progress(now, t.alphaStartMs, FADE_DURATION_MS) < 1f ||
+            t.removing
+    }
 
 private fun progress(
     now: Long,
