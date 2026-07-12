@@ -1,5 +1,6 @@
 package com.example.gpstest.data.source
 
+import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
 import kotlinx.coroutines.flow.Flow
 
@@ -18,4 +19,12 @@ interface GnssDataSource {
 
     /** 设备是否支持 GPS（存在 GPS provider）。仿真器或无 GPS 设备返回 false。 */
     fun isSupported(): Boolean
+
+    /**
+     * 查询设备 GNSS 能力（API 31+）。
+     *
+     * 结果是静态的设备能力快照，不需要位置权限即可获取。
+     * API < 31 的设备可能仅返回硬件型号/年份（API 28+），能力字段全部为 null。
+     */
+    fun getGnssCapabilities(): GnssCapabilitiesInfo?
 }

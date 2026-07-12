@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gpstest.data.source.DumpsysGnssData
 import com.example.gpstest.domain.model.DopInfo
+import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssClockData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
@@ -44,6 +45,9 @@ class SatelliteViewModel(
     private val _ttffState = MutableStateFlow<TtffState>(TtffState.Measuring(System.currentTimeMillis()))
     val ttffState: StateFlow<TtffState> = _ttffState.asStateFlow()
 
+    private val _gnssCapabilities = MutableStateFlow<GnssCapabilitiesInfo?>(null)
+    val gnssCapabilities: StateFlow<GnssCapabilitiesInfo?> = _gnssCapabilities.asStateFlow()
+
     private var lastSnapshotTime = 0L
     private val snapshotIntervalMs = 60_000L // 自动快照间隔：1 分钟（平衡粒度和存储量）
     private var collectionJob: Job? = null
@@ -52,6 +56,18 @@ class SatelliteViewModel(
 
     init {
         loadHistory()
+        loadCapabilities()
+    }
+
+    // GNSS 能力查询不依赖定位权限，在 init 中执行，权限拒绝时也能展示
+    private fun loadCapabilities() {
+        viewModelScope.launch {
+            try {
+                _gnssCapabilities.value = repository.getGnssCapabilities()
+            } catch (e: Exception) {
+                _gnssCapabilities.value = null
+            }
+        }
     }
 
     fun startListening() {

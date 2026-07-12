@@ -1,6 +1,7 @@
 package com.example.gpstest.domain.repository
 
 import com.example.gpstest.data.source.GnssDataSource
+import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.sample
@@ -17,4 +18,6 @@ class GnssRepositoryImpl(
     override fun getGnssData(): Flow<GnssData> = dataSource.getGnssData().sample(UI_SAMPLE_INTERVAL_MS)
 
     override suspend fun isGnssSupported(): Boolean = dataSource.isSupported()
+
+    override suspend fun getGnssCapabilities(): GnssCapabilitiesInfo? = dataSource.getGnssCapabilities()
 }

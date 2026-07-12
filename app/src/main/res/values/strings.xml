@@ -237,6 +237,20 @@
     <string name="ttff_unit">秒</string>
     <string name="ttff_reset">重置</string>
 
+    <!-- GNSS Capabilities -->
+    <string name="gnss_capabilities_title">设备 GNSS 能力</string>
+    <string name="cap_hardware_model">硬件型号</string>
+    <string name="cap_hardware_year">硬件年份</string>
+    <string name="cap_measurements">原始测量</string>
+    <string name="cap_navigation_messages">导航电文</string>
+    <string name="cap_antenna_info">天线信息</string>
+    <string name="cap_accumulated_delta_range">累积距离</string>
+    <string name="cap_measurement_corrections">测量修正</string>
+    <string name="cap_measurement_correlation_vectors">测量相关向量</string>
+    <string name="cap_supported">支持</string>
+    <string name="cap_unsupported">不支持</string>
+    <string name="cap_unknown">未知</string>
+
     <!-- Help -->
     <string name="help_title">帮助</string>
     <string name="help_ttff_title">TTFF 首次定位时间</string>

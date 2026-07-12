@@ -36,6 +36,7 @@ import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
 import com.example.gpstest.ui.components.ConstellationStatCard
 import com.example.gpstest.ui.components.DopCard
 import com.example.gpstest.ui.components.ErrorContent
+import com.example.gpstest.ui.components.GnssCapabilitiesCard
 import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.PermissionRequiredContent
 import com.example.gpstest.ui.components.SatelliteCard
@@ -57,6 +58,7 @@ fun SatelliteListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val ttffState by viewModel.ttffState.collectAsState()
+    val gnssCapabilities by viewModel.gnssCapabilities.collectAsState()
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -107,6 +109,7 @@ fun SatelliteListScreen(
                         clock = state.clock,
                         dumpsysData = state.dumpsysData,
                         dopInfo = state.dopInfo,
+                        gnssCapabilities = gnssCapabilities,
                         ttffState = ttffState,
                         onTtffReset = { viewModel.resetTtff() },
                         onSatelliteClick = { selectedSatellite = it },
@@ -148,6 +151,7 @@ private fun SatelliteListContent(
     clock: com.example.gpstest.domain.model.GnssClockData?,
     dumpsysData: com.example.gpstest.data.source.DumpsysGnssData?,
     dopInfo: com.example.gpstest.domain.model.DopInfo?,
+    gnssCapabilities: com.example.gpstest.domain.model.GnssCapabilitiesInfo?,
     ttffState: com.example.gpstest.viewmodel.TtffState,
     onTtffReset: () -> Unit,
     onSatelliteClick: (GnssSatellite) -> Unit,
@@ -205,6 +209,12 @@ private fun SatelliteListContent(
                 totalCount = totalCount,
                 satellites = allSatellites,
             )
+        }
+
+        if (gnssCapabilities != null) {
+            item {
+                GnssCapabilitiesCard(capabilities = gnssCapabilities)
+            }
         }
 
         if (usedInFix.isNotEmpty()) {

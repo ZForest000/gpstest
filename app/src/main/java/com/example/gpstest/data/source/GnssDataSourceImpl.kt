@@ -11,7 +11,9 @@ import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.os.Build
 import com.example.gpstest.domain.model.Constellation
+import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssClockData
 import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
@@ -122,8 +124,8 @@ class GnssDataSourceImpl(
                                             null
                                         },
                                     accumulatedDeltaRangeState = measurement.accumulatedDeltaRangeState,
+                                    // ADR 无效时不确定性也无意义，一并置为 null
                                     accumulatedDeltaRangeUncertaintyMeters =
-                                        // ADR 无效时不确定性也无意义，一并置为 null
                                         if ((measurement.accumulatedDeltaRangeState and GnssMeasurement.ADR_STATE_VALID) != 0) {
                                             measurement.accumulatedDeltaRangeUncertaintyMeters
                                         } else {
@@ -409,6 +411,81 @@ class GnssDataSourceImpl(
         val lm = locationManager ?: return false
         return lm.allProviders.contains("gps")
     }
+
+    override fun getGnssCapabilities(): GnssCapabilitiesInfo? {
+        val lm = locationManager ?: return null
+        return try {
+            val hardwareModelName =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    lm.gnssHardwareModelName
+                } else {
+                    null
+                }
+            val yearOfHardware =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    lm.gnssYearOfHardware.toString()
+                } else {
+                    null
+                }
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                return if (hardwareModelName != null || yearOfHardware != null) {
+                    GnssCapabilitiesInfo(
+                        hardwareModelName = hardwareModelName,
+                        yearOfHardware = yearOfHardware,
+                        hasMeasurements = null,
+                        hasNavigationMessages = null,
+                        hasAntennaInfo = null,
+                        hasAccumulatedDeltaRange = null,
+                        hasMeasurementCorrections = null,
+                        hasMeasurementCorrelationVectors = null,
+                    )
+                } else {
+                    null
+                }
+            }
+
+            val cap = lm.gnssCapabilities
+            val hasAccumulatedDeltaRange =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    cap.hasAccumulatedDeltaRange()
+                } else {
+                    null
+                }
+            val hasMeasurementCorrections =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    cap.hasMeasurementCorrections()
+                } else {
+                    null
+                }
+            val hasMeasurementCorrelationVectors =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    cap.hasMeasurementCorrelationVectors()
+                } else {
+                    null
+                }
+
+            GnssCapabilitiesInfo(
+                hardwareModelName = hardwareModelName,
+                yearOfHardware = yearOfHardware,
+                // API 31 能力方法返回 boolean，转为领域层 1/0 编码
+                hasMeasurements = cap.hasMeasurements().toCapabilityResult(),
+                hasNavigationMessages = cap.hasNavigationMessages().toCapabilityResult(),
+                hasAntennaInfo = cap.hasAntennaInfo().toCapabilityResult(),
+                // API 34 方法返回类型不一致：ADR 返回 int；修正/相关向量返回 boolean
+                hasAccumulatedDeltaRange = hasAccumulatedDeltaRange,
+                hasMeasurementCorrections = hasMeasurementCorrections?.let { if (it) 1 else 0 },
+                hasMeasurementCorrelationVectors = hasMeasurementCorrelationVectors?.let { if (it) 1 else 0 },
+            )
+        } catch (e: Exception) {
+            // 部分 OEM 在调用 gnssCapabilities 时可能抛出异常（如 binder 调用失败），
+            // 静默降级，不影响主数据流。
+            null
+        }
+    }
+
+    // Android GnssCapabilities 布尔返回值映射为领域层 Int 编码：true=1, false=0
+    private fun Boolean.toCapabilityResult(): Int = if (this) 1 else 0
 
     // 将 [Constellation] 枚举映射为 Android [GnssStatus] 的整型常量
     // 1=GPS, 2=SBAS, 3=GLONASS, 4=QZSS, 5=北斗, 6=伽利略, 0=未知
