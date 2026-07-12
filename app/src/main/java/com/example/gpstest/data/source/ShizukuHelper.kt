@@ -86,10 +86,11 @@ object ShizukuHelper {
      */
     fun fetchDumpsysGnssData(): DumpsysGnssData? {
         if (!isShizukuAvailable || !isPermissionGranted) return null
-        val service = dumpsysService ?: run {
-            bindUserServiceIfNeeded()
-            return null
-        }
+        val service =
+            dumpsysService ?: run {
+                bindUserServiceIfNeeded()
+                return null
+            }
         return try {
             val output = service.exec("dumpsys location")
             DumpsysParser.parse(output)
@@ -104,12 +105,13 @@ object ShizukuHelper {
         if (bindRequested || !isShizukuAvailable || !isPermissionGranted) return
         try {
             val args =
-                Shizuku.UserServiceArgs(
-                    ComponentName(
-                        "com.example.gpstest",
-                        "com.example.gpstest.data.source.DumpsysServiceImpl",
-                    ),
-                ).tag(USER_SERVICE_TAG)
+                Shizuku
+                    .UserServiceArgs(
+                        ComponentName(
+                            "com.example.gpstest",
+                            "com.example.gpstest.data.source.DumpsysServiceImpl",
+                        ),
+                    ).tag(USER_SERVICE_TAG)
                     .version(USER_SERVICE_VERSION)
             Shizuku.bindUserService(args, serviceConnection)
             bindRequested = true
@@ -121,7 +123,10 @@ object ShizukuHelper {
 
     private val serviceConnection =
         object : ServiceConnection {
-            override fun onServiceConnected(name: android.content.ComponentName?, service: IBinder?) {
+            override fun onServiceConnected(
+                name: android.content.ComponentName?,
+                service: IBinder?,
+            ) {
                 dumpsysService = IDumpsysService.Stub.asInterface(service)
             }
 

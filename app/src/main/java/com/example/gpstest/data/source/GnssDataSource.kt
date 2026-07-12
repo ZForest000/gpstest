@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
  * 合并为统一的 [Flow]，实现见 [GnssDataSourceImpl]。
  */
 interface GnssDataSource {
-
     /**
      * 返回 GNSS 数据流，包含卫星列表、位置、时钟和气压信息。
      * 调用方应在生命周期感知的协程作用域中收集此 Flow。

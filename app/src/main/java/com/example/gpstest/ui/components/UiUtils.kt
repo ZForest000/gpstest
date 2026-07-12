@@ -29,9 +29,7 @@ fun formatNanosToTime(nanos: Long): String {
     return SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault()).format(Date(millis))
 }
 
-fun formatMillisToDateTime(millis: Long): String {
-    return SimpleDateFormat("MM/dd HH:mm:ss", Locale.getDefault()).format(Date(millis))
-}
+fun formatMillisToDateTime(millis: Long): String = SimpleDateFormat("MM/dd HH:mm:ss", Locale.getDefault()).format(Date(millis))
 
 @Composable
 fun DetailRow(

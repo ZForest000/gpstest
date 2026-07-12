@@ -15,7 +15,6 @@ enum class Constellation(
     ;
 
     companion object {
-        fun fromConstellationType(type: Int): Constellation =
-            entries.find { it.constellationType == type } ?: UNKNOWN
+        fun fromConstellationType(type: Int): Constellation = entries.find { it.constellationType == type } ?: UNKNOWN
     }
 }

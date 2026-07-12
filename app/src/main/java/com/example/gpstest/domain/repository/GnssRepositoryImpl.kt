@@ -14,8 +14,7 @@ private const val UI_SAMPLE_INTERVAL_MS = 250L
 class GnssRepositoryImpl(
     private val dataSource: GnssDataSource,
 ) : GnssRepository {
-    override fun getGnssData(): Flow<GnssData> =
-        dataSource.getGnssData().sample(UI_SAMPLE_INTERVAL_MS)
+    override fun getGnssData(): Flow<GnssData> = dataSource.getGnssData().sample(UI_SAMPLE_INTERVAL_MS)
 
     override suspend fun isGnssSupported(): Boolean = dataSource.isSupported()
 }

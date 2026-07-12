@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.Flow
  * 和 izatcloud.net XTRA 数据格式。
  */
 interface AGpsRepository {
-
     /** 当前 A-GPS 数据状态流（时间/星历/历书各自状态）。 */
     val status: Flow<AGpsStatus>
 

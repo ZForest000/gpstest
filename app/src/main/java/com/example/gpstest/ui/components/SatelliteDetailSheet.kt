@@ -1,7 +1,6 @@
 package com.example.gpstest.ui.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,13 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
-import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
-import com.example.gpstest.ui.components.fullNameResId
 import com.example.gpstest.domain.model.MultipathIndicator
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.example.gpstest.ui.components.fullNameResId
 
 @Composable
 fun SatelliteDetailSheet(
@@ -184,5 +179,3 @@ private fun DetailSection(
         content()
     }
 }
-
-

@@ -36,12 +36,16 @@ class AGpsRepositoryImpl(
 ) : AGpsRepository {
     companion object {
         private const val TAG = "AGpsRepository"
+
         // GPS 广播星历每 2 小时更新，有效期约 4 小时；超期后卫星钟差预报发散，精度下降
         private const val EPHEMERIS_VALID_HOURS = 4L
+
         // 历书为粗轨道信息，有效期数周至数月，保守用 30 天
         private const val ALMANAC_VALID_DAYS = 30L
+
         // 时间注入后接收机内部时钟漂移约 1μs/天，24h 内可接受
         private const val TIME_VALID_HOURS = 24L
+
         // 至少 50% 可见卫星有有效星历或历书才认为注入成功
         // 低于此比例常意味着数据过期或下载了错误文件（如 HTML 错误页面）
         private const val MIN_SUCCESS_RATIO = 0.5f
@@ -250,7 +254,6 @@ class AGpsRepositoryImpl(
     override suspend fun updateSettings(settings: AGpsSettings) {
         settingsStore.updateSettings(settings)
     }
-
 
     private fun addRecord(
         type: InjectionType,
