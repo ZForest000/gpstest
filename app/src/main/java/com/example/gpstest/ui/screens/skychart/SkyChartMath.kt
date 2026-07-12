@@ -6,16 +6,21 @@ import com.example.gpstest.domain.model.GnssSatellite
 import kotlin.math.cos
 import kotlin.math.sin
 
-fun satelliteKey(constellation: Constellation, svid: Int): String =
-    "${constellation.name}_$svid"
+fun satelliteKey(
+    constellation: Constellation,
+    svid: Int,
+): String = "${constellation.name}_$svid"
 
-fun satelliteKey(satellite: GnssSatellite): String =
-    satelliteKey(satellite.constellation, satellite.svid)
+fun satelliteKey(satellite: GnssSatellite): String = satelliteKey(satellite.constellation, satellite.svid)
 
 /**
  * Linear interpolate azimuth along the shortest arc. Result normalized to [0, 360).
  */
-fun shortestArcAzimuthLerp(fromDeg: Float, toDeg: Float, t: Float): Float {
+fun shortestArcAzimuthLerp(
+    fromDeg: Float,
+    toDeg: Float,
+    t: Float,
+): Float {
     val from = normalizeDegrees(fromDeg)
     val to = normalizeDegrees(toDeg)
     var delta = to - from
@@ -24,8 +29,11 @@ fun shortestArcAzimuthLerp(fromDeg: Float, toDeg: Float, t: Float): Float {
     return normalizeDegrees(from + delta * t.coerceIn(0f, 1f))
 }
 
-fun elevationLerp(fromDeg: Float, toDeg: Float, t: Float): Float =
-    fromDeg + (toDeg - fromDeg) * t.coerceIn(0f, 1f)
+fun elevationLerp(
+    fromDeg: Float,
+    toDeg: Float,
+    t: Float,
+): Float = fromDeg + (toDeg - fromDeg) * t.coerceIn(0f, 1f)
 
 /**
  * Chart-space point → screen-space after the canvas transform chain:
@@ -83,7 +91,11 @@ fun screenToChart(
 /**
  * At scale==1 force zero. Otherwise clamp each axis to ± maxRadius*(scale-1).
  */
-fun clampPanOffset(offset: Offset, scale: Float, maxRadius: Float): Offset {
+fun clampPanOffset(
+    offset: Offset,
+    scale: Float,
+    maxRadius: Float,
+): Offset {
     if (scale <= 1f) return Offset.Zero
     val maxPan = maxRadius * (scale - 1f)
     return Offset(
@@ -99,7 +111,10 @@ fun normalizeDegrees(degrees: Float): Float {
 }
 
 /** Rotate vector by [degrees] (positive = clockwise in screen Y-down coords? use standard math CCW). */
-fun rotateOffset(v: Offset, degrees: Float): Offset {
+fun rotateOffset(
+    v: Offset,
+    degrees: Float,
+): Offset {
     val rad = Math.toRadians(degrees.toDouble())
     val c = cos(rad).toFloat()
     val s = sin(rad).toFloat()

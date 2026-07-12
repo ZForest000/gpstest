@@ -149,9 +149,17 @@ fun rememberAnimatedSatellites(satellites: List<GnssSatellite>): List<AnimatedSa
     }
 }
 
-private fun progress(now: Long, start: Long, duration: Long): Float {
+private fun progress(
+    now: Long,
+    start: Long,
+    duration: Long,
+): Float {
     if (duration <= 0L) return 1f
     return ((now - start).toFloat() / duration.toFloat()).coerceIn(0f, 1f)
 }
 
-private fun lerp(from: Float, to: Float, t: Float): Float = from + (to - from) * t.coerceIn(0f, 1f)
+private fun lerp(
+    from: Float,
+    to: Float,
+    t: Float,
+): Float = from + (to - from) * t.coerceIn(0f, 1f)

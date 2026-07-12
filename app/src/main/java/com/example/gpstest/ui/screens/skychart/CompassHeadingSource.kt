@@ -80,10 +80,14 @@ fun rememberCompassHeading(enabled: Boolean): Float {
                             heading = smoothed
                         }
 
-                        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+                        override fun onAccuracyChanged(
+                            sensor: Sensor?,
+                            accuracy: Int,
+                        ) {}
                     }
 
                 var registered = false
+
                 fun register() {
                     if (!registered) {
                         sensorManager.registerListener(
@@ -127,7 +131,11 @@ fun rememberCompassHeading(enabled: Boolean): Float {
 }
 
 /** Blend toward [target] along shortest arc by [alpha] (0..1). */
-internal fun shortestArcBlend(current: Float, target: Float, alpha: Float): Float {
+internal fun shortestArcBlend(
+    current: Float,
+    target: Float,
+    alpha: Float,
+): Float {
     val from = normalizeDegrees(current)
     val to = normalizeDegrees(target)
     var delta = to - from

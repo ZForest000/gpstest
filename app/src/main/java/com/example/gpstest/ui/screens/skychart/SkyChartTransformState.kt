@@ -75,7 +75,10 @@ class SkyChartTransformState(
         offset = clampPanOffset(offset + delta, newScale, maxRadius)
     }
 
-    fun applyPan(pan: Offset, maxRadius: Float) {
+    fun applyPan(
+        pan: Offset,
+        maxRadius: Float,
+    ) {
         if (scale <= 1f) {
             offset = Offset.Zero
             return
@@ -99,5 +102,4 @@ class SkyChartTransformState(
 }
 
 @Composable
-fun rememberSkyChartTransformState(): SkyChartTransformState =
-    remember { SkyChartTransformState() }
+fun rememberSkyChartTransformState(): SkyChartTransformState = remember { SkyChartTransformState() }
