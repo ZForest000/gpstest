@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -86,15 +87,29 @@ fun SkyChartView(
                 SatellitePlot(anim.satellite, x, y, visualRadius, anim.alpha)
             }
 
+        // Stable keys for pointerInput; latest values read via rememberUpdatedState
+        // so az/el/alpha animation does not cancel gestures mid-flight.
+        val latestPlots = rememberUpdatedState(plots)
+        val latestTransformState = rememberUpdatedState(transformState)
+        val latestHeadingDegrees = rememberUpdatedState(headingDegrees)
+        val latestOnSatelliteClick = rememberUpdatedState(onSatelliteClick)
+
         Canvas(
             modifier =
                 Modifier
                     .semantics {
                         contentDescription = "卫星天空图，显示 ${plottableSatellites.size} 颗卫星的位置分布"
-                    }.pointerInput(transformState, center, maxRadius) {
+                    }.pointerInput(
+                        transformState.northUp,
+                        headingDegrees,
+                        center,
+                        maxRadius,
+                    ) {
                         detectTransformGestures { centroid, pan, zoom, _ ->
+                            val ts = latestTransformState.value
+                            val heading = latestHeadingDegrees.value
                             if (zoom != 1f) {
-                                transformState.applyZoom(
+                                ts.applyZoom(
                                     centroid = centroid,
                                     zoomChange = zoom,
                                     center = center,
@@ -103,16 +118,15 @@ fun SkyChartView(
                             }
                             if (pan != Offset.Zero) {
                                 val adjustedPan =
-                                    if (transformState.northUp) {
-                                        rotateOffset(pan, headingDegrees)
+                                    if (ts.northUp) {
+                                        rotateOffset(pan, heading)
                                     } else {
                                         pan
                                     }
-                                transformState.applyPan(adjustedPan, maxRadius)
+                                ts.applyPan(adjustedPan, maxRadius)
                             }
                         }
                     }.pointerInput(
-                        plots,
                         transformState.scale,
                         transformState.offset,
                         transformState.northUp,
@@ -122,20 +136,22 @@ fun SkyChartView(
                     ) {
                         detectTapGestures(
                             onDoubleTap = {
-                                transformState.resetScaleAndOffset()
+                                latestTransformState.value.resetScaleAndOffset()
                             },
                             onTap = { screenOffset ->
+                                val ts = latestTransformState.value
+                                val heading = latestHeadingDegrees.value
                                 val chartPoint =
                                     screenToChart(
                                         point = screenOffset,
                                         center = center,
-                                        scale = transformState.scale,
-                                        offset = transformState.offset,
-                                        headingDeg = if (transformState.northUp) headingDegrees else 0f,
-                                        northUp = transformState.northUp,
+                                        scale = ts.scale,
+                                        offset = ts.offset,
+                                        headingDeg = if (ts.northUp) heading else 0f,
+                                        northUp = ts.northUp,
                                     )
                                 val hit =
-                                    plots
+                                    latestPlots.value
                                         .filter { it.animAlpha > 0.5f }
                                         .minByOrNull { plot ->
                                             val dx = chartPoint.x - plot.x
@@ -146,7 +162,7 @@ fun SkyChartView(
                                     val dx = chartPoint.x - hit.x
                                     val dy = chartPoint.y - hit.y
                                     if (dx * dx + dy * dy <= touchRadius * touchRadius) {
-                                        onSatelliteClick(hit.satellite)
+                                        latestOnSatelliteClick.value(hit.satellite)
                                     }
                                 }
                             },
