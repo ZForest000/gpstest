@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.PermissionState
+import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.ui.components.ErrorContent
 import com.example.gpstest.ui.components.PermissionRequiredContent
@@ -48,6 +49,9 @@ fun SkyChartScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
+    var visibleConstellations by remember {
+        mutableStateOf(Constellation.entries.toSet())
+    }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
@@ -87,8 +91,18 @@ fun SkyChartScreen(
                 }
                 is SatelliteUiState.Success -> {
                     val allSatellites = state.usedInFix + state.visibleOnly + state.searching
+                    val filteredSatellites = allSatellites.filter { it.constellation in visibleConstellations }
                     SkyChartContent(
-                        satellites = allSatellites,
+                        satellites = filteredSatellites,
+                        visibleConstellations = visibleConstellations,
+                        onConstellationToggle = { constellation ->
+                            visibleConstellations =
+                                if (constellation in visibleConstellations) {
+                                    visibleConstellations - constellation
+                                } else {
+                                    visibleConstellations + constellation
+                                }
+                        },
                         onSatelliteClick = { selectedSatellite = it },
                     )
                 }
@@ -119,6 +133,8 @@ fun SkyChartScreen(
 @Composable
 private fun SkyChartContent(
     satellites: List<GnssSatellite>,
+    visibleConstellations: Set<Constellation>,
+    onConstellationToggle: (Constellation) -> Unit,
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -142,6 +158,9 @@ private fun SkyChartContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SkyChartLegend()
+        SkyChartLegend(
+            visibleConstellations = visibleConstellations,
+            onConstellationToggle = onConstellationToggle,
+        )
     }
 }

@@ -186,6 +186,21 @@ fun SkyChartView(
                     center = Offset(plot.x, plot.y),
                     style = Stroke(width = borderWidth),
                 )
+
+                val svidLabel =
+                    textMeasurer.measure(
+                        text = AnnotatedString(sat.svid.toString()),
+                        style = TextStyle(fontSize = 10.sp),
+                    )
+                drawText(
+                    textLayoutResult = svidLabel,
+                    color = color.copy(alpha = alpha),
+                    topLeft =
+                        Offset(
+                            plot.x + plot.visualRadius + with(density) { 3.dp.toPx() },
+                            plot.y - plot.visualRadius - svidLabel.size.height / 2f,
+                        ),
+                )
             }
 
             // 空状态提示
