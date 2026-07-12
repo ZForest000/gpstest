@@ -1,6 +1,6 @@
 # GNSS 调试工具 — 功能路线图
 
-> **核实基准日期**：2026-07-12（基于 master 分支，含 G5 TDOP/GDOP 实现）
+> **核实基准日期**：2026-07-12（基于 master 分支，含 G5 TDOP/GDOP、G6 设备能力、E4 测试覆盖实现）
 > **目的**：经代码核实的功能增强清单与实施路线图，取代旧版 checkbox 列表
 > **变更说明**：旧版 TODO.md 有 6 处标记错误，已在「第六章 已实现功能清单」中修正
 
@@ -50,14 +50,13 @@
 | 编号   | 功能                                                   | 优先级 | 工作量 | 章节 |
 | ------ | ------------------------------------------------------ | ------ | ------ | ---- |
 | **B3** | NMEA 监听接线(文案已预留,代码零命中)                   | P2     | 中     | 一   |
-| **G1** | 原始伪距采集 + 本地最小二乘定位解(杀手级)              | P1     | 大     | 二   |
+| **G1** | 原始伪距推导 + 本地最小二乘定位解(杀手级)              | P1     | 大     | 二   |
 | **G2** | RINEX 3.x 导出                                         | P1     | 大     | 二   |
 | **G3** | GnssAntennaInfo 接入                                   | P2     | 中     | 二   |
 | **G4** | GnssNavigationMessage 导航电文                         | P3     | 大     | 二   |
-| **G6** | GnssCapabilities 设备能力查询展示 ✅                   | P2     | 小     | 二   |
 | **G7** | Location 精度字段补全 + 闰秒                           | P2     | 小     | 二   |
 | **U1** | 设置屏幕(多处死代码待激活)                             | P1     | 中     | 三   |
-| **U2** | 天空图交互增强(缩放/SVID标签/指北)                     | P1     | 中     | 三   |
+| **U2** | 天空图交互增强第一阶段(SVID标签/星座过滤)              | P1     | 小     | 三   |
 | **U3** | 历史趋势图 + CSV 导出 + 详情钻取                       | P1     | 大     | 三   |
 | **U4** | 卫星列表筛选/排序/冻结                                 | P2     | 中     | 三   |
 | **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块)               | P2     | 中     | 三   |
@@ -65,13 +64,12 @@
 | **E1** | Release minify 开启 + ProGuard 补全                    | P2     | 中     | 四   |
 | **E2** | CI 增加 lint / 覆盖率 / instrumented 测试              | P2     | 小     | 四   |
 | **E3** | Timber + 崩溃上报(54 处裸 Log)                         | P2     | 中     | 四   |
-| **E4** | ViewModel/Repository 测试覆盖(核心逻辑零测试)          | P1     | 中     | 四   |
 | **E5** | 国际化 i18n(仅 values/,4 处硬编码中文)                 | P2     | 中     | 四   |
 | **E6** | Version Catalog 迁移                                   | P3     | 小     | 四   |
 | **E7** | 历史存储迁移 Room                                      | P3     | 大     | 四   |
 | **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3     | 小     | 四   |
 
-**下一步建议**:阶段二核心能力(G6 → G7 → G1)或 E4 测试覆盖(作为后续重构安全网)。
+**下一步建议**：先完成当前 G6 收尾验证；之后优先做 **U2 第一阶段（SVID 标签 + 星座过滤）**，这是当前单位投入收益最高的用户可见增强；若只安排半天数据补全，则做 **G7（闰秒 + Location 精度字段）**。G1 保留为杀手级长线能力，但需先修正伪距推导方案，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -145,25 +143,25 @@
 
 ## 二、🚀 专业 GNSS 能力增强
 
-### G1. 原始伪距采集 + 本地最小二乘定位解（P1，工作量：大）
+### G1. 原始伪距推导 + 本地最小二乘定位解（P1，工作量：大）
 
-**现状**：`GnssDataSourceImpl.kt:126` 只读取了 `pseudorangeRateMetersPerSecond`（速率），**`GnssMeasurement.getPseudorangeMeters()` / `getPseudorangeUncertaintyMeters()`（API 31+）完全未采**。`GnssSatellite.kt:41-69` 模型中无 `pseudorangeMeters` 字段。`GnssClockData.totalBiasNanos`（`GnssClockData.kt:29-36`）已采集时钟偏移。
+**现状**：`GnssDataSourceImpl.kt:124-126` 已读取 `receivedSvTimeNanos`、`receivedSvTimeUncertaintyNanos`、`pseudorangeRateMetersPerSecond`，`GnssClockData.totalBiasNanos`（`GnssClockData.kt:29-36`）已采集接收机时钟偏移。Android `GnssMeasurement` **没有** `getPseudorangeMeters()` / `getPseudorangeUncertaintyMeters()` 直接 API；伪距必须由接收机时钟、卫星发射时间、测量状态和星座时间系统推导。
 
 **问题/缺口**：有了原始伪距 + 接收机时钟偏移 + 卫星位置（可从星历算），可**本地计算定位解**（加权最小二乘），与 Android 报告位置做残差对比——这是 GNSS 调试工具的核心价值。当前用户只能看 Android 给的"成品"位置，无法诊断"为什么定位偏了"。
 
 **建议方案**：
 
-1. `GnssSatellite` 新增 `pseudorangeMeters`、`pseudorangeUncertaintyMeters` 字段（API 31+ 守卫）。
-2. `GnssDataSourceImpl.kt:126` 附近补充采集。
-3. 新增 `domain/util/PositionSolver.kt`：从伪距 + 时钟偏移 + 卫星位置解算位置（迭代最小二乘）。
-4. 卫星位置计算：接入 G3（GnssAntennaInfo）+ 星历，或先用简化模型（如广播星历解析）。
-5. UI 增加对比卡片：系统位置 vs 本地解算位置，显示差异（米）。
+1. `GnssSatellite` 新增 `pseudorangeMeters`、`pseudorangeUncertaintyMeters` 字段，但字段来源是**推导值**，不是平台直接 getter。
+2. 新增 `domain/util/PseudorangeCalculator.kt`：根据 `GnssClock`、`receivedSvTimeNanos`、`state`、星座时间基准处理周内秒/TOW、日内秒/TOD、rollover、闰秒和接收机钟差，输出可用伪距与不确定度。
+3. 新增 `domain/util/PositionSolver.kt`：从伪距 + 卫星位置解算位置（迭代加权最小二乘）。
+4. 卫星位置计算需接入导航电文/星历（G4）或外部星历来源；同时处理卫星钟差、相对论效应、地球自转 Sagnac、对流层/电离层改正和星座间偏差（ISB）。
+5. UI 增加对比卡片：系统位置 vs 本地解算位置，显示残差、参与卫星数、WLS 收敛状态。
 
-**涉及文件**：`domain/model/GnssSatellite.kt`、`data/source/GnssDataSourceImpl.kt`、新增 `domain/util/PositionSolver.kt`、新增 UI 卡片。
+**涉及文件**：`domain/model/GnssSatellite.kt`、`data/source/GnssDataSourceImpl.kt`、新增 `domain/util/PseudorangeCalculator.kt`、新增 `domain/util/PositionSolver.kt`、新增 UI 卡片。
 
-**依赖与风险**：API 31+；卫星位置计算复杂（需星历/历书），可作为二期；最小二乘需足够卫星数（≥5）；需新增领域层测试。
+**依赖与风险**：无直接伪距 API，算法复杂度高；卫星位置计算依赖星历/历书；最小二乘需足够卫星数（≥5）；必须用公开样例或录制原始观测做领域层黄金测试，避免“看似有数、实际错误”的误导性输出。
 
-**ROI**：大工作量 / 极高价值 — 杀手级功能，将工具从"数据展示"提升到"诊断分析"。
+**ROI**：大工作量 / 极高价值 — 杀手级功能，将工具从"数据展示"提升到"诊断分析"；但当前不是单位投入收益最高项，适合在 G7/U2 后作为专项推进。
 
 ---
 
@@ -301,14 +299,14 @@
 
 **建议方案**：
 
-1. `LocationInfo` 新增 `verticalAccuracyMeters`、`bearingAccuracyDegrees`、`speedAccuracyMetersPerSecond`、`satelliteCountInFix`（extras）字段。
+1. `LocationInfo` 新增 `verticalAccuracyMeters`、`bearingAccuracyDegrees`、`speedAccuracyMetersPerSecond` 字段。
 2. `GnssDataSourceImpl.kt:278-293` 补充采集（API 26+ 守卫）。
 3. `LocationCard.kt` 增加展示。
 4. `GnssClockData` 新增 `leapSecond: Int?`，采集时读取。
 
 **涉及文件**：`domain/model/LocationInfo.kt`、`domain/model/GnssClockData.kt`、`data/source/GnssDataSourceImpl.kt:278-293`、`ui/components/LocationCard.kt`。
 
-**依赖与风险**：API 26+ 守卫；测试需更新现有 `GnssClockDataTest`。
+**依赖与风险**：API 26+ 守卫；测试需更新现有 `GnssClockDataTest`。不建议依赖 `Location.extras` 的定位卫星数，OEM 差异大且稳定性不足。
 
 **ROI**：小工作量 / 中价值 — 数据完整性补全，调试细节更丰富。
 
@@ -338,7 +336,7 @@
 
 ---
 
-### U2. 天空图交互增强（P1，工作量：中）
+### U2. 天空图交互增强（P1，第一阶段工作量：小；完整工作量：中）
 
 **现状**：`SkyChartView.kt`（196 行 Canvas）实现了基础极坐标投影和点击卫星弹详情，但**交互最单薄**：
 
@@ -363,7 +361,7 @@
 
 **依赖与风险**：动画可能增加耗电；缩放后命中检测需同步调整坐标变换。
 
-**ROI**：中工作量 / 高价值 — 提升核心屏幕体验，SVID 标签 + 星座过滤应优先做。
+**ROI**：第一阶段小工作量 / 高价值 — 当前最高单位投入收益。SVID 标签 + 星座过滤触达核心视觉页、无需新依赖、设备/API 风险低；缩放/动画/指北可后续再做。
 
 ---
 
@@ -534,34 +532,31 @@
 
 ---
 
-### E4. ViewModel/Repository 测试覆盖（P1，工作量：中）
+### E4. ViewModel/Repository 测试覆盖 ✅ 已实现（P1，工作量：中）
 
-**现状**：48 个 Kotlin 源文件，9 个测试文件，151 个用例，**全部集中在 `domain/` 和 `data/validator/`**。完全没测试的类（按风险）：
+**现状**：已通过 commit `ef99db0 test(E4): 补全 ViewModel/Repository/DataSource 单元测试` 实现核心业务逻辑回归安全网。新增测试覆盖 `AGpsRepositoryImpl`、`AGpsViewModel`、`SatelliteViewModel`、`AGpsDownloaderImpl`、下载流程与 androidTest 骨架；提交时记录为新增 98 个用例、全量 246/0 失败。
 
-- `SatelliteViewModel.kt`（184 行）— TTFF、信号历史环形缓冲、自动快照逻辑全无测试
-- `AGpsViewModel.kt`（146 行）— A-GPS 状态机无测试
-- `AGpsRepositoryImpl.kt`（352 行，最大文件）— 多 URL 回退、验证、注入逻辑无测试（bug 高发区）
-- `GnssDataSourceImpl.kt`（370 行）— callbackFlow 合并无测试
-- `AGpsDownloader.kt`（106 行）— URL 校验（含中文错误信息）无测试
-- `AGpsUpdateWorker.kt`（69 行）— 退避策略无测试
-- 整个 `app/src/androidTest/` 目录缺失（`build.gradle.kts:97-98` 的 androidTestImplementation 依赖未被使用）
+**已覆盖**：
 
-**问题/缺口**：核心业务逻辑（ViewModel 状态机、Repository 回退）零测试，回归风险高。
+- `AGpsRepositoryImplTest`：多 URL 回退、注入验证阈值、历史上限、时间衰减状态机、清除辅助数据、时间注入。
+- `AGpsViewModelTest`：状态机与自动更新调度入口。
+- `SatelliteViewModelTest`：TTFF、信号历史 60 条环形缓冲、分组、错误态、history flow。
+- `AGpsDownloaderImplTest` / `AGpsDownloaderDownloadTest`：URL 校验、默认 URL、MockWebServer 下载成功/失败路径。
+- `ExampleInstrumentedTest`：androidTest 骨架，激活空置依赖。
 
-**建议方案**：
+**剩余缺口**：
 
-1. 补测试栈依赖：`mockk`、`kotlinx-coroutines-test`、`turbine`（Flow 测试）、`androidx.arch.core:core-testing`、（可选）`robolectric`。
-2. 优先测 `SatelliteViewModel`、`AGpsViewModel`（纯状态机，ROI 最高）。
-3. 测 `AGpsRepositoryImpl` 多 URL 回退（用 mockk 模拟 downloader/dataSource）。
-4. 测 `AGpsDownloader` URL 校验、`AGpsUpdateWorker` 退避。
-5. 测 `SkyChartView` 坐标投影（纯函数，易测易出 bug）。
-6. 建 `app/src/androidTest/`，写关键 UI 流程的 instrumented 测试。
+- `AGpsUpdateWorker.doWork` 仍未覆盖，原因是 worker 内部硬 new 依赖链；需先引入 `WorkerFactory` 或显式依赖注入。
+- `GnssDataSourceImpl` 仍未覆盖，原因是 100% Android framework callback 耦合；需 Robolectric 或抽出薄适配层。
+- CI 目前仅 `workflow_dispatch` 手动触发，测试安全网的收益低于自动 push/PR 门禁场景。
 
-**涉及文件**：`app/build.gradle.kts`（加测试依赖）、新建多个 `*Test.kt`、新建 `app/src/androidTest/`。
+**后续建议**：把 E4 从待办移出；后续测试工作拆到 E2（CI 门禁）和新增小项（WorkerFactory/Robolectric）中，不再作为当前 P1 待办。
 
-**依赖与风险**：引入 mock 库（项目原本无 mock）；ViewModel 测试需 `InstantTaskExecutorRule`。
+**涉及文件**：`app/build.gradle.kts`、`app/src/test/java/com/example/gpstest/domain/repository/AGpsRepositoryImplTest.kt`、`app/src/test/java/com/example/gpstest/viewmodel/AGpsViewModelTest.kt`、`app/src/test/java/com/example/gpstest/viewmodel/SatelliteViewModelTest.kt`、`app/src/test/java/com/example/gpstest/data/source/AGpsDownloaderImplTest.kt`、`app/src/test/java/com/example/gpstest/data/source/AGpsDownloaderDownloadTest.kt`、`app/src/androidTest/java/com/example/gpstest/ExampleInstrumentedTest.kt`。
 
-**ROI**：中工作量 / 高价值 — 核心逻辑回归保障，是后续重构（E1/E7）的安全网。
+**依赖与风险**：已引入 `mockk`、`kotlinx-coroutines-test`、`turbine`、`mockwebserver`、`work-testing(androidTest)`；后续如覆盖 `GnssDataSourceImpl` 可能需要 Robolectric。
+
+**ROI**：已兑现 — 核心逻辑回归保障已建立，是后续重构（E1/E7）的安全网。
 
 ---
 
@@ -673,16 +668,15 @@
 
 **目标**：建立工具的专业调试价值，从"数据展示"升级到"诊断分析"。
 
-| 顺序 | 条目                                          | 预估工作量 | 关键产出                                     |
-| ---- | --------------------------------------------- | ---------- | -------------------------------------------- |
-| 1    | **G6** GnssCapabilities 查询                  | 小         | 设备能力卡片，排障自助                       |
-| 2    | **G7** Location 精度字段 + 闰秒               | 小         | 数据完整性补全                               |
-| 3    | **G1** 原始伪距 + 本地定位解                  | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
-| 4    | **U2** 天空图增强（SVID 标签 + 星座过滤优先） | 中         | 核心屏幕体验提升                             |
-| 5    | **B3** NMEA 监听                              | 中         | 补全调试基础能力                             |
+| 顺序 | 条目                                              | 预估工作量 | 关键产出                                     |
+| ---- | ------------------------------------------------- | ---------- | -------------------------------------------- |
+| 1    | **U2** 天空图增强第一阶段（SVID 标签 + 星座过滤） | 小         | 当前最高 ROI：核心屏幕体验提升               |
+| 2    | **G7** Location 精度字段 + 闰秒                   | 小         | 数据完整性补全                               |
+| 3    | **G1** 原始伪距推导 + 本地定位解                  | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
+| 4    | **B3** NMEA 监听                                  | 中         | 补全调试基础能力                             |
 
-**依赖**：G1 依赖 G6/G7 的数据完整性；U2 独立。
-**风险**：G1 卫星位置计算复杂，可分二期（先用简化模型）；NMEA 高频流需节流。
+**依赖**：G6 已完成；G1 依赖 G7 的时间/精度字段完整性，也依赖更清晰的伪距推导与星历方案；U2 独立。
+**风险**：G1 卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
 
 ---
 
@@ -707,22 +701,21 @@
 
 **目标**：提升工程质量、可观测性、测试覆盖。可与前三阶段并行，或作为「无功能需求时的填充」。
 
-| 顺序 | 条目                             | 预估工作量 | 关键产出                                           |
-| ---- | -------------------------------- | ---------- | -------------------------------------------------- |
-| 1    | **E4** ViewModel/Repository 测试 | 中         | 核心逻辑回归保障（建议尽早，作为其他重构的安全网） |
-| 2    | **E2** CI 增加 lint/覆盖率       | 小         | 质量门禁                                           |
-| 3    | **E1** Release minify + ProGuard | 中         | APK 瘦身 + 代码防护                                |
-| 4    | **E3** Timber + 崩溃上报         | 中         | 线上可观测性                                       |
-| 5    | **E5** i18n                      | 中         | 国际化                                             |
-| 6    | **E8** 文档补全                  | 小         | 协作基础                                           |
-| 7    | **G2** RINEX 导出                | 大         | 专业用户核心诉求（依赖 G1/G3 数据）                |
-| 8    | **G3** GnssAntennaInfo           | 中         | RINEX 头部依赖                                     |
-| 9    | **E6** Version Catalog           | 小         | 维护便利                                           |
-| 10   | **E7** Room 迁移                 | 大         | 仅在 U3 做厚后                                     |
-| 11   | **G4** 导航电文                  | 大         | 长线可选                                           |
-| 12   | **U6** 柱状图/DOP 曲线           | 中         | 视觉化锦上添花                                     |
+| 顺序 | 条目                             | 预估工作量 | 关键产出                                    |
+| ---- | -------------------------------- | ---------- | ------------------------------------------- |
+| 1    | **E2** CI 增加 lint/覆盖率       | 小         | 质量门禁；若恢复 push/PR 触发，收益显著提高 |
+| 2    | **E1** Release minify + ProGuard | 中         | APK 瘦身 + 代码防护                         |
+| 3    | **E3** Timber + 崩溃上报         | 中         | 线上可观测性                                |
+| 4    | **E5** i18n                      | 中         | 国际化                                      |
+| 5    | **E8** 文档补全                  | 小         | 协作基础                                    |
+| 6    | **G2** RINEX 导出                | 大         | 专业用户核心诉求（依赖 G1/G3 数据）         |
+| 7    | **G3** GnssAntennaInfo           | 中         | RINEX 头部依赖                              |
+| 8    | **E6** Version Catalog           | 小         | 维护便利                                    |
+| 9    | **E7** Room 迁移                 | 大         | 仅在 U3 做厚后                              |
+| 10   | **G4** 导航电文                  | 大         | 长线可选                                    |
+| 11   | **U6** 柱状图/DOP 曲线           | 中         | 视觉化锦上添花                              |
 
-**建议**：**E4 测试覆盖应优先于其他工程化项**——它是 E1（混淆回归）、E7（Room 迁移）等重构的安全网。
+**建议**：E4 已完成，后续工程化的优先级取决于 CI 是否恢复自动触发；若继续保持仅手动触发，E2 的即时收益低于 U2/G7。
 
 ---
 
@@ -731,13 +724,12 @@
 ```
 阶段一·止血(1-2天)         阶段二·核心(3-7天)        阶段三·体验(5-10天)       阶段四·工程化(持续)
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ B1 dumpsys修复 ★ │    │ G6 设备能力查询  │    │ U1 设置屏幕 ★   │    │ E4 测试覆盖 ★   │
-│ G5 TDOP/GDOP ★   │ ──→│ G7 精度字段+闰秒 │ ──→│ U3 历史+导出 ★  │ ──→│ E2 CI lint      │
-│ B2 载波相位纠错  │    │ G1 伪距+定位解 ★ │    │ U4 列表筛选     │    │ E1 minify       │
-└──────────────────┘    │ U2 天空图增强 ★  │    │ U5 A-GPS补全    │    │ E3 Timber+崩溃   │
-                        │ B3 NMEA监听      │    │ U2续 缩放/动画  │    │ E5 i18n          │
-                        └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
-                                                                         │ E6-E8, G4, U6    │
+│ B1 dumpsys修复 ★ │    │ U2 天空图一期 ★ │    │ U1 设置屏幕 ★   │    │ E2 CI lint      │
+│ G5 TDOP/GDOP ★   │ ──→│ G7 精度字段+闰秒 │ ──→│ U3 历史+导出 ★  │ ──→│ E1 minify       │
+│ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选     │    │ E3 Timber+崩溃   │
+└──────────────────┘    │ B3 NMEA监听      │    │ U5 A-GPS补全    │    │ E5 i18n          │
+                        │                  │    │ U2续 缩放/动画  │    │ G2/G3 RINEX      │
+                        └──────────────────┘    └──────────────────┘    │ E6-E8, G4, U6    │
                                                                          └──────────────────┘
 ★ = 阶段内最高优先级
 ```
@@ -746,7 +738,7 @@
 
 ## 六、✅ 已实现功能清单（里程碑记录）
 
-> 旧版 TODO.md 标记经代码核实，以下 11 项均为**完整实现**（采集 + 展示链路齐全），修正了旧版的 6 处标记错误。
+> 旧版 TODO.md 标记经代码核实，以下功能均为**完整实现**或已形成明确里程碑记录，修正了旧版的多处标记错误。
 
 ### 高价值功能
 
@@ -759,6 +751,7 @@
 | TTFF（首次定位时间）   | `[ ]` ❌ | ✅ 完整实现            | `SatelliteViewModel.kt:44-45,92-102` 状态机 + `TtffCard.kt:25-100`                            |
 | 信号历史曲线           | `[ ]` ❌ | ✅ 完整实现            | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入                          |
 | **TDOP/GDOP 补全**     | —        | ✅ 已实现 (2026-07-12) | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试 |
+| **GnssCapabilities**   | —        | ✅ 已实现 (2026-07-12) | `GnssCapabilitiesInfo.kt` + `GnssCapabilitiesCard.kt` + 数据源/仓库/ViewModel 接线 + 单元测试 |
 
 ### 专业/调试功能
 
@@ -769,6 +762,12 @@
 | 基带 C/N0        | `[*]`  | ✅ 完整实现 | `GnssDataSourceImpl.kt:223-228`（API 30+）+ `ClockInfoCard.kt:102-121` 全局均值             |
 | 时钟偏差/漂移    | `[*]`  | ✅ 完整实现 | `GnssDataSourceImpl.kt:134-172` + `GnssClockData.kt:29-43` 派生 + `ClockInfoCard.kt:73-100` |
 | 星座健康状态汇总 | `[*]`  | ✅ 完整实现 | `ConstellationHealthSummaryCard.kt:35-101` 进度条 + 百分比                                  |
+
+### 工程化里程碑
+
+| 功能                          | 旧标记 | 核实结论               | 关键证据                                                                                               |
+| ----------------------------- | ------ | ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| ViewModel/Repository 测试覆盖 | —      | ✅ 已实现 (2026-07-12) | commit `ef99db0`：新增 98 个用例，覆盖 AGpsRepository/ViewModel/SatelliteViewModel/Downloader 核心路径 |
 
 ### 标记错误纠正记录
 
@@ -789,7 +788,7 @@
 
 - **UI 层**：5 个屏幕 + 16 个组件的完整功能审查
 - **领域/数据层**：所有数据模型、数据源、仓库、工具类的实现审查
-- **工程化**：构建配置、测试覆盖（151 用例分布）、CI 流程、Manifest、ProGuard、i18n、文档
+- **工程化**：构建配置、测试覆盖（E4 后提交记录为 246 用例）、CI 流程、Manifest、ProGuard、i18n、文档
 - **TODO 标记核实**：旧版 15 项逐一对照代码实现状态
 
 所有 `file:line` 引用均来自 master 分支 `d22baec`。如代码后续变更，行号可能偏移，但文件名与逻辑位置应保持参考价值。
