@@ -98,4 +98,5 @@ compose_generated/
 # Tool configs
 .agents/
 .omc/
+.zcode/
 skills-lock.json
