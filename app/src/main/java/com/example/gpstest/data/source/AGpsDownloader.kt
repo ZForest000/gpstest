@@ -30,12 +30,13 @@ class AGpsDownloaderImpl(
             .readTimeout(60, TimeUnit.SECONDS)
             .build()
 
-    private data class UrlValidationResult(
+    internal data class UrlValidationResult(
         val isValid: Boolean,
         val error: String = "",
     )
 
-    private fun validateUrl(url: String): UrlValidationResult {
+    // internal 以便单测直接覆盖 URL 校验逻辑（含中文错误信息），避免必须走 MockWebServer
+    internal fun validateUrl(url: String): UrlValidationResult {
         if (url.isBlank()) {
             return UrlValidationResult(false, "URL为空")
         }

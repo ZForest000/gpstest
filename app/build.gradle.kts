@@ -51,6 +51,14 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    // 单元测试：未 mock 的 android.util.Log 等桩方法返回默认值（0/null）而非抛异常。
+    // AGpsRepositoryImpl 等类含裸 Log 调用（未 try/catch 包裹），需此配置才能在纯 JVM 单测运行。
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
@@ -95,6 +103,12 @@ dependencies {
 
     // Testing
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("app.cash.turbine:turbine:1.2.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.10.01"))
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.work:work-testing:2.10.0")
 }
