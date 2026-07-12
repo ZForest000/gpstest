@@ -228,6 +228,8 @@
     <string name="dop_title">DOP 精度因子</string>
     <string name="dop_satellite_count">卫星: %d 颗</string>
     <string name="dop_waiting">等待定位...</string>
+    <string name="dop_group_spatial">空间精度</string>
+    <string name="dop_group_time">时间精度</string>
 
     <!-- TTFF -->
     <string name="ttff_title">TTFF 首次定位时间</string>
@@ -270,6 +272,8 @@
     <string name="help_dop_pdop">位置精度因子，综合反映三维定位精度。</string>
     <string name="help_dop_hdop">水平精度因子，反映水平方向定位精度。</string>
     <string name="help_dop_vdop">垂直精度因子，反映垂直方向定位精度。</string>
+    <string name="help_dop_tdop">时间精度因子，反映接收机钟差估计精度。</string>
+    <string name="help_dop_gdop">几何精度因子，综合反映空间与时间的总体精度（√(PDOP²+TDOP²)）。</string>
     <string name="help_dop_quality">DOP 值质量评估：</string>
     <string name="help_dop_excellent">优秀</string>
     <string name="help_dop_good">良好</string>

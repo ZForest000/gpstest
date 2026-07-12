@@ -172,4 +172,36 @@ class DopCalculatorTest {
         assertNotNull(result)
         assertEquals(4, result!!.satelliteCount)
     }
+
+    @Test
+    fun `tdop and gdop are positive for well-distributed satellites`() {
+        val sats =
+            listOf(
+                makeSatellite(1, 0f, 30f),
+                makeSatellite(2, 90f, 60f),
+                makeSatellite(3, 180f, 45f),
+                makeSatellite(4, 270f, 15f),
+            )
+        val result = DopCalculator.calculate(sats)
+        assertNotNull(result)
+        result!!
+        assert(result.tdop > 0) { "TDOP should be positive" }
+        assert(result.gdop > 0) { "GDOP should be positive" }
+    }
+
+    @Test
+    fun `gdop squared equals pdop squared plus tdop squared`() {
+        val sats =
+            listOf(
+                makeSatellite(1, 0f, 30f),
+                makeSatellite(2, 90f, 60f),
+                makeSatellite(3, 180f, 45f),
+                makeSatellite(4, 270f, 15f),
+            )
+        val result = DopCalculator.calculate(sats)!!
+        val gdopSquared = result.gdop * result.gdop
+        val pdopSquared = result.pdop * result.pdop
+        val tdopSquared = result.tdop * result.tdop
+        assertEquals(gdopSquared, pdopSquared + tdopSquared, 0.01)
+    }
 }

@@ -58,9 +58,15 @@ fun DopCard(
         }
 
         if (dopInfo != null) {
-            DopRow(label = "PDOP", value = dopInfo.pdop)
-            DopRow(label = "HDOP", value = dopInfo.hdop)
-            DopRow(label = "VDOP", value = dopInfo.vdop)
+            DopGroup(title = stringResource(R.string.dop_group_spatial)) {
+                DopRow(label = "PDOP", value = dopInfo.pdop)
+                DopRow(label = "HDOP", value = dopInfo.hdop)
+                DopRow(label = "VDOP", value = dopInfo.vdop)
+            }
+            DopGroup(title = stringResource(R.string.dop_group_time)) {
+                DopRow(label = "TDOP", value = dopInfo.tdop)
+                DopRow(label = "GDOP", value = dopInfo.gdop)
+            }
         } else {
             Text(
                 text = stringResource(R.string.dop_waiting),
@@ -68,6 +74,21 @@ fun DopCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+@Composable
+private fun DopGroup(
+    title: String,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        content()
     }
 }
 

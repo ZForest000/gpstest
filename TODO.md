@@ -1,6 +1,6 @@
 # GNSS 调试工具 — 功能路线图
 
-> **核实基准日期**：2026-06-14（基于 master 分支 `d22baec`）
+> **核实基准日期**：2026-07-12（基于 master 分支，含 G5 TDOP/GDOP 实现）
 > **目的**：经代码核实的功能增强清单与实施路线图，取代旧版 checkbox 列表
 > **变更说明**：旧版 TODO.md 有 6 处标记错误，已在「第六章 已实现功能清单」中修正
 
@@ -42,6 +42,36 @@
 **依赖与风险**：Android API、新库、兼容性、测试
 **ROI**：工作量 vs 价值评估
 ```
+
+### 📋 当前未实现功能速查
+
+> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
+
+| 编号 | 功能 | 优先级 | 工作量 | 章节 |
+|------|------|--------|--------|------|
+| **B3** | NMEA 监听接线(文案已预留,代码零命中) | P2 | 中 | 一 |
+| **G1** | 原始伪距采集 + 本地最小二乘定位解(杀手级) | P1 | 大 | 二 |
+| **G2** | RINEX 3.x 导出 | P1 | 大 | 二 |
+| **G3** | GnssAntennaInfo 接入 | P2 | 中 | 二 |
+| **G4** | GnssNavigationMessage 导航电文 | P3 | 大 | 二 |
+| **G6** | GnssCapabilities 设备能力查询展示 | P2 | 小 | 二 |
+| **G7** | Location 精度字段补全 + 闰秒 | P2 | 小 | 二 |
+| **U1** | 设置屏幕(多处死代码待激活) | P1 | 中 | 三 |
+| **U2** | 天空图交互增强(缩放/SVID标签/指北) | P1 | 中 | 三 |
+| **U3** | 历史趋势图 + CSV 导出 + 详情钻取 | P1 | 大 | 三 |
+| **U4** | 卫星列表筛选/排序/冻结 | P2 | 中 | 三 |
+| **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块) | P2 | 中 | 三 |
+| **U6** | 信噪比柱状图 + DOP 实时曲线 | P3 | 中 | 三 |
+| **E1** | Release minify 开启 + ProGuard 补全 | P2 | 中 | 四 |
+| **E2** | CI 增加 lint / 覆盖率 / instrumented 测试 | P2 | 小 | 四 |
+| **E3** | Timber + 崩溃上报(54 处裸 Log) | P2 | 中 | 四 |
+| **E4** | ViewModel/Repository 测试覆盖(核心逻辑零测试) | P1 | 中 | 四 |
+| **E5** | 国际化 i18n(仅 values/,4 处硬编码中文) | P2 | 中 | 四 |
+| **E6** | Version Catalog 迁移 | P3 | 小 | 四 |
+| **E7** | 历史存储迁移 Room | P3 | 大 | 四 |
+| **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3 | 小 | 四 |
+
+**下一步建议**:阶段二核心能力(G6 → G7 → G1)或 E4 测试覆盖(作为后续重构安全网)。
 
 ---
 
@@ -191,7 +221,7 @@
 
 ---
 
-### G5. TDOP/GDOP 补全（P0，工作量：小）
+### G5. TDOP/GDOP 补全 ✅ 已实现（P0，工作量：小）
 
 **现状**：`DopCalculator.kt:54` 已求逆 4×4 Q 矩阵，但 `:61-63` **只用了前 3 个空间分量**算 PDOP/HDOP/VDOP，`q[3][3]`（时间项）被丢弃。`DopInfo.kt:20-35` 模型无 `tdop`/`gdop` 字段。Grep `TDOP`/`GDOP` 零命中。
 
@@ -582,9 +612,9 @@
 
 | 顺序 | 条目 | 预估工作量 | 关键产出 |
 |------|------|-----------|----------|
-| 1 | **B1** dumpsys 通路修复 | 中 | `ShizukuHelper.fetchDumpsysLocation` + 解析 + 接入数据源，ClockInfoCard 的 DumpsysDataSection 终于显示 |
-| 2 | **G5** TDOP/GDOP 补全 | 小 | `DopCalculator` 补 2 行公式 + DopInfo 字段 + 测试，DOP 全家族 |
-| 3 | **B2** 载波相位标记纠错 | 小 | `GnssDataSourceImpl.kt:129` 接入真实采集（API 34+），补 UI 展示 |
+| 1 | **B1** dumpsys 通路修复 ✅ | 中 | `ShizukuHelper.fetchDumpsysLocation` + 解析 + 接入数据源，ClockInfoCard 的 DumpsysDataSection 终于显示 |
+| 2 | **G5** TDOP/GDOP 补全 ✅ | 小 | `DopCalculator` 补 2 行公式 + DopInfo 字段 + 测试，DOP 全家族 |
+| 3 | **B2** 载波相位标记纠错 ✅ | 小 | `GnssDataSourceImpl.kt:129` 接入真实采集（API 34+），补 UI 展示 |
 
 **依赖**：无；**风险**：B1 需测试不同 OEM dumpsys 格式。
 
@@ -679,6 +709,7 @@
 | HDOP/VDOP/PDOP | `[ ]` ❌ | ✅ 完整实现 | `DopCalculator.kt:18-71` 算法 + `DopCard.kt:60-71` 展示（含单元测试） |
 | TTFF（首次定位时间） | `[ ]` ❌ | ✅ 完整实现 | `SatelliteViewModel.kt:44-45,92-102` 状态机 + `TtffCard.kt:25-100` |
 | 信号历史曲线 | `[ ]` ❌ | ✅ 完整实现 | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入 |
+| **TDOP/GDOP 补全** | — | ✅ 已实现 (2026-07-12) | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试 |
 
 ### 专业/调试功能
 

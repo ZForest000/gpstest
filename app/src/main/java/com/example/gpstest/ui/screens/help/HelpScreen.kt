@@ -120,6 +120,8 @@ fun HelpScreen(
                     HelpSubItem(title = "PDOP", desc = stringResource(R.string.help_dop_pdop))
                     HelpSubItem(title = "HDOP", desc = stringResource(R.string.help_dop_hdop))
                     HelpSubItem(title = "VDOP", desc = stringResource(R.string.help_dop_vdop))
+                    HelpSubItem(title = "TDOP", desc = stringResource(R.string.help_dop_tdop))
+                    HelpSubItem(title = "GDOP", desc = stringResource(R.string.help_dop_gdop))
                     Spacer(modifier = Modifier.height(8.dp))
                     HelpText(stringResource(R.string.help_dop_quality))
                     HelpValueRow(label = stringResource(R.string.help_dop_excellent), value = "< 2", color = Color(0xFF4CAF50))

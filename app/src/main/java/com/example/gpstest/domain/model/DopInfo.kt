@@ -21,6 +21,8 @@ data class DopInfo(
     val pdop: Double,
     val hdop: Double,
     val vdop: Double,
+    val tdop: Double = 0.0,
+    val gdop: Double = 0.0,
     val satelliteCount: Int,
 ) {
     val quality: DopQuality

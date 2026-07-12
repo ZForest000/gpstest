@@ -53,19 +53,23 @@ object DopCalculator {
         // Invert using Gauss-Jordan elimination
         val q = invert4x4(hth) ?: return null
 
-        // Validate diagonal elements
-        for (i in 0 until 3) {
+        // Validate diagonal elements (spatial x/y/z + time t)
+        for (i in 0 until MATRIX_SIZE) {
             if (q[i][i] <= 0 || !q[i][i].isFinite()) return null
         }
 
         val pdop = sqrt(q[0][0] + q[1][1] + q[2][2])
         val hdop = sqrt(q[0][0] + q[1][1])
         val vdop = sqrt(q[2][2])
+        val tdop = sqrt(q[3][3])
+        val gdop = sqrt(q[0][0] + q[1][1] + q[2][2] + q[3][3])
 
         return DopInfo(
             pdop = pdop,
             hdop = hdop,
             vdop = vdop,
+            tdop = tdop,
+            gdop = gdop,
             satelliteCount = validSatellites.size,
         )
     }
