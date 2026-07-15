@@ -25,6 +25,8 @@ data class GnssClockData(
     val driftUncertaintyNanosPerSecond: Double?,
     // 硬件时钟重置计数。非零值表示时钟曾跳变，连续 ADR 测量值在此之后不可靠
     val hardwareClockDiscontinuityCount: Int,
+    // GPS 时与 UTC 之间的闰秒差（秒），用于 GPS 时↔UTC 换算
+    val leapSecond: Int? = null,
 ) {
     val totalBiasNanos: Double?
         get() {

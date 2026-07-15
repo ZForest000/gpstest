@@ -169,4 +169,35 @@ class GnssClockDataTest {
             )
         assertEquals(-3.0, clock.driftMicrosecondsPerSecond!!, 0.001)
     }
+
+    @Test
+    fun `leapSecond defaults to null`() {
+        val clock =
+            GnssClockData(
+                timeNanos = 1000L,
+                biasNanos = null,
+                fullBiasNanos = null,
+                driftNanosPerSecond = null,
+                biasUncertaintyNanos = null,
+                driftUncertaintyNanosPerSecond = null,
+                hardwareClockDiscontinuityCount = 0,
+            )
+        assertNull(clock.leapSecond)
+    }
+
+    @Test
+    fun `leapSecond retains provided value`() {
+        val clock =
+            GnssClockData(
+                timeNanos = 1000L,
+                biasNanos = null,
+                fullBiasNanos = null,
+                driftNanosPerSecond = null,
+                biasUncertaintyNanos = null,
+                driftUncertaintyNanosPerSecond = null,
+                hardwareClockDiscontinuityCount = 0,
+                leapSecond = 18,
+            )
+        assertEquals(18, clock.leapSecond)
+    }
 }

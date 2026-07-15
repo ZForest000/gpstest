@@ -208,6 +208,9 @@
     <string name="lng_format">经度: %.6f°</string>
     <string name="altitude_format">海拔: %.1f m</string>
     <string name="accuracy_format">精度: %.1f m</string>
+    <string name="vertical_accuracy_format">垂直精度: %.1f m</string>
+    <string name="bearing_accuracy_format">航向精度: %.1f°</string>
+    <string name="speed_accuracy_format">速度精度: %.2f m/s</string>
     <string name="baro_altitude_format">气压海拔: %.1f m</string>
     <string name="pressure_format">气压: %.1f hPa</string>
 
@@ -229,6 +232,8 @@
     <string name="clock_drift">时钟漂移</string>
     <string name="clock_bias_uncertainty">偏差不确定度</string>
     <string name="clock_drift_uncertainty">漂移不确定度</string>
+    <string name="clock_leap_second">闰秒</string>
+    <string name="clock_leap_second_format">%d s</string>
     <string name="avg_baseband_cn0">平均基带信噪比</string>
     <string name="shizuku_status">Shizuku 状态</string>
     <string name="shizuku_available">可用 (%s)</string>

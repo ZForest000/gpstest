@@ -54,7 +54,6 @@
 | **G2** | RINEX 3.x 导出                            | P1     | 大     | 二   |
 | **G3** | GnssAntennaInfo 接入                      | P2     | 中     | 二   |
 | **G4** | GnssNavigationMessage 导航电文            | P3     | 大     | 二   |
-| **G7** | Location 精度字段补全 + 闰秒              | P2     | 小     | 二   |
 
 | **U3** | 历史趋势图 + CSV 导出 + 详情钻取 | P1 | 大 | 三 |
 | **U4** | 卫星列表筛选/排序/冻结 | P2 | 中 | 三 |
@@ -68,7 +67,7 @@
 | **E7** | 历史存储迁移 Room | P3 | 大 | 四 |
 | **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3 | 小 | 四 |
 
-**下一步建议**：优先 **G7（闰秒 + Location 精度字段）**（半天数据补全）；或 **U3 历史趋势图 + CSV 导出**（体验完善）。G1 保留为杀手级长线能力，但需先修正伪距推导方案，不应按“直接读取伪距 API”实现。
+**下一步建议**：G7 已完成。优先 **U3 历史趋势图 + CSV 导出**（体验完善）；或 **G3 GnssAntennaInfo**。G1 保留为杀手级长线能力，但需先修正伪距推导方案，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -286,28 +285,15 @@
 
 ---
 
-### G7. 闰秒 / Location 精度字段补全（P2，工作量：小）
+### G7. 闰秒 / Location 精度字段补全 ✅ 已实现（P2，工作量：小）
 
-**现状**：
+**现状（已实现）**：
 
-- `GnssClock`/`GnssMeasurement` 的 `hasLeapSecond`/`leapSecond`（闰秒，用于 GPS 时↔UTC 换算）未采集。
-- `GnssDataSourceImpl.kt:278-293` 从 `Location` 只取了 lat/lon/alt/accuracy/speed/bearing/time，**未采** `verticalAccuracyMeters`、`bearingAccuracyDegrees`、`speedAccuracyMetersPerSecond`（API 26+）、`location.extras` 中的卫星数。Grep `verticalAccuracyMeters` 零命中。
-- `LocationInfo.kt:3-13` 模型无对应字段。
-
-**问题/缺口**：闰秒影响所有时间戳换算精度；垂直精度（实测 VDOP 对照）对 GPS 调试有意义。
-
-**建议方案**：
-
-1. `LocationInfo` 新增 `verticalAccuracyMeters`、`bearingAccuracyDegrees`、`speedAccuracyMetersPerSecond` 字段。
-2. `GnssDataSourceImpl.kt:278-293` 补充采集（API 26+ 守卫）。
-3. `LocationCard.kt` 增加展示。
-4. `GnssClockData` 新增 `leapSecond: Int?`，采集时读取。
-
-**涉及文件**：`domain/model/LocationInfo.kt`、`domain/model/GnssClockData.kt`、`data/source/GnssDataSourceImpl.kt:278-293`、`ui/components/LocationCard.kt`。
-
-**依赖与风险**：API 26+ 守卫；测试需更新现有 `GnssClockDataTest`。不建议依赖 `Location.extras` 的定位卫星数，OEM 差异大且稳定性不足。
-
-**ROI**：小工作量 / 中价值 — 数据完整性补全，调试细节更丰富。
+- `LocationInfo`：`verticalAccuracyMeters` / `bearingAccuracyDegrees` / `speedAccuracyMetersPerSecond`（nullable，默认 null）
+- `GnssDataSourceImpl`：API 26+ 守卫采集上述 Location 精度字段；`GnssClock.hasLeapSecond()` → `GnssClockData.leapSecond`
+- UI：`LocationCard` 展示垂直/航向/速度精度；`ClockInfoCard` 展示闰秒
+- 测试：`LocationInfoTest`（2）+ `GnssClockDataTest` 增补 leapSecond（2）
+- **未采** `Location.extras` 卫星数（OEM 不稳定，按方案刻意跳过）
 
 ---
 
@@ -648,14 +634,14 @@
 
 **目标**：建立工具的专业调试价值，从"数据展示"升级到"诊断分析"。
 
-| 顺序 | 条目                             | 预估工作量 | 关键产出                                     |
-| ---- | -------------------------------- | ---------- | -------------------------------------------- |
-| 1    | **U2** 天空图交互（一期+续） ✅  | 中         | SVID/过滤/缩放/动画/指北已落地               |
-| 2    | **G7** Location 精度字段 + 闰秒  | 小         | 数据完整性补全                               |
-| 3    | **G1** 原始伪距推导 + 本地定位解 | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
-| 4    | **B3** NMEA 监听                 | 中         | 补全调试基础能力                             |
+| 顺序 | 条目                               | 预估工作量 | 关键产出                                     |
+| ---- | ---------------------------------- | ---------- | -------------------------------------------- |
+| 1    | **U2** 天空图交互（一期+续） ✅    | 中         | SVID/过滤/缩放/动画/指北已落地               |
+| 2    | **G7** Location 精度字段 + 闰秒 ✅ | 小         | 垂直/航向/速度精度 + 闰秒采集与展示          |
+| 3    | **G1** 原始伪距推导 + 本地定位解   | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
+| 4    | **B3** NMEA 监听                   | 中         | 补全调试基础能力                             |
 
-**依赖**：G6/U2 已完成；G1 依赖 G7 的时间/精度字段完整性，也依赖更清晰的伪距推导与星历方案。
+**依赖**：G6/U2/G7 已完成；G1 依赖 G7 的时间/精度字段完整性，也依赖更清晰的伪距推导与星历方案。
 **风险**：G1 卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
 
 ---
@@ -705,7 +691,7 @@
 阶段一·止血(1-2天)         阶段二·核心(3-7天)        阶段三·体验(5-10天)       阶段四·工程化(持续)
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI lint      │
-│ G5 TDOP/GDOP ★   │ ──→│ G7 精度字段+闰秒 │ ──→│ U3 历史+导出 ★  │ ──→│ E1 minify       │
+│ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ★  │ ──→│ E1 minify       │
 │ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选     │    │ E3 Timber+崩溃   │
 └──────────────────┘    │ B3 NMEA监听      │    │ U5 A-GPS补全    │    │ E5 i18n          │
                         └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
@@ -722,18 +708,19 @@
 
 ### 高价值功能
 
-| 功能                   | 旧标记   | 核实结论               | 关键证据                                                                                      |
-| ---------------------- | -------- | ---------------------- | --------------------------------------------------------------------------------------------- |
-| 卫星天空图（Sky View） | `[*]`    | ✅ 完整实现            | `SkyChartView.kt:64-209` 极坐标投影 + `SkyChartScreen.kt:139-146`                             |
-| 多路径指示             | `[*]`    | ✅ 完整实现            | `GnssDataSourceImpl.kt:108` 采集 + `SatelliteDetailSheet.kt:106-112` 展示                     |
-| 自动增益控制（AGC）    | `[*]`    | ✅ 完整实现            | `GnssDataSourceImpl.kt:100-107` 采集 + `SatelliteDetailSheet.kt:97-100` 展示                  |
-| HDOP/VDOP/PDOP         | `[ ]` ❌ | ✅ 完整实现            | `DopCalculator.kt:18-71` 算法 + `DopCard.kt:60-71` 展示（含单元测试）                         |
-| TTFF（首次定位时间）   | `[ ]` ❌ | ✅ 完整实现            | `SatelliteViewModel.kt:44-45,92-102` 状态机 + `TtffCard.kt:25-100`                            |
-| 信号历史曲线           | `[ ]` ❌ | ✅ 完整实现            | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入                          |
-| **TDOP/GDOP 补全**     | —        | ✅ 已实现 (2026-07-12) | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试 |
-| **GnssCapabilities**   | —        | ✅ 已实现 (2026-07-12) | `GnssCapabilitiesInfo.kt` + `GnssCapabilitiesCard.kt` + 数据源/仓库/ViewModel 接线 + 单元测试 |
-| **天空图交互 U2**      | —        | ✅ 已实现              | SVID 标签 + 星座过滤 + 缩放/平移 + 位置动画 + 指北（`SkyChart*` / `CompassHeadingSource`）    |
-| **设置屏幕 U1**        | —        | ✅ 已实现              | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试     |
+| 功能                        | 旧标记   | 核实结论               | 关键证据                                                                                                |
+| --------------------------- | -------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| 卫星天空图（Sky View）      | `[*]`    | ✅ 完整实现            | `SkyChartView.kt:64-209` 极坐标投影 + `SkyChartScreen.kt:139-146`                                       |
+| 多路径指示                  | `[*]`    | ✅ 完整实现            | `GnssDataSourceImpl.kt:108` 采集 + `SatelliteDetailSheet.kt:106-112` 展示                               |
+| 自动增益控制（AGC）         | `[*]`    | ✅ 完整实现            | `GnssDataSourceImpl.kt:100-107` 采集 + `SatelliteDetailSheet.kt:97-100` 展示                            |
+| HDOP/VDOP/PDOP              | `[ ]` ❌ | ✅ 完整实现            | `DopCalculator.kt:18-71` 算法 + `DopCard.kt:60-71` 展示（含单元测试）                                   |
+| TTFF（首次定位时间）        | `[ ]` ❌ | ✅ 完整实现            | `SatelliteViewModel.kt:44-45,92-102` 状态机 + `TtffCard.kt:25-100`                                      |
+| 信号历史曲线                | `[ ]` ❌ | ✅ 完整实现            | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入                                    |
+| **TDOP/GDOP 补全**          | —        | ✅ 已实现 (2026-07-12) | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试           |
+| **GnssCapabilities**        | —        | ✅ 已实现 (2026-07-12) | `GnssCapabilitiesInfo.kt` + `GnssCapabilitiesCard.kt` + 数据源/仓库/ViewModel 接线 + 单元测试           |
+| **天空图交互 U2**           | —        | ✅ 已实现              | SVID 标签 + 星座过滤 + 缩放/平移 + 位置动画 + 指北（`SkyChart*` / `CompassHeadingSource`）              |
+| **设置屏幕 U1**             | —        | ✅ 已实现              | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试               |
+| **Location 精度 + 闰秒 G7** | —        | ✅ 已实现 (2026-07-15) | `LocationInfo` 垂直/航向/速度精度 + `GnssClockData.leapSecond` + LocationCard/ClockInfoCard 展示 + 测试 |
 
 ### 专业/调试功能
 

@@ -96,6 +96,12 @@ private fun ClockDataSection(clock: GnssClockData) {
                 "%.3f ns/s".format(uncertainty),
             )
         }
+        clock.leapSecond?.let { leap ->
+            CompactDetailRow(
+                stringResource(R.string.clock_leap_second),
+                stringResource(R.string.clock_leap_second_format, leap),
+            )
+        }
     }
 }
 

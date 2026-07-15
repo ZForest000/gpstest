@@ -190,6 +190,7 @@ class GnssDataSourceImpl(
                                         null
                                     },
                                 hardwareClockDiscontinuityCount = clock.hardwareClockDiscontinuityCount,
+                                leapSecond = if (clock.hasLeapSecond()) clock.leapSecond else null,
                             )
 
                         if (currentSatellites.isNotEmpty()) {
@@ -308,6 +309,30 @@ class GnssDataSourceImpl(
                                 timestamp = location.time,
                                 barometricAltitude = currentBaroAltitude,
                                 pressure = currentPressure,
+                                verticalAccuracyMeters =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        location.hasVerticalAccuracy()
+                                    ) {
+                                        location.verticalAccuracyMeters
+                                    } else {
+                                        null
+                                    },
+                                bearingAccuracyDegrees =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        location.hasBearingAccuracy()
+                                    ) {
+                                        location.bearingAccuracyDegrees
+                                    } else {
+                                        null
+                                    },
+                                speedAccuracyMetersPerSecond =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        location.hasSpeedAccuracy()
+                                    ) {
+                                        location.speedAccuracyMetersPerSecond
+                                    } else {
+                                        null
+                                    },
                             )
                         trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
                     }

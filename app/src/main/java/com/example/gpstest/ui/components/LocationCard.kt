@@ -97,6 +97,34 @@ fun LocationCard(
                             text = stringResource(R.string.accuracy_format, location.accuracy),
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                        location.verticalAccuracyMeters?.let { vertAcc ->
+                            Text(
+                                text = stringResource(R.string.vertical_accuracy_format, vertAcc),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+
+                if (location.bearingAccuracyDegrees != null || location.speedAccuracyMetersPerSecond != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        location.bearingAccuracyDegrees?.let { bearingAcc ->
+                            Text(
+                                text = stringResource(R.string.bearing_accuracy_format, bearingAcc),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        location.speedAccuracyMetersPerSecond?.let { speedAcc ->
+                            Text(
+                                text = stringResource(R.string.speed_accuracy_format, speedAcc),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
                 }
 
