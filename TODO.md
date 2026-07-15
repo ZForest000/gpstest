@@ -1,6 +1,6 @@
 # GNSS 调试工具 — 功能路线图
 
-> **核实基准日期**：2026-07-12（基于 master 分支，含 G5 TDOP/GDOP、G6 设备能力、E4 测试覆盖实现）
+> **核实基准日期**：2026-07-15（基于 master 分支，含 G1 伪距推导与纯领域 WLS 解算核心）
 > **目的**：经代码核实的功能增强清单与实施路线图，取代旧版 checkbox 列表
 > **变更说明**：旧版 TODO.md 有 6 处标记错误，已在「第六章 已实现功能清单」中修正
 
@@ -50,7 +50,7 @@
 | 编号   | 功能                                      | 优先级 | 工作量 | 章节 |
 | ------ | ----------------------------------------- | ------ | ------ | ---- |
 | **B3** | NMEA 监听接线(文案已预留,代码零命中)      | P2     | 中     | 一   |
-| **G1** | 原始伪距推导 + 本地最小二乘定位解(杀手级) | P1     | 大     | 二   |
+| **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置） | P1     | 大     | 二   |
 | **G2** | RINEX 3.x 导出                            | P1     | 大     | 二   |
 | **G3** | GnssAntennaInfo 接入                      | P2     | 中     | 二   |
 | **G4** | GnssNavigationMessage 导航电文            | P3     | 大     | 二   |
@@ -67,7 +67,7 @@
 | **E7** | 历史存储迁移 Room | P3 | 大 | 四 |
 | **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3 | 小 | 四 |
 
-**下一步建议**：G7 已完成。优先 **U3 历史趋势图 + CSV 导出**（体验完善）；或 **G3 GnssAntennaInfo**。G1 保留为杀手级长线能力，但需先修正伪距推导方案，不应按“直接读取伪距 API”实现。
+**下一步建议**：G1 的伪距推导与纯领域 WLS 核心已完成。优先 **U3 历史趋势图 + CSV 导出**（体验完善）；或 **G3 GnssAntennaInfo**。G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -141,21 +141,26 @@
 
 ## 二、🚀 专业 GNSS 能力增强
 
-### G1. 原始伪距推导 + 本地最小二乘定位解（P1，工作量：大）
+### G1. 原始伪距推导 + 本地最小二乘定位解（P1，工作量：大，阶段 1/2 已完成）
 
-**现状**：`GnssDataSourceImpl.kt:124-126` 已读取 `receivedSvTimeNanos`、`receivedSvTimeUncertaintyNanos`、`pseudorangeRateMetersPerSecond`，`GnssClockData.totalBiasNanos`（`GnssClockData.kt:29-36`）已采集接收机时钟偏移。Android `GnssMeasurement` **没有** `getPseudorangeMeters()` / `getPseudorangeUncertaintyMeters()` 直接 API；伪距必须由接收机时钟、卫星发射时间、测量状态和星座时间系统推导。
+**现状**：阶段 1 已完成伪距推导：`PseudorangeCalculator.kt` 根据 `GnssClockData`、卫星接收时间、测量状态和星座时间基准输出伪距与不确定度，结果已接入 `GnssSatellite` 与卫星详情。阶段 2 已完成纯领域 `PositionSolver.kt`：以调用方提供的卫星 ECEF、已修正伪距和不确定度执行迭代 WLS，含 4x4 部分主元 Gauss-Jordan、明确失败状态和黄金测试。Android `GnssMeasurement` **没有** `getPseudorangeMeters()` / `getPseudorangeUncertaintyMeters()` 直接 API。
 
-**问题/缺口**：有了原始伪距 + 接收机时钟偏移 + 卫星位置（可从星历算），可**本地计算定位解**（加权最小二乘），与 Android 报告位置做残差对比——这是 GNSS 调试工具的核心价值。当前用户只能看 Android 给的"成品"位置，无法诊断"为什么定位偏了"。
+**问题/缺口**：当前 WLS 核心刻意未接入真实数据流：尚无导航电文、星历下载/解析、实时卫星 ECEF 或卫星钟差与传播路径改正。因此应用仍不能产出本地实时位置解或与 Android 位置做残差对比。
 
-**建议方案**：
+**已完成（阶段 1/2）**：
 
-1. `GnssSatellite` 新增 `pseudorangeMeters`、`pseudorangeUncertaintyMeters` 字段，但字段来源是**推导值**，不是平台直接 getter。
-2. 新增 `domain/util/PseudorangeCalculator.kt`：根据 `GnssClock`、`receivedSvTimeNanos`、`state`、星座时间基准处理周内秒/TOW、日内秒/TOD、rollover、闰秒和接收机钟差，输出可用伪距与不确定度。
-3. 新增 `domain/util/PositionSolver.kt`：从伪距 + 卫星位置解算位置（迭代加权最小二乘）。
-4. 卫星位置计算需接入导航电文/星历（G4）或外部星历来源；同时处理卫星钟差、相对论效应、地球自转 Sagnac、对流层/电离层改正和星座间偏差（ISB）。
-5. UI 增加对比卡片：系统位置 vs 本地解算位置，显示残差、参与卫星数、WLS 收敛状态。
+1. `GnssSatellite` 已新增 `pseudorangeMeters`、`pseudorangeUncertaintyMeters` 及状态字段；字段来源是**推导值**，不是平台直接 getter。
+2. `PseudorangeCalculator.kt` 已实现 GPS/Galileo GPS 兼容周内时间、北斗 BDT 转换、`timeOffsetNanos`、测量状态、不确定度和范围校验。
+3. `PositionSolver.kt` 已实现状态 `(x, y, z, receiverClockBiasMeters)`、`w = 1 / sigma²` 等价相对权重、Gauss-Newton 正规方程、双重收敛条件与加权残差 RMS。
+4. `PositionSolverTest.kt` 已覆盖 4/6 星黄金数据、高不确定度异常观测、无效输入、奇异几何、较差初值、迭代耗尽及极端有限不确定度。
 
-**涉及文件**：`domain/model/GnssSatellite.kt`、`data/source/GnssDataSourceImpl.kt`、新增 `domain/util/PseudorangeCalculator.kt`、新增 `domain/util/PositionSolver.kt`、新增 UI 卡片。
+**后续建议（阶段 3+）**：
+
+1. 接入 `GnssNavigationMessage`，采集并保存可用于星历解析的导航电文。
+2. 接入外部星历或解析后的本地星历，计算实时卫星 ECEF；随后处理卫星钟差、相对论效应、Sagnac、对流层/电离层改正和 ISB。
+3. 将已完成前置改正的真实伪距与卫星 ECEF 送入 `PositionSolver`，再增加系统位置 vs 本地解算位置的残差展示。
+
+**涉及文件**：已完成 `domain/model/Pseudorange.kt`、`domain/util/PseudorangeCalculator.kt`、`domain/model/PositionSolution.kt`、`domain/util/PositionSolver.kt` 及对应测试；后续涉及 `data/source/GnssDataSourceImpl.kt`、导航电文/星历模块和 UI 对比卡片。
 
 **依赖与风险**：无直接伪距 API，算法复杂度高；卫星位置计算依赖星历/历书；最小二乘需足够卫星数（≥5）；必须用公开样例或录制原始观测做领域层黄金测试，避免“看似有数、实际错误”的误导性输出。
 
@@ -638,11 +643,11 @@
 | ---- | ---------------------------------- | ---------- | -------------------------------------------- |
 | 1    | **U2** 天空图交互（一期+续） ✅    | 中         | SVID/过滤/缩放/动画/指北已落地               |
 | 2    | **G7** Location 精度字段 + 闰秒 ✅ | 小         | 垂直/航向/速度精度 + 闰秒采集与展示          |
-| 3    | **G1** 原始伪距推导 + 本地定位解   | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
+| 3    | **G1** 伪距 + WLS 核心 ✅；后续电文/星历接线 | 大         | 已完成纯领域解算；后续实现真实定位解与系统位置残差对比 |
 | 4    | **B3** NMEA 监听                   | 中         | 补全调试基础能力                             |
 
-**依赖**：G6/U2/G7 已完成；G1 依赖 G7 的时间/精度字段完整性，也依赖更清晰的伪距推导与星历方案。
-**风险**：G1 卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
+**依赖**：G6/U2/G7 已完成；G1 阶段 1/2 已完成，后续依赖导航电文、星历与实时卫星位置。
+**风险**：G1 后续卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
 
 ---
 
@@ -721,6 +726,7 @@
 | **天空图交互 U2**           | —        | ✅ 已实现              | SVID 标签 + 星座过滤 + 缩放/平移 + 位置动画 + 指北（`SkyChart*` / `CompassHeadingSource`）              |
 | **设置屏幕 U1**             | —        | ✅ 已实现              | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试               |
 | **Location 精度 + 闰秒 G7** | —        | ✅ 已实现 (2026-07-15) | `LocationInfo` 垂直/航向/速度精度 + `GnssClockData.leapSecond` + LocationCard/ClockInfoCard 展示 + 测试 |
+| **G1 伪距 + WLS 核心**      | —        | ✅ 阶段 1/2 已实现 (2026-07-15) | `PseudorangeCalculator.kt` + `PositionSolver.kt`：伪距推导、纯领域迭代 WLS、黄金与边界测试；真实星历/卫星位置接线待后续 |
 
 ### 专业/调试功能
 
@@ -760,4 +766,4 @@
 - **工程化**：构建配置、测试覆盖（E4 后提交记录为 246 用例）、CI 流程、Manifest、ProGuard、i18n、文档
 - **TODO 标记核实**：旧版 15 项逐一对照代码实现状态
 
-所有 `file:line` 引用均来自 master 分支 `d22baec`。如代码后续变更，行号可能偏移，但文件名与逻辑位置应保持参考价值。
+所有 `file:line` 引用均来自 master 分支近期基线（含 `4b28455` 后的 G1 阶段 1/2 实现）。如代码后续变更，行号可能偏移，但文件名与逻辑位置应保持参考价值。
