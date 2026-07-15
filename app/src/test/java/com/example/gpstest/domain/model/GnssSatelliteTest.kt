@@ -1,6 +1,7 @@
 package com.example.gpstest.domain.model
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class GnssSatelliteTest {
@@ -31,6 +32,15 @@ class GnssSatelliteTest {
         )
 
     // --- group ---
+
+    @Test
+    fun `pseudorange defaults to missing measurement`() {
+        val satellite = makeSatellite()
+
+        assertNull(satellite.pseudorangeMeters)
+        assertNull(satellite.pseudorangeUncertaintyMeters)
+        assertEquals(PseudorangeStatus.MISSING_MEASUREMENT, satellite.pseudorangeStatus)
+    }
 
     @Test
     fun `group is USED_IN_FIX when usedInFix is true`() {

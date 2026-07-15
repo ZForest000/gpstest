@@ -19,6 +19,10 @@ import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.MultipathIndicator
+import com.example.gpstest.domain.model.PseudorangeMeasurement
+import com.example.gpstest.domain.model.PseudorangeResult
+import com.example.gpstest.domain.model.PseudorangeStatus
+import com.example.gpstest.domain.util.PseudorangeCalculator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -78,6 +82,7 @@ class GnssDataSourceImpl(
                 val measurementState: Int?,
                 val measurementCn0DbHz: Double?,
                 val fullCarrierPhaseCycleCount: Long?,
+                val pseudorangeResult: PseudorangeResult,
             )
             var measurementMap = mutableMapOf<String, MeasurementExtras>()
 
@@ -86,6 +91,46 @@ class GnssDataSourceImpl(
             val measurementCallback =
                 object : GnssMeasurementsEvent.Callback() {
                     override fun onGnssMeasurementsReceived(event: GnssMeasurementsEvent) {
+                        val clock = event.clock
+                        val clockData =
+                            GnssClockData(
+                                timeNanos = clock.timeNanos,
+                                biasNanos =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        clock.hasBiasNanos()
+                                    ) {
+                                        clock.biasNanos
+                                    } else {
+                                        null
+                                    },
+                                fullBiasNanos = if (clock.hasFullBiasNanos()) clock.fullBiasNanos else null,
+                                driftNanosPerSecond =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        clock.hasDriftNanosPerSecond()
+                                    ) {
+                                        clock.driftNanosPerSecond
+                                    } else {
+                                        null
+                                    },
+                                biasUncertaintyNanos =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        clock.hasBiasUncertaintyNanos()
+                                    ) {
+                                        clock.biasUncertaintyNanos
+                                    } else {
+                                        null
+                                    },
+                                driftUncertaintyNanosPerSecond =
+                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                        clock.hasDriftUncertaintyNanosPerSecond()
+                                    ) {
+                                        clock.driftUncertaintyNanosPerSecond
+                                    } else {
+                                        null
+                                    },
+                                hardwareClockDiscontinuityCount = clock.hardwareClockDiscontinuityCount,
+                                leapSecond = if (clock.hasLeapSecond()) clock.leapSecond else null,
+                            )
                         val newMap = mutableMapOf<String, MeasurementExtras>()
                         for (measurement in event.measurements) {
                             val key = "${measurement.constellationType}_${measurement.svid}"
@@ -148,50 +193,25 @@ class GnssDataSourceImpl(
                                         } else {
                                             null
                                         },
+                                    pseudorangeResult =
+                                        PseudorangeCalculator.calculate(
+                                            clockData,
+                                            PseudorangeMeasurement(
+                                                constellation = Constellation.fromConstellationType(measurement.constellationType),
+                                                timeOffsetNanos = measurement.timeOffsetNanos,
+                                                receivedSvTimeNanos = measurement.receivedSvTimeNanos,
+                                                receivedSvTimeUncertaintyNanos = measurement.receivedSvTimeUncertaintyNanos.toDouble(),
+                                                hasCodeLock =
+                                                    (measurement.state and GnssMeasurement.STATE_CODE_LOCK) != 0,
+                                                hasTowDecoded =
+                                                    (measurement.state and GnssMeasurement.STATE_TOW_DECODED) != 0,
+                                            ),
+                                        ),
                                 )
                         }
                         measurementMap = newMap
 
-                        val clock = event.clock
-                        currentClock =
-                            GnssClockData(
-                                timeNanos = clock.timeNanos,
-                                biasNanos =
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
-                                        clock.hasBiasNanos()
-                                    ) {
-                                        clock.biasNanos
-                                    } else {
-                                        null
-                                    },
-                                fullBiasNanos = if (clock.hasFullBiasNanos()) clock.fullBiasNanos else null,
-                                driftNanosPerSecond =
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
-                                        clock.hasDriftNanosPerSecond()
-                                    ) {
-                                        clock.driftNanosPerSecond
-                                    } else {
-                                        null
-                                    },
-                                biasUncertaintyNanos =
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
-                                        clock.hasBiasUncertaintyNanos()
-                                    ) {
-                                        clock.biasUncertaintyNanos
-                                    } else {
-                                        null
-                                    },
-                                driftUncertaintyNanosPerSecond =
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
-                                        clock.hasDriftUncertaintyNanosPerSecond()
-                                    ) {
-                                        clock.driftUncertaintyNanosPerSecond
-                                    } else {
-                                        null
-                                    },
-                                hardwareClockDiscontinuityCount = clock.hardwareClockDiscontinuityCount,
-                                leapSecond = if (clock.hasLeapSecond()) clock.leapSecond else null,
-                            )
+                        currentClock = clockData
 
                         if (currentSatellites.isNotEmpty()) {
                             currentSatellites =
@@ -217,6 +237,9 @@ class GnssDataSourceImpl(
                                             measurementState = extras.measurementState ?: sat.measurementState,
                                             measurementCn0DbHz = extras.measurementCn0DbHz ?: sat.measurementCn0DbHz,
                                             fullCarrierPhaseCycleCount = extras.fullCarrierPhaseCycleCount ?: sat.fullCarrierPhaseCycleCount,
+                                            pseudorangeMeters = extras.pseudorangeResult.meters,
+                                            pseudorangeUncertaintyMeters = extras.pseudorangeResult.uncertaintyMeters,
+                                            pseudorangeStatus = extras.pseudorangeResult.status,
                                         )
                                     } else {
                                         sat
@@ -281,6 +304,9 @@ class GnssDataSourceImpl(
                                         measurementState = extras?.measurementState,
                                         measurementCn0DbHz = extras?.measurementCn0DbHz,
                                         fullCarrierPhaseCycleCount = extras?.fullCarrierPhaseCycleCount,
+                                        pseudorangeMeters = extras?.pseudorangeResult?.meters,
+                                        pseudorangeUncertaintyMeters = extras?.pseudorangeResult?.uncertaintyMeters,
+                                        pseudorangeStatus = extras?.pseudorangeResult?.status ?: PseudorangeStatus.MISSING_MEASUREMENT,
                                     )
 
                                 satellites.add(satellite)

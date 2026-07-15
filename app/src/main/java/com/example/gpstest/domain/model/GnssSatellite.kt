@@ -66,6 +66,9 @@ data class GnssSatellite(
     val measurementState: Int? = null,
     val measurementCn0DbHz: Double? = null,
     val fullCarrierPhaseCycleCount: Long? = null,
+    val pseudorangeMeters: Double? = null,
+    val pseudorangeUncertaintyMeters: Double? = null,
+    val pseudorangeStatus: PseudorangeStatus = PseudorangeStatus.MISSING_MEASUREMENT,
 ) {
     // 分类逻辑：正在参与定位解算 → USED_IN_FIX；有信号但未参与 → VISIBLE_ONLY；其余 → SEARCHING
     val group: SatelliteGroup

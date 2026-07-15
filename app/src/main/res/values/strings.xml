@@ -224,6 +224,20 @@
     <string name="received_sv_time_uncertainty">时间不确定度</string>
     <string name="pseudorange_rate">伪距变化率</string>
     <string name="measurement_cn0">测量载噪比</string>
+    <string name="pseudorange">伪距</string>
+    <string name="pseudorange_uncertainty">伪距不确定度</string>
+    <string name="pseudorange_status">伪距状态</string>
+    <string name="pseudorange_format_kilometers">%1$.3f km</string>
+    <string name="pseudorange_uncertainty_format_meters">%1$.2f m</string>
+    <string name="pseudorange_status_available">可用</string>
+    <string name="pseudorange_status_missing_measurement">暂无原始测量</string>
+    <string name="pseudorange_status_unsupported_constellation">星座暂不支持</string>
+    <string name="pseudorange_status_missing_full_bias">缺少完整时钟偏差</string>
+    <string name="pseudorange_status_missing_received_sv_time">缺少卫星时间</string>
+    <string name="pseudorange_status_missing_code_lock">未获得码锁定</string>
+    <string name="pseudorange_status_missing_tow_decoded">未解码周内时间</string>
+    <string name="pseudorange_status_invalid_input">测量值无效</string>
+    <string name="pseudorange_status_out_of_range">结果超出合理范围</string>
 
     <!-- Baseband C/N0 & Clock -->
     <string name="baseband_cn0">基带信噪比</string>

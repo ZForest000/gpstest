@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.MultipathIndicator
+import com.example.gpstest.domain.model.PseudorangeStatus
 import com.example.gpstest.ui.components.fullNameResId
 
 @Composable
@@ -137,6 +138,22 @@ fun SatelliteDetailSheet(
                 stringResource(R.string.received_sv_time_uncertainty),
                 satellite.receivedSvTimeUncertaintyNanos?.let { "%.3f ns".format(it) } ?: "N/A",
             )
+            DetailRow(
+                stringResource(R.string.pseudorange),
+                satellite.pseudorangeMeters?.let {
+                    stringResource(R.string.pseudorange_format_kilometers, it / 1_000.0)
+                } ?: stringResource(R.string.value_not_available),
+            )
+            DetailRow(
+                stringResource(R.string.pseudorange_uncertainty),
+                satellite.pseudorangeUncertaintyMeters?.let {
+                    stringResource(R.string.pseudorange_uncertainty_format_meters, it)
+                } ?: stringResource(R.string.value_not_available),
+            )
+            DetailRow(
+                stringResource(R.string.pseudorange_status),
+                pseudorangeStatusText(satellite.pseudorangeStatus),
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -163,6 +180,22 @@ fun SatelliteDetailSheet(
         }
     }
 }
+
+@Composable
+private fun pseudorangeStatusText(status: PseudorangeStatus): String =
+    stringResource(
+        when (status) {
+            PseudorangeStatus.AVAILABLE -> R.string.pseudorange_status_available
+            PseudorangeStatus.MISSING_MEASUREMENT -> R.string.pseudorange_status_missing_measurement
+            PseudorangeStatus.UNSUPPORTED_CONSTELLATION -> R.string.pseudorange_status_unsupported_constellation
+            PseudorangeStatus.MISSING_FULL_BIAS -> R.string.pseudorange_status_missing_full_bias
+            PseudorangeStatus.MISSING_RECEIVED_SV_TIME -> R.string.pseudorange_status_missing_received_sv_time
+            PseudorangeStatus.MISSING_CODE_LOCK -> R.string.pseudorange_status_missing_code_lock
+            PseudorangeStatus.MISSING_TOW_DECODED -> R.string.pseudorange_status_missing_tow_decoded
+            PseudorangeStatus.INVALID_INPUT -> R.string.pseudorange_status_invalid_input
+            PseudorangeStatus.OUT_OF_RANGE -> R.string.pseudorange_status_out_of_range
+        },
+    )
 
 @Composable
 private fun DetailSection(
