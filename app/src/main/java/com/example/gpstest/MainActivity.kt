@@ -14,12 +14,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SatelliteAlt
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -38,6 +41,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.gpstest.data.local.AGpsFileHandlerImpl
 import com.example.gpstest.data.local.AGpsSettingsStore
 import com.example.gpstest.data.local.SatelliteHistoryDataStore
+import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.AGpsDataSourceImpl
 import com.example.gpstest.data.source.AGpsDownloaderImpl
 import com.example.gpstest.data.source.GnssDataSourceImpl
@@ -48,9 +52,11 @@ import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
 import com.example.gpstest.ui.screens.help.HelpScreen
 import com.example.gpstest.ui.screens.history.HistoryScreen
 import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
+import com.example.gpstest.ui.screens.settings.SettingsScreen
 import com.example.gpstest.ui.theme.Theme
 import com.example.gpstest.viewmodel.AGpsViewModel
 import com.example.gpstest.viewmodel.SatelliteViewModel
+import com.example.gpstest.viewmodel.SettingsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,13 +69,20 @@ enum class PermissionState {
 }
 
 class MainActivity : ComponentActivity() {
+    private val settingsViewModel: SettingsViewModel by viewModels {
+        val app = application
+        val settingsStore = SettingsStore(app)
+        SettingsViewModelFactory(app, settingsStore)
+    }
+
     private val satelliteViewModel: SatelliteViewModel by viewModels {
         val app = application
         val dataSource = GnssDataSourceImpl(app)
         val gnssRepository = GnssRepositoryImpl(dataSource)
-        val historyDataStore = SatelliteHistoryDataStore(app)
+        val settingsStore = SettingsStore(app)
+        val historyDataStore = SatelliteHistoryDataStore(app, settingsStore)
         val historyRepository = SatelliteHistoryRepositoryImpl(historyDataStore)
-        SatelliteViewModelFactory(app, gnssRepository, historyRepository)
+        SatelliteViewModelFactory(app, gnssRepository, historyRepository, settingsStore)
     }
 
     private val agpsViewModel: AGpsViewModel by viewModels {
@@ -113,11 +126,14 @@ class MainActivity : ComponentActivity() {
         updatePermissionState()
 
         setContent {
-            Theme {
+            val appSettings by settingsViewModel.settings.collectAsState()
+            val systemDark = isSystemInDarkTheme()
+            Theme(darkTheme = appSettings.resolveDarkTheme(systemDark)) {
                 Surface {
                     GpsTestApp(
                         satelliteViewModel = satelliteViewModel,
                         agpsViewModel = agpsViewModel,
+                        settingsViewModel = settingsViewModel,
                         permissionStateFlow = _permissionState,
                         onRequestPermission = {
                             hasRequestedPermission = true
@@ -178,6 +194,8 @@ sealed class Screen(
     object AGps : Screen("agps")
 
     object Help : Screen("help")
+
+    object Settings : Screen("settings")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -185,6 +203,7 @@ sealed class Screen(
 fun GpsTestApp(
     satelliteViewModel: SatelliteViewModel,
     agpsViewModel: AGpsViewModel,
+    settingsViewModel: SettingsViewModel,
     permissionStateFlow: StateFlow<PermissionState>,
     onRequestPermission: () -> Unit,
     onOpenAppSettings: () -> Unit,
@@ -261,6 +280,13 @@ fun GpsTestApp(
                     onClick = { navigateAndCloseDrawer(Screen.Help.route) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
+                androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text(stringResource(R.string.settings_title)) },
+                    selected = currentRoute == Screen.Settings.route,
+                    onClick = { navigateAndCloseDrawer(Screen.Settings.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
             }
         },
     ) {
@@ -320,6 +346,13 @@ fun GpsTestApp(
                     onNavigateBack = safeNavigateBack,
                 )
             }
+            composable(Screen.Settings.route) {
+                BackHandler { safeNavigateBack() }
+                SettingsScreen(
+                    viewModel = settingsViewModel,
+                    onNavigateBack = safeNavigateBack,
+                )
+            }
         }
     }
 }
@@ -328,11 +361,12 @@ class SatelliteViewModelFactory(
     private val application: Application,
     private val gnssRepository: com.example.gpstest.domain.repository.GnssRepository,
     private val historyRepository: com.example.gpstest.domain.repository.SatelliteHistoryRepository,
+    private val settingsStore: SettingsStore? = null,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SatelliteViewModel::class.java)) {
-            return SatelliteViewModel(application, gnssRepository, historyRepository) as T
+            return SatelliteViewModel(application, gnssRepository, historyRepository, settingsStore) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
@@ -346,6 +380,19 @@ class AGpsViewModelFactory(
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AGpsViewModel::class.java)) {
             return AGpsViewModel(application, repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+class SettingsViewModelFactory(
+    private val application: Application,
+    private val settingsStore: SettingsStore,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+            return SettingsViewModel(application, settingsStore) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

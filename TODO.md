@@ -45,31 +45,30 @@
 
 ### 📋 当前未实现功能速查
 
-> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
+> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互（一期+续）已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
 
-| 编号   | 功能                                                   | 优先级 | 工作量 | 章节 |
-| ------ | ------------------------------------------------------ | ------ | ------ | ---- |
-| **B3** | NMEA 监听接线(文案已预留,代码零命中)                   | P2     | 中     | 一   |
-| **G1** | 原始伪距推导 + 本地最小二乘定位解(杀手级)              | P1     | 大     | 二   |
-| **G2** | RINEX 3.x 导出                                         | P1     | 大     | 二   |
-| **G3** | GnssAntennaInfo 接入                                   | P2     | 中     | 二   |
-| **G4** | GnssNavigationMessage 导航电文                         | P3     | 大     | 二   |
-| **G7** | Location 精度字段补全 + 闰秒                           | P2     | 小     | 二   |
-| **U1** | 设置屏幕(多处死代码待激活)                             | P1     | 中     | 三   |
-| **U2** | 天空图交互增强第一阶段(SVID标签/星座过滤)              | P1     | 小     | 三   |
-| **U3** | 历史趋势图 + CSV 导出 + 详情钻取                       | P1     | 大     | 三   |
-| **U4** | 卫星列表筛选/排序/冻结                                 | P2     | 中     | 三   |
-| **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块)               | P2     | 中     | 三   |
-| **U6** | 信噪比柱状图 + DOP 实时曲线                            | P3     | 中     | 三   |
-| **E1** | Release minify 开启 + ProGuard 补全                    | P2     | 中     | 四   |
-| **E2** | CI 增加 lint / 覆盖率 / instrumented 测试              | P2     | 小     | 四   |
-| **E3** | Timber + 崩溃上报(54 处裸 Log)                         | P2     | 中     | 四   |
-| **E5** | 国际化 i18n(仅 values/,4 处硬编码中文)                 | P2     | 中     | 四   |
-| **E6** | Version Catalog 迁移                                   | P3     | 小     | 四   |
-| **E7** | 历史存储迁移 Room                                      | P3     | 大     | 四   |
-| **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3     | 小     | 四   |
+| 编号   | 功能                                      | 优先级 | 工作量 | 章节 |
+| ------ | ----------------------------------------- | ------ | ------ | ---- |
+| **B3** | NMEA 监听接线(文案已预留,代码零命中)      | P2     | 中     | 一   |
+| **G1** | 原始伪距推导 + 本地最小二乘定位解(杀手级) | P1     | 大     | 二   |
+| **G2** | RINEX 3.x 导出                            | P1     | 大     | 二   |
+| **G3** | GnssAntennaInfo 接入                      | P2     | 中     | 二   |
+| **G4** | GnssNavigationMessage 导航电文            | P3     | 大     | 二   |
+| **G7** | Location 精度字段补全 + 闰秒              | P2     | 小     | 二   |
 
-**下一步建议**：先完成当前 G6 收尾验证；之后优先做 **U2 第一阶段（SVID 标签 + 星座过滤）**，这是当前单位投入收益最高的用户可见增强；若只安排半天数据补全，则做 **G7（闰秒 + Location 精度字段）**。G1 保留为杀手级长线能力，但需先修正伪距推导方案，不应按“直接读取伪距 API”实现。
+| **U3** | 历史趋势图 + CSV 导出 + 详情钻取 | P1 | 大 | 三 |
+| **U4** | 卫星列表筛选/排序/冻结 | P2 | 中 | 三 |
+| **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块) | P2 | 中 | 三 |
+| **U6** | 信噪比柱状图 + DOP 实时曲线 | P3 | 中 | 三 |
+| **E1** | Release minify 开启 + ProGuard 补全 | P2 | 中 | 四 |
+| **E2** | CI 增加 lint / 覆盖率 / instrumented 测试 | P2 | 小 | 四 |
+| **E3** | Timber + 崩溃上报(54 处裸 Log) | P2 | 中 | 四 |
+| **E5** | 国际化 i18n(仅 values/,4 处硬编码中文) | P2 | 中 | 四 |
+| **E6** | Version Catalog 迁移 | P3 | 小 | 四 |
+| **E7** | 历史存储迁移 Room | P3 | 大 | 四 |
+| **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3 | 小 | 四 |
+
+**下一步建议**：优先 **G7（闰秒 + Location 精度字段）**（半天数据补全）；或 **U3 历史趋势图 + CSV 导出**（体验完善）。G1 保留为杀手级长线能力，但需先修正伪距推导方案，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -314,54 +313,35 @@
 
 ## 三、🎨 用户体验增强
 
-### U1. 设置屏幕（P1，工作量：中）
+### U1. 设置屏幕 ✅ 已实现（P1，工作量：中）
 
-**现状**：项目**无 Settings 屏幕**。`Theme.kt:103-108` 的 `Theme()` 别名不接受 `dynamicColor` 参数，`MainActivity.kt:116` 调用未传主题选项；`strings.xml:61-62` 预留 `settings_dark_mode` 文案但无 UI 入口（死代码）。`SatelliteHistoryConfig`（`SatelliteHistory.kt:96-100`）定义了快照配置但**实际未被读取**（`SatelliteHistoryDataStore.kt:24` 硬编码 `MAX_SNAPSHOTS = 100`）。
+**现状（已核实）**：
 
-**问题/缺口**：用户无法切换日夜模式、无法开关 Material You、无法调整快照频率/上限、无法清缓存。配置能力是基础体验缺口。
+- **设置屏**：`ui/screens/settings/SettingsScreen.kt` + 抽屉导航 `Screen.Settings`
+- **深色模式三态**：`DarkModeConfig` {SYSTEM, ON, OFF}，`AppSettings.resolveDarkTheme()`，`MainActivity.setContent` 收集并传 `Theme(darkTheme=…)`
+- **快照配置**：`SettingsStore`（DataStore `app_settings`）→ `SatelliteViewModel` 读 interval/autoSave；`SatelliteHistoryDataStore` 读 maxSnapshots + retentionDays
+- **领域模型**：`domain/model/Settings.kt` + 7 个单元测试 `SettingsTest`
 
-**建议方案**：
-
-1. 新建 `ui/screens/settings/SettingsScreen.kt`，加入导航（`MainActivity.kt:169-181`）。
-2. 新增 `data/local/ThemePreferencesStore.kt`（DataStore）存主题偏好。
-3. `Theme.kt` 改造为从 DataStore 读取偏好，支持「跟随系统/亮/暗」三态 + Material You 开关。
-4. 快照配置项：间隔（30/60/120 秒）、上限（100/500/1000）、自动保存开关，写入实际生效的 config。
-5. 清缓存按钮：清除历史快照、信号历史。
-
-**涉及文件**：新建 `ui/screens/settings/`、`data/local/ThemePreferencesStore.kt`、`ui/theme/Theme.kt:103`、`MainActivity.kt:116,169-181`、`data/local/SatelliteHistoryDataStore.kt`（读取 config）。
-
-**依赖与风险**：需引入 `androidx.datastore`（已有）；主题切换需 recompose 整个应用。
-
-**ROI**：中工作量 / 高价值 — 解决多个死代码（strings、config），用户基础控制能力。
+**剩余缺口**：清信号历史按钮、Material You dynamicColor 开关（可选）。
 
 ---
 
-### U2. 天空图交互增强（P1，第一阶段工作量：小；完整工作量：中）
+### U2. 天空图交互增强 ✅ 已实现（P1，第一阶段工作量：小；完整工作量：中）
 
-**现状**：`SkyChartView.kt`（196 行 Canvas）实现了基础极坐标投影和点击卫星弹详情，但**交互最单薄**：
+**现状（已核实）**：一期 + 续均已落地：
 
-- 无缩放/平移（grep `transformable`/`detectTransformGestures` 零命中）
-- 图例点击不能切换星座显示（`SkyChartLegend.kt` 是纯展示）
-- 卫星点无 SVID 标签（`SkyChartView.kt:172-190` 绘制循环只画圆）
-- 无位置动画过渡（卫星跳变，无 `animateFloatAsState`）
-- 无指北旋转（未接入指南针传感器）
+- **SVID 标签**：`SkyChartView.kt` 绘制循环旁用 `drawText` 显示 `sat.svid`
+- **星座过滤**：`SkyChartScreen` 维护 `visibleConstellations`，`SkyChartLegend` 可点击切换
+- **双指缩放/平移**：`detectTransformGestures` + `SkyChartTransformState`
+- **位置动画**：`rememberAnimatedSatellites`
+- **指北旋转**：`CompassHeadingSource`（`TYPE_ROTATION_VECTOR`）+ `northUp` 开关
+- **截图分享**：仍未做（可选，P3）
 
-**问题/缺口**：天空图是调试工具的视觉核心，当前像静态图。卫星密集时无法放大、无法快速识别哪颗是哪颗。
+**剩余缺口**：截图分享（可选）。
 
-**建议方案**（可分阶段）：
+**涉及文件**：`SkyChartView.kt`、`SkyChartLegend.kt`、`SkyChartScreen.kt`、`SkyChartMath.kt`、`SkyChartTransformState.kt`、`CompassHeadingSource.kt` + 对应单元测试。
 
-1. **SVID 标签**（小）：在卫星点旁绘制 SVID 数字，避免必须点开才知道。
-2. **星座过滤**（小）：图例变可点击 `FilterChip`，切换某星座显示/隐藏。
-3. **双指缩放**（中）：用 `Modifier.pointerInput { detectTransformGestures }` 包裹 Canvas，缩放/平移坐标系。
-4. **位置动画**（中）：用 `Animatable`/`animateFloatAsState` 平滑过渡卫星位置。
-5. **指北旋转**（中，可选）：接入 `Sensor.TYPE_ORIENTATION` 或 `TYPE_ROTATION_VECTOR`，旋转画布使前进方向朝上。
-6. **截图分享**（小，可选）：`Canvas` 转 Bitmap，通过 FileProvider 分享。
-
-**涉及文件**：`ui/screens/skychart/SkyChartView.kt`、`SkyChartLegend.kt`、`SkyChartScreen.kt`；指北旋转需 `data/source/` 新增传感器接入。
-
-**依赖与风险**：动画可能增加耗电；缩放后命中检测需同步调整坐标变换。
-
-**ROI**：第一阶段小工作量 / 高价值 — 当前最高单位投入收益。SVID 标签 + 星座过滤触达核心视觉页、无需新依赖、设备/API 风险低；缩放/动画/指北可后续再做。
+**ROI**：已兑现 — 天空图从静态展示升级为可交互调试视图。
 
 ---
 
@@ -668,14 +648,14 @@
 
 **目标**：建立工具的专业调试价值，从"数据展示"升级到"诊断分析"。
 
-| 顺序 | 条目                                              | 预估工作量 | 关键产出                                     |
-| ---- | ------------------------------------------------- | ---------- | -------------------------------------------- |
-| 1    | **U2** 天空图增强第一阶段（SVID 标签 + 星座过滤） | 小         | 当前最高 ROI：核心屏幕体验提升               |
-| 2    | **G7** Location 精度字段 + 闰秒                   | 小         | 数据完整性补全                               |
-| 3    | **G1** 原始伪距推导 + 本地定位解                  | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
-| 4    | **B3** NMEA 监听                                  | 中         | 补全调试基础能力                             |
+| 顺序 | 条目                             | 预估工作量 | 关键产出                                     |
+| ---- | -------------------------------- | ---------- | -------------------------------------------- |
+| 1    | **U2** 天空图交互（一期+续） ✅  | 中         | SVID/过滤/缩放/动画/指北已落地               |
+| 2    | **G7** Location 精度字段 + 闰秒  | 小         | 数据完整性补全                               |
+| 3    | **G1** 原始伪距推导 + 本地定位解 | 大         | 杀手级：本地最小二乘解算 vs 系统位置残差对比 |
+| 4    | **B3** NMEA 监听                 | 中         | 补全调试基础能力                             |
 
-**依赖**：G6 已完成；G1 依赖 G7 的时间/精度字段完整性，也依赖更清晰的伪距推导与星历方案；U2 独立。
+**依赖**：G6/U2 已完成；G1 依赖 G7 的时间/精度字段完整性，也依赖更清晰的伪距推导与星历方案。
 **风险**：G1 卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
 
 ---
@@ -684,13 +664,13 @@
 
 **目标**：让已实现的功能真正好用，补全半成品。
 
-| 顺序 | 条目                           | 预估工作量 | 关键产出                                  |
-| ---- | ------------------------------ | ---------- | ----------------------------------------- |
-| 1    | **U1** 设置屏幕                | 中         | 主题切换 + 快照配置，激活多个死代码       |
-| 2    | **U3** 历史趋势图 + CSV 导出   | 大         | 历史功能真正可用                          |
-| 3    | **U4** 卫星列表筛选/排序/冻结  | 中         | 多星座场景实用增强                        |
-| 4    | **U5** A-GPS 补全              | 中         | 激活 import_file 文案、URL 编辑、间隔调节 |
-| 5    | **U2 续** 天空图缩放/动画/指北 | 中         | 完成天空图全功能                          |
+| 顺序 | 条目                              | 预估工作量 | 关键产出                                  |
+| ---- | --------------------------------- | ---------- | ----------------------------------------- |
+| 1    | **U1** 设置屏幕 ✅                | —          | 已实现：主题三态 + 快照配置               |
+| 2    | **U3** 历史趋势图 + CSV 导出      | 大         | 历史功能真正可用                          |
+| 3    | **U4** 卫星列表筛选/排序/冻结     | 中         | 多星座场景实用增强                        |
+| 4    | **U5** A-GPS 补全                 | 中         | 激活 import_file 文案、URL 编辑、间隔调节 |
+| 5    | **U2 续** 天空图缩放/动画/指北 ✅ | —          | 已实现；可选截图分享仍未做                |
 
 **依赖**：U3 可选依赖 U1 的快照配置；其余独立。
 **风险**：U3 快照字段扩展需数据迁移。
@@ -724,12 +704,12 @@
 ```
 阶段一·止血(1-2天)         阶段二·核心(3-7天)        阶段三·体验(5-10天)       阶段四·工程化(持续)
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ B1 dumpsys修复 ★ │    │ U2 天空图一期 ★ │    │ U1 设置屏幕 ★   │    │ E2 CI lint      │
+│ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI lint      │
 │ G5 TDOP/GDOP ★   │ ──→│ G7 精度字段+闰秒 │ ──→│ U3 历史+导出 ★  │ ──→│ E1 minify       │
 │ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选     │    │ E3 Timber+崩溃   │
 └──────────────────┘    │ B3 NMEA监听      │    │ U5 A-GPS补全    │    │ E5 i18n          │
-                        │                  │    │ U2续 缩放/动画  │    │ G2/G3 RINEX      │
-                        └──────────────────┘    └──────────────────┘    │ E6-E8, G4, U6    │
+                        └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
+                                                                         │ E6-E8, G4, U6    │
                                                                          └──────────────────┘
 ★ = 阶段内最高优先级
 ```
@@ -752,6 +732,8 @@
 | 信号历史曲线           | `[ ]` ❌ | ✅ 完整实现            | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入                          |
 | **TDOP/GDOP 补全**     | —        | ✅ 已实现 (2026-07-12) | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试 |
 | **GnssCapabilities**   | —        | ✅ 已实现 (2026-07-12) | `GnssCapabilitiesInfo.kt` + `GnssCapabilitiesCard.kt` + 数据源/仓库/ViewModel 接线 + 单元测试 |
+| **天空图交互 U2**      | —        | ✅ 已实现              | SVID 标签 + 星座过滤 + 缩放/平移 + 位置动画 + 指北（`SkyChart*` / `CompassHeadingSource`）    |
+| **设置屏幕 U1**        | —        | ✅ 已实现              | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试     |
 
 ### 专业/调试功能
 

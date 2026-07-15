@@ -60,6 +60,21 @@
     <string name="settings_nmea_enabled_summary">显示原始NMEA数据</string>
     <string name="settings_dark_mode">深色模式</string>
     <string name="settings_dark_mode_summary">使用深色主题</string>
+    <string name="settings_dark_mode_system">跟随系统</string>
+    <string name="settings_dark_mode_on">深色</string>
+    <string name="settings_dark_mode_off">浅色</string>
+    <string name="settings_snapshot_section">历史快照</string>
+    <string name="settings_auto_save">自动保存快照</string>
+    <string name="settings_auto_save_summary">定期保存卫星状态快照</string>
+    <string name="settings_snapshot_interval">快照间隔</string>
+    <string name="settings_max_snapshots">快照数量上限</string>
+    <string name="settings_retention_days">保留天数</string>
+    <string name="settings_interval_30s">30秒</string>
+    <string name="settings_interval_1min">1分钟</string>
+    <string name="settings_interval_2min">2分钟</string>
+    <string name="settings_interval_5min">5分钟</string>
+    <string name="settings_days_format">%d天</string>
+    <string name="settings_count_format">%d条</string>
 
     <!-- Permissions -->
     <string name="permission_required_title">需要权限</string>

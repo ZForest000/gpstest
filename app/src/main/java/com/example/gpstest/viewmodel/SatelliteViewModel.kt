@@ -3,7 +3,9 @@ package com.example.gpstest.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.DumpsysGnssData
+import com.example.gpstest.domain.model.AppSettings
 import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssClockData
@@ -26,12 +28,13 @@ import kotlinx.coroutines.launch
  *
  * 数据流：GNSS 数据流 → 分组过滤 → UI State + DOP 计算 + 信号历史 + 快照存储。
  * 信号历史：每颗卫星维护一个 60 秒环形缓冲区（[maxSignalHistorySize]），用于信号图表。
- * 快照：每分钟（[snapshotIntervalMs]）自动保存一次卫星状态到 DataStore。
+ * 快照：按 [AppSettings] 配置的间隔自动保存卫星状态到 DataStore。
  */
 class SatelliteViewModel(
     application: Application,
     private val repository: GnssRepository,
     private val historyRepository: SatelliteHistoryRepository? = null,
+    private val settingsStore: SettingsStore? = null,
 ) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<SatelliteUiState>(SatelliteUiState.Loading)
     val uiState: StateFlow<SatelliteUiState> = _uiState.asStateFlow()
@@ -49,7 +52,8 @@ class SatelliteViewModel(
     val gnssCapabilities: StateFlow<GnssCapabilitiesInfo?> = _gnssCapabilities.asStateFlow()
 
     private var lastSnapshotTime = 0L
-    private val snapshotIntervalMs = 60_000L // 自动快照间隔：1 分钟（平衡粒度和存储量）
+    private var autoSaveEnabled = true
+    private var snapshotIntervalMs = AppSettings.DEFAULT_SNAPSHOT_INTERVAL_MS
     private var collectionJob: Job? = null
 
     private val maxSignalHistorySize = 60 // 每颗卫星保留 60 秒历史数据
@@ -57,6 +61,17 @@ class SatelliteViewModel(
     init {
         loadHistory()
         loadCapabilities()
+        observeSettings()
+    }
+
+    private fun observeSettings() {
+        val store = settingsStore ?: return
+        viewModelScope.launch {
+            store.settings.collect { settings ->
+                autoSaveEnabled = settings.autoSaveEnabled
+                snapshotIntervalMs = settings.snapshotIntervalMs
+            }
+        }
     }
 
     // GNSS 能力查询不依赖定位权限，在 init 中执行，权限拒绝时也能展示
@@ -142,8 +157,9 @@ class SatelliteViewModel(
         return _signalHistory.value[key] ?: emptyList()
     }
 
-    // 距离上次快照超过 snapshotIntervalMs 时异步保存新快照
+    // 自动保存开启且距离上次快照超过 snapshotIntervalMs 时异步保存
     private fun maybeSaveSnapshot(satellites: List<GnssSatellite>) {
+        if (!autoSaveEnabled) return
         val now = System.currentTimeMillis()
         if (now - lastSnapshotTime >= snapshotIntervalMs) {
             lastSnapshotTime = now
