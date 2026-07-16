@@ -47,15 +47,15 @@
 
 > 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互（一期+续）已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
 
-| 编号   | 功能                                      | 优先级 | 工作量 | 章节 |
-| ------ | ----------------------------------------- | ------ | ------ | ---- |
-| **B3** | NMEA 监听接线(文案已预留,代码零命中)      | P2     | 中     | 一   |
+| 编号   | 功能                                               | 优先级 | 工作量 | 章节 |
+| ------ | -------------------------------------------------- | ------ | ------ | ---- |
+| **B3** | NMEA 监听接线(文案已预留,代码零命中)               | P2     | 中     | 一   |
 | **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置） | P1     | 大     | 二   |
-| **G2** | RINEX 3.x 导出                            | P1     | 大     | 二   |
-| **G3** | GnssAntennaInfo 接入                      | P2     | 中     | 二   |
-| **G4** | GnssNavigationMessage 导航电文            | P3     | 大     | 二   |
+| **G2** | RINEX 3.x 导出                                     | P1     | 大     | 二   |
+| **G3** | GnssAntennaInfo 接入                               | P2     | 中     | 二   |
+| **G4** | GnssNavigationMessage 导航电文                     | P3     | 大     | 二   |
 
-| **U3** | 历史趋势图 + CSV 导出 + 详情钻取 | P1 | 大 | 三 |
+| **U3** | 历史趋势图 + CSV 导出 + 详情钻取 ✅ | P1 | 大 | 三 |
 | **U4** | 卫星列表筛选/排序/冻结 | P2 | 中 | 三 |
 | **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块) | P2 | 中 | 三 |
 | **U6** | 信噪比柱状图 + DOP 实时曲线 | P3 | 中 | 三 |
@@ -67,7 +67,7 @@
 | **E7** | 历史存储迁移 Room | P3 | 大 | 四 |
 | **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3 | 小 | 四 |
 
-**下一步建议**：G1 的伪距推导与纯领域 WLS 核心已完成。优先 **U3 历史趋势图 + CSV 导出**（体验完善）；或 **G3 GnssAntennaInfo**。G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
+**下一步建议**：U3 已完成。优先 **G3 GnssAntennaInfo** 或 **B3 NMEA 监听**；G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -336,28 +336,20 @@
 
 ---
 
-### U3. 历史趋势图 + 导出 + 详情钻取（P1，工作量：大）
+### U3. 历史趋势图 + 导出 + 详情钻取 ✅ 已完成（P1，工作量：大）
 
-**现状**：`HistoryScreen.kt` 只是卡片列表。grep 全代码库无 `CSV`/`export`/`ACTION_SEND`/`FileWriter`（仅 `AndroidManifest.xml:24` 有 FileProvider 声明但历史功能没用）。点快照卡片无反应，无法展开明细（`SatelliteHistorySnapshot.getEntries()` 数据已存却未展示）。无时间筛选/搜索、无单条删除。
+**现状（已实现）**：
 
-更深层：`SatelliteHistoryEntry`（`SatelliteHistory.kt:13-37`）**只存卫星信号**，未保存经纬度/精度/DOP/TTFF，历史无法回溯定位质量轨迹。
+1. **快照字段扩展**：`SatelliteHistorySnapshot` 增加 lat/lon/accuracy/pdop/hdop/vdop/ttffMs（可选，旧 JSON 兼容）
+2. **详情钻取 + 删除**：`HistorySnapshotCard` 可展开卫星明细，支持单条删除/分享
+3. **CSV 导出**：`HistoryCsvExporter`（摘要+明细）+ `HistoryExportHelper`（FileProvider + ACTION_SEND）
+4. **趋势图**：`HistoryTrendChart` 绘制平均信号 / 定位星数 / 可见星数
+5. **时间筛选**：`HistoryTimeFilter`（全部/1h/6h/24h/7d）
+6. **保存链路**：`saveSnapshot` / `maybeSaveSnapshot` 写入定位质量字段
 
-**问题/缺口**：用户保存了快照却无法分析趋势、无法导出给他人、无法看某时刻明细。历史功能停留在"存了但没用起来"。
+**涉及文件**：`SatelliteHistory.kt`、`HistoryCsvExporter.kt`、`HistoryExportHelper.kt`、`SatelliteHistoryDataStore.kt`、`SatelliteHistoryRepository*`、`SatelliteViewModel.kt`、`HistoryScreen.kt`、`HistorySnapshotCard.kt`、`HistoryTrendChart.kt`、`file_paths.xml`、`strings.xml` + 领域单测
 
-**建议方案**：
-
-1. **趋势图**（中）：用 SignalChart 组件或新图表，画"平均信号/定位卫星数/可见卫星数随时间"曲线。
-2. **详情钻取**（小）：点快照卡片展开，调用 `getEntries()` 展示该时刻每颗卫星明细。
-3. **CSV 导出**（中）：`HistorySnapshot.toCsv()`，通过已有 FileProvider + `ACTION_SEND` 分享。
-4. **单条删除**（小）：滑动或长按菜单删除单条快照。
-5. **快照字段扩展**（中）：`SatelliteHistoryEntry` 增加 lat/lon/accuracy/dop/ttff，让历史可回溯定位质量（需数据迁移）。
-6. **时间筛选**（小）：按日期范围、按星座筛选。
-
-**涉及文件**：`ui/screens/history/HistoryScreen.kt`、`HistorySnapshotCard.kt`、`domain/model/SatelliteHistory.kt`、`data/local/SatelliteHistoryDataStore.kt`、新增 CSV 导出工具。
-
-**依赖与风险**：字段扩展需数据迁移（旧 JSON 反序列化兼容）；图表性能需注意（100 点 × 多序列）。
-
-**ROI**：大工作量 / 高价值 — 让历史功能真正可用，是用户长期使用的留存点。
+**ROI**：已兑现 — 历史从“只存不用”升级为可分析、可导出、可钻取。
 
 ---
 
@@ -639,12 +631,12 @@
 
 **目标**：建立工具的专业调试价值，从"数据展示"升级到"诊断分析"。
 
-| 顺序 | 条目                               | 预估工作量 | 关键产出                                     |
-| ---- | ---------------------------------- | ---------- | -------------------------------------------- |
-| 1    | **U2** 天空图交互（一期+续） ✅    | 中         | SVID/过滤/缩放/动画/指北已落地               |
-| 2    | **G7** Location 精度字段 + 闰秒 ✅ | 小         | 垂直/航向/速度精度 + 闰秒采集与展示          |
+| 顺序 | 条目                                         | 预估工作量 | 关键产出                                               |
+| ---- | -------------------------------------------- | ---------- | ------------------------------------------------------ |
+| 1    | **U2** 天空图交互（一期+续） ✅              | 中         | SVID/过滤/缩放/动画/指北已落地                         |
+| 2    | **G7** Location 精度字段 + 闰秒 ✅           | 小         | 垂直/航向/速度精度 + 闰秒采集与展示                    |
 | 3    | **G1** 伪距 + WLS 核心 ✅；后续电文/星历接线 | 大         | 已完成纯领域解算；后续实现真实定位解与系统位置残差对比 |
-| 4    | **B3** NMEA 监听                   | 中         | 补全调试基础能力                             |
+| 4    | **B3** NMEA 监听                             | 中         | 补全调试基础能力                                       |
 
 **依赖**：G6/U2/G7 已完成；G1 阶段 1/2 已完成，后续依赖导航电文、星历与实时卫星位置。
 **风险**：G1 后续卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
@@ -658,13 +650,13 @@
 | 顺序 | 条目                              | 预估工作量 | 关键产出                                  |
 | ---- | --------------------------------- | ---------- | ----------------------------------------- |
 | 1    | **U1** 设置屏幕 ✅                | —          | 已实现：主题三态 + 快照配置               |
-| 2    | **U3** 历史趋势图 + CSV 导出      | 大         | 历史功能真正可用                          |
+| 2    | **U3** 历史趋势图 + CSV 导出 ✅   | —          | 已实现：趋势图/CSV/详情钻取/删除/筛选     |
 | 3    | **U4** 卫星列表筛选/排序/冻结     | 中         | 多星座场景实用增强                        |
 | 4    | **U5** A-GPS 补全                 | 中         | 激活 import_file 文案、URL 编辑、间隔调节 |
 | 5    | **U2 续** 天空图缩放/动画/指北 ✅ | —          | 已实现；可选截图分享仍未做                |
 
-**依赖**：U3 可选依赖 U1 的快照配置；其余独立。
-**风险**：U3 快照字段扩展需数据迁移。
+**依赖**：U3 已完成（可选依赖 U1 快照配置）；其余独立。
+**风险**：U3 快照字段扩展已用可选字段兼容旧 JSON。
 
 ---
 
@@ -696,7 +688,7 @@
 阶段一·止血(1-2天)         阶段二·核心(3-7天)        阶段三·体验(5-10天)       阶段四·工程化(持续)
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI lint      │
-│ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ★  │ ──→│ E1 minify       │
+│ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ✅ │ ──→│ E1 minify       │
 │ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选     │    │ E3 Timber+崩溃   │
 └──────────────────┘    │ B3 NMEA监听      │    │ U5 A-GPS补全    │    │ E5 i18n          │
                         └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
@@ -713,19 +705,19 @@
 
 ### 高价值功能
 
-| 功能                        | 旧标记   | 核实结论               | 关键证据                                                                                                |
-| --------------------------- | -------- | ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| 卫星天空图（Sky View）      | `[*]`    | ✅ 完整实现            | `SkyChartView.kt:64-209` 极坐标投影 + `SkyChartScreen.kt:139-146`                                       |
-| 多路径指示                  | `[*]`    | ✅ 完整实现            | `GnssDataSourceImpl.kt:108` 采集 + `SatelliteDetailSheet.kt:106-112` 展示                               |
-| 自动增益控制（AGC）         | `[*]`    | ✅ 完整实现            | `GnssDataSourceImpl.kt:100-107` 采集 + `SatelliteDetailSheet.kt:97-100` 展示                            |
-| HDOP/VDOP/PDOP              | `[ ]` ❌ | ✅ 完整实现            | `DopCalculator.kt:18-71` 算法 + `DopCard.kt:60-71` 展示（含单元测试）                                   |
-| TTFF（首次定位时间）        | `[ ]` ❌ | ✅ 完整实现            | `SatelliteViewModel.kt:44-45,92-102` 状态机 + `TtffCard.kt:25-100`                                      |
-| 信号历史曲线                | `[ ]` ❌ | ✅ 完整实现            | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入                                    |
-| **TDOP/GDOP 补全**          | —        | ✅ 已实现 (2026-07-12) | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试           |
-| **GnssCapabilities**        | —        | ✅ 已实现 (2026-07-12) | `GnssCapabilitiesInfo.kt` + `GnssCapabilitiesCard.kt` + 数据源/仓库/ViewModel 接线 + 单元测试           |
-| **天空图交互 U2**           | —        | ✅ 已实现              | SVID 标签 + 星座过滤 + 缩放/平移 + 位置动画 + 指北（`SkyChart*` / `CompassHeadingSource`）              |
-| **设置屏幕 U1**             | —        | ✅ 已实现              | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试               |
-| **Location 精度 + 闰秒 G7** | —        | ✅ 已实现 (2026-07-15) | `LocationInfo` 垂直/航向/速度精度 + `GnssClockData.leapSecond` + LocationCard/ClockInfoCard 展示 + 测试 |
+| 功能                        | 旧标记   | 核实结论                        | 关键证据                                                                                                                |
+| --------------------------- | -------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 卫星天空图（Sky View）      | `[*]`    | ✅ 完整实现                     | `SkyChartView.kt:64-209` 极坐标投影 + `SkyChartScreen.kt:139-146`                                                       |
+| 多路径指示                  | `[*]`    | ✅ 完整实现                     | `GnssDataSourceImpl.kt:108` 采集 + `SatelliteDetailSheet.kt:106-112` 展示                                               |
+| 自动增益控制（AGC）         | `[*]`    | ✅ 完整实现                     | `GnssDataSourceImpl.kt:100-107` 采集 + `SatelliteDetailSheet.kt:97-100` 展示                                            |
+| HDOP/VDOP/PDOP              | `[ ]` ❌ | ✅ 完整实现                     | `DopCalculator.kt:18-71` 算法 + `DopCard.kt:60-71` 展示（含单元测试）                                                   |
+| TTFF（首次定位时间）        | `[ ]` ❌ | ✅ 完整实现                     | `SatelliteViewModel.kt:44-45,92-102` 状态机 + `TtffCard.kt:25-100`                                                      |
+| 信号历史曲线                | `[ ]` ❌ | ✅ 完整实现                     | `SignalChart.kt:132-176` 折线图 + `SatelliteDetailSheet.kt:150` 接入                                                    |
+| **TDOP/GDOP 补全**          | —        | ✅ 已实现 (2026-07-12)          | `DopInfo.kt` + `DopCalculator.kt:62-63` 公式 + `DopCard.kt` 分组展示 + Help 解释 + 2 个新测试                           |
+| **GnssCapabilities**        | —        | ✅ 已实现 (2026-07-12)          | `GnssCapabilitiesInfo.kt` + `GnssCapabilitiesCard.kt` + 数据源/仓库/ViewModel 接线 + 单元测试                           |
+| **天空图交互 U2**           | —        | ✅ 已实现                       | SVID 标签 + 星座过滤 + 缩放/平移 + 位置动画 + 指北（`SkyChart*` / `CompassHeadingSource`）                              |
+| **设置屏幕 U1**             | —        | ✅ 已实现                       | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试                               |
+| **Location 精度 + 闰秒 G7** | —        | ✅ 已实现 (2026-07-15)          | `LocationInfo` 垂直/航向/速度精度 + `GnssClockData.leapSecond` + LocationCard/ClockInfoCard 展示 + 测试                 |
 | **G1 伪距 + WLS 核心**      | —        | ✅ 阶段 1/2 已实现 (2026-07-15) | `PseudorangeCalculator.kt` + `PositionSolver.kt`：伪距推导、纯领域迭代 WLS、黄金与边界测试；真实星历/卫星位置接线待后续 |
 
 ### 专业/调试功能

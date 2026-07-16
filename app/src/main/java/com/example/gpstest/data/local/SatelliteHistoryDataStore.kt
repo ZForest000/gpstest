@@ -68,6 +68,24 @@ class SatelliteHistoryDataStore(
         }
     }
 
+    suspend fun deleteSnapshot(timestamp: Long) {
+        context.historyDataStore.edit { preferences ->
+            val currentList =
+                try {
+                    val jsonString = preferences[SNAPSHOTS_KEY] ?: "[]"
+                    json.decodeFromString(ListSerializer(SatelliteHistorySnapshot.serializer()), jsonString)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            val updated = currentList.filterNot { it.timestamp == timestamp }
+            preferences[SNAPSHOTS_KEY] =
+                json.encodeToString(
+                    ListSerializer(SatelliteHistorySnapshot.serializer()),
+                    updated,
+                )
+        }
+    }
+
     suspend fun clearHistory() {
         context.historyDataStore.edit { preferences ->
             preferences[SNAPSHOTS_KEY] = "[]"

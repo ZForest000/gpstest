@@ -109,7 +109,11 @@ class SatelliteViewModel(
 
                         updateTtffState(gnssData.location)
                         updateSignalHistory(satellites)
-                        maybeSaveSnapshot(satellites)
+                        maybeSaveSnapshot(
+                            satellites = satellites,
+                            location = gnssData.location,
+                            dopInfo = dopInfo,
+                        )
                     }
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
@@ -158,13 +162,22 @@ class SatelliteViewModel(
     }
 
     // 自动保存开启且距离上次快照超过 snapshotIntervalMs 时异步保存
-    private fun maybeSaveSnapshot(satellites: List<GnssSatellite>) {
+    private fun maybeSaveSnapshot(
+        satellites: List<GnssSatellite>,
+        location: LocationInfo?,
+        dopInfo: DopInfo?,
+    ) {
         if (!autoSaveEnabled) return
         val now = System.currentTimeMillis()
         if (now - lastSnapshotTime >= snapshotIntervalMs) {
             lastSnapshotTime = now
             viewModelScope.launch {
-                historyRepository?.saveSnapshot(satellites)
+                historyRepository?.saveSnapshot(
+                    satellites = satellites,
+                    location = location,
+                    dopInfo = dopInfo,
+                    ttffMs = completedTtffMs(),
+                )
             }
         }
     }
@@ -174,17 +187,34 @@ class SatelliteViewModel(
         if (state is SatelliteUiState.Success) {
             val allSatellites = state.usedInFix + state.visibleOnly + state.searching
             viewModelScope.launch {
-                historyRepository?.saveSnapshot(allSatellites)
+                historyRepository?.saveSnapshot(
+                    satellites = allSatellites,
+                    location = state.location,
+                    dopInfo = state.dopInfo,
+                    ttffMs = completedTtffMs(),
+                )
                 loadHistory()
             }
         }
     }
+
+    private fun completedTtffMs(): Long? =
+        when (val ttff = _ttffState.value) {
+            is TtffState.Completed -> ttff.ttffMs
+            is TtffState.Measuring -> null
+        }
 
     private fun loadHistory() {
         viewModelScope.launch {
             historyRepository?.historySnapshots?.collect { snapshots ->
                 _historySnapshots.value = snapshots
             }
+        }
+    }
+
+    fun deleteSnapshot(timestamp: Long) {
+        viewModelScope.launch {
+            historyRepository?.deleteSnapshot(timestamp)
         }
     }
 

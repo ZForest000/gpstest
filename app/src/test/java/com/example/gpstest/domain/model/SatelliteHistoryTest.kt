@@ -190,4 +190,84 @@ class SatelliteHistoryTest {
         val entry = SatelliteHistoryEntry.fromGnssSatellite(sat, timestamp = 1000L)
         assertEquals(99, entry.rawConstellationType)
     }
+
+    @Test
+    fun `fromSatellites stores location dop and ttff when provided`() {
+        val location =
+            LocationInfo(
+                latitude = 31.2304,
+                longitude = 121.4737,
+                altitude = 10.0,
+                accuracy = 5.5f,
+                speed = 0f,
+                bearing = 0f,
+                timestamp = 1000L,
+            )
+        val dop = DopInfo(pdop = 1.5, hdop = 1.0, vdop = 1.2, satelliteCount = 8)
+        val snapshot =
+            SatelliteHistorySnapshot.fromSatellites(
+                satellites = listOf(makeSatellite()),
+                timestamp = 1000L,
+                location = location,
+                dopInfo = dop,
+                ttffMs = 2500L,
+            )
+        assertEquals(31.2304, snapshot.latitude!!, 1e-6)
+        assertEquals(121.4737, snapshot.longitude!!, 1e-6)
+        assertEquals(5.5f, snapshot.accuracy!!, 0.01f)
+        assertEquals(1.5, snapshot.pdop!!, 1e-6)
+        assertEquals(1.0, snapshot.hdop!!, 1e-6)
+        assertEquals(1.2, snapshot.vdop!!, 1e-6)
+        assertEquals(2500L, snapshot.ttffMs)
+        assertTrue(snapshot.hasLocation)
+    }
+
+    @Test
+    fun `fromSatellites leaves quality fields null when omitted`() {
+        val snapshot = SatelliteHistorySnapshot.fromSatellites(listOf(makeSatellite()), 1000L)
+        assertEquals(null, snapshot.latitude)
+        assertEquals(null, snapshot.longitude)
+        assertEquals(null, snapshot.accuracy)
+        assertEquals(null, snapshot.pdop)
+        assertEquals(null, snapshot.ttffMs)
+        assertEquals(false, snapshot.hasLocation)
+    }
+
+    @Test
+    fun `HistoryTimeFilter ALL returns all snapshots`() {
+        val now = 1_000_000L
+        val snapshots =
+            listOf(
+                SatelliteHistorySnapshot.EMPTY.copy(timestamp = now - 1000),
+                SatelliteHistorySnapshot.EMPTY.copy(timestamp = now - 100_000),
+            )
+        assertEquals(2, HistoryTimeFilter.ALL.apply(snapshots, now).size)
+    }
+
+    @Test
+    fun `HistoryTimeFilter HOUR_1 keeps only last hour`() {
+        val now = 10_000_000L
+        val snapshots =
+            listOf(
+                SatelliteHistorySnapshot.EMPTY.copy(timestamp = now - 30 * 60 * 1000L),
+                SatelliteHistorySnapshot.EMPTY.copy(timestamp = now - 2 * 60 * 60 * 1000L),
+            )
+        val filtered = HistoryTimeFilter.HOUR_1.apply(snapshots, now)
+        assertEquals(1, filtered.size)
+        assertEquals(now - 30 * 60 * 1000L, filtered[0].timestamp)
+    }
+
+    @Test
+    fun `HistoryTimeFilter DAY_7 excludes older than seven days`() {
+        val now = 100_000_000L
+        val dayMs = 24 * 60 * 60 * 1000L
+        val snapshots =
+            listOf(
+                SatelliteHistorySnapshot.EMPTY.copy(timestamp = now - 3 * dayMs),
+                SatelliteHistorySnapshot.EMPTY.copy(timestamp = now - 8 * dayMs),
+            )
+        val filtered = HistoryTimeFilter.DAY_7.apply(snapshots, now)
+        assertEquals(1, filtered.size)
+        assertEquals(now - 3 * dayMs, filtered[0].timestamp)
+    }
 }

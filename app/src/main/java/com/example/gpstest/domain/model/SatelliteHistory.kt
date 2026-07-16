@@ -2,7 +2,6 @@ package com.example.gpstest.domain.model
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 
 /**
@@ -39,6 +38,9 @@ data class SatelliteHistoryEntry(
 /**
  * 某一时刻所有可见卫星的快照。使用 JSON 编码的 entriesJson 存储卫星列表，
  * 而非多键存储，因为 DataStore 操作是单键原子性的。
+ *
+ * 定位质量字段（lat/lon/accuracy/DOP/TTFF）为可选：旧快照反序列化时为 null，
+ * 新快照在有定位时写入，保证 ignoreUnknownKeys + 默认值兼容迁移。
  */
 @Serializable
 data class SatelliteHistorySnapshot(
@@ -47,6 +49,13 @@ data class SatelliteHistorySnapshot(
     val usedInFixCount: Int,
     val visibleCount: Int,
     val averageSignalStrength: Float,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val accuracy: Float? = null,
+    val pdop: Double? = null,
+    val hdop: Double? = null,
+    val vdop: Double? = null,
+    val ttffMs: Long? = null,
 ) {
     fun getEntries(): List<SatelliteHistoryEntry> =
         try {
@@ -54,6 +63,9 @@ data class SatelliteHistorySnapshot(
         } catch (e: Exception) {
             emptyList()
         }
+
+    val hasLocation: Boolean
+        get() = latitude != null && longitude != null
 
     companion object {
         val EMPTY =
@@ -68,6 +80,9 @@ data class SatelliteHistorySnapshot(
         fun fromSatellites(
             satellites: List<GnssSatellite>,
             timestamp: Long,
+            location: LocationInfo? = null,
+            dopInfo: DopInfo? = null,
+            ttffMs: Long? = null,
         ): SatelliteHistorySnapshot {
             val entries = satellites.map { SatelliteHistoryEntry.fromGnssSatellite(it, timestamp) }
             val entriesJson = Json.encodeToString(ListSerializer(SatelliteHistoryEntry.serializer()), entries)
@@ -87,6 +102,13 @@ data class SatelliteHistorySnapshot(
                 usedInFixCount = usedInFixCount,
                 visibleCount = visibleCount,
                 averageSignalStrength = avgSignal,
+                latitude = location?.latitude,
+                longitude = location?.longitude,
+                accuracy = location?.accuracy,
+                pdop = dopInfo?.pdop,
+                hdop = dopInfo?.hdop,
+                vdop = dopInfo?.vdop,
+                ttffMs = ttffMs,
             )
         }
     }
@@ -98,3 +120,24 @@ data class SatelliteHistoryConfig(
     val snapshotIntervalMs: Long = 60_000L,
     val retentionDays: Int = 7,
 )
+
+/** 历史列表时间筛选窗口。 */
+enum class HistoryTimeFilter(
+    val windowMs: Long?,
+) {
+    ALL(null),
+    HOUR_1(60 * 60 * 1000L),
+    HOUR_6(6 * 60 * 60 * 1000L),
+    HOUR_24(24 * 60 * 60 * 1000L),
+    DAY_7(7 * 24 * 60 * 60 * 1000L),
+    ;
+
+    fun apply(
+        snapshots: List<SatelliteHistorySnapshot>,
+        nowMs: Long = System.currentTimeMillis(),
+    ): List<SatelliteHistorySnapshot> {
+        val window = windowMs ?: return snapshots
+        val cutoff = nowMs - window
+        return snapshots.filter { it.timestamp >= cutoff }
+    }
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 历史 CSV 等导出文件，写入 cacheDir/exports -->
+    <cache-path
+        name="exports"
+        path="exports/" />
+</paths>

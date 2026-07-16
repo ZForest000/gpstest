@@ -170,7 +170,33 @@
     <string name="visible">可见</string>
     <string name="total">总计</string>
     <string name="snapshot_count">共 %d 条记录</string>
+    <string name="snapshot_count_filtered">显示 %1$d / 共 %2$d 条</string>
     <string name="signal_strength_avg">平均信号: %d dB-Hz</string>
+    <string name="history_expand">展开明细</string>
+    <string name="history_collapse">收起明细</string>
+    <string name="history_entries_title">卫星明细（%d）</string>
+    <string name="history_no_entries">无卫星明细数据</string>
+    <string name="history_delete_snapshot">删除此快照</string>
+    <string name="history_share_snapshot">分享此快照</string>
+    <string name="history_delete_title">删除快照</string>
+    <string name="history_delete_message">确定删除这条历史快照吗？</string>
+    <string name="delete">删除</string>
+    <string name="history_export_csv">导出 CSV</string>
+    <string name="history_share_chooser">分享历史 CSV</string>
+    <string name="history_export_failed">导出失败，请重试</string>
+    <string name="history_trend_title">趋势</string>
+    <string name="history_trend_avg_signal">平均信号</string>
+    <string name="history_trend_used">定位星</string>
+    <string name="history_trend_visible">可见星</string>
+    <string name="history_filter_all">全部</string>
+    <string name="history_filter_1h">1 小时</string>
+    <string name="history_filter_6h">6 小时</string>
+    <string name="history_filter_24h">24 小时</string>
+    <string name="history_filter_7d">7 天</string>
+    <string name="history_filter_empty">当前时间范围内无快照</string>
+    <string name="history_location_line">位置: %1$s, %2$s · 精度 %3$s m</string>
+    <string name="history_dop_line">DOP: P%1$s H%2$s V%3$s</string>
+    <string name="history_ttff_line">TTFF: %.1f s</string>
 
     <!-- A-GPS -->
     <string name="agps_manager">A-GPS 管理</string>
