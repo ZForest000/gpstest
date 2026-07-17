@@ -21,6 +21,17 @@
     <string name="satellite_used_in_fix">用于定位: %1$d</string>
     <string name="satellite_view_only">仅查看: %1$d</string>
 
+    <!-- Satellite Filter / Sort / Freeze -->
+    <string name="satellite_filter_title">筛选</string>
+    <string name="satellite_sort_cn0">信号</string>
+    <string name="satellite_sort_elevation">仰角</string>
+    <string name="satellite_sort_svid">编号</string>
+    <string name="satellite_search_svid">搜索 SVID</string>
+    <string name="satellite_freeze">冻结</string>
+    <string name="satellite_resume">继续</string>
+    <string name="satellite_frozen_banner">列表已冻结 — 显示暂停更新</string>
+    <string name="constellation_all">全部</string>
+
     <!-- Signal Quality -->
     <string name="signal_strength_excellent">优秀</string>
     <string name="signal_strength_good">良好</string>
