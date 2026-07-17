@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gpstest.R
 import com.example.gpstest.domain.model.AGpsInjectionRecord
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.domain.model.AGpsStatus
@@ -142,11 +143,15 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Injecting
             val result = repository.importAndInject(uri.toString())
+            val app = getApplication<Application>()
             _uiState.value =
                 if (result.isSuccess) {
-                    AGpsUiState.Success("文件导入并注入成功")
+                    AGpsUiState.Success(app.getString(R.string.agps_import_success))
                 } else {
-                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "导入失败")
+                    AGpsUiState.Error(
+                        result.exceptionOrNull()?.message
+                            ?: app.getString(R.string.agps_import_fail),
+                    )
                 }
         }
     }

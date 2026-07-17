@@ -2,6 +2,7 @@ package com.example.gpstest.viewmodel
 
 import android.app.Application
 import android.net.Uri
+import com.example.gpstest.R
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.domain.model.AGpsStatus
 import com.example.gpstest.domain.model.DataStatus
@@ -58,6 +59,8 @@ class AGpsViewModelTest {
         every { repository.settings } returns settingsFlow
         every { repository.injectionHistory } returns historyFlow
         coEvery { repository.hydrateHistory() } just Runs
+        every { application.getString(R.string.agps_import_success) } returns "文件导入并注入成功"
+        every { application.getString(R.string.agps_import_fail) } returns "导入失败"
         // AGpsUpdateWorker 伴生对象静态方法桩（schedule/cancel 需 Context + WorkManager）
         mockkObject(AGpsUpdateWorker)
         every { AGpsUpdateWorker.schedule(any(), any()) } just Runs

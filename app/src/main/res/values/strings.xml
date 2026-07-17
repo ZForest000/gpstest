@@ -261,6 +261,7 @@
     <string name="agps_validation_fail">验证失败</string>
     <string name="agps_error_prefix">错误: %1$s</string>
     <string name="agps_import_success">文件导入并注入成功</string>
+    <string name="agps_import_fail">导入失败</string>
     
     <!-- Location -->
     <string name="location_info">位置信息</string>
