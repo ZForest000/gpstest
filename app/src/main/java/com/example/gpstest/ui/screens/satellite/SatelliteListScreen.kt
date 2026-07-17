@@ -132,38 +132,22 @@ fun SatelliteListScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
-            when (val state = uiState) {
-                is SatelliteUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-                is SatelliteUiState.PermissionRequired -> {
-                    PermissionRequiredContent(
-                        permissionState = permissionState,
-                        onRequestPermission = onRequestPermission,
-                        onOpenAppSettings = onOpenAppSettings,
-                    )
-                }
-                is SatelliteUiState.Success -> {
-                    val displayState =
-                        if (frozen && frozenSuccess != null) {
-                            frozenSuccess!!
-                        } else {
-                            state
-                        }
+            val snapshot = frozenSuccess
+            val liveState = uiState
+            when {
+                frozen && snapshot != null -> {
                     val allSatellites =
-                        displayState.usedInFix + displayState.visibleOnly + displayState.searching
+                        snapshot.usedInFix + snapshot.visibleOnly + snapshot.searching
                     SatelliteListContent(
-                        usedInFix = displayState.usedInFix,
-                        visibleOnly = displayState.visibleOnly,
-                        searching = displayState.searching,
-                        totalCount = displayState.totalCount,
+                        usedInFix = snapshot.usedInFix,
+                        visibleOnly = snapshot.visibleOnly,
+                        searching = snapshot.searching,
+                        totalCount = snapshot.totalCount,
                         allSatellites = allSatellites,
-                        location = displayState.location,
-                        clock = displayState.clock,
-                        dumpsysData = displayState.dumpsysData,
-                        dopInfo = displayState.dopInfo,
+                        location = snapshot.location,
+                        clock = snapshot.clock,
+                        dumpsysData = snapshot.dumpsysData,
+                        dopInfo = snapshot.dopInfo,
                         gnssCapabilities = gnssCapabilities,
                         ttffState = ttffState,
                         listQuery = listQuery,
@@ -186,9 +170,56 @@ fun SatelliteListScreen(
                         onSatelliteClick = { selectedSatellite = it },
                     )
                 }
-                is SatelliteUiState.Error -> {
+                liveState is SatelliteUiState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+                liveState is SatelliteUiState.PermissionRequired -> {
+                    PermissionRequiredContent(
+                        permissionState = permissionState,
+                        onRequestPermission = onRequestPermission,
+                        onOpenAppSettings = onOpenAppSettings,
+                    )
+                }
+                liveState is SatelliteUiState.Success -> {
+                    val allSatellites =
+                        liveState.usedInFix + liveState.visibleOnly + liveState.searching
+                    SatelliteListContent(
+                        usedInFix = liveState.usedInFix,
+                        visibleOnly = liveState.visibleOnly,
+                        searching = liveState.searching,
+                        totalCount = liveState.totalCount,
+                        allSatellites = allSatellites,
+                        location = liveState.location,
+                        clock = liveState.clock,
+                        dumpsysData = liveState.dumpsysData,
+                        dopInfo = liveState.dopInfo,
+                        gnssCapabilities = gnssCapabilities,
+                        ttffState = ttffState,
+                        listQuery = listQuery,
+                        selectedConstellations = selectedConstellationEnums,
+                        sortMode = sortMode,
+                        svidQuery = svidQuery,
+                        frozen = frozen,
+                        onConstellationToggle = { constellation ->
+                            selectedConstellations =
+                                if (constellation.name in selectedConstellations) {
+                                    selectedConstellations - constellation.name
+                                } else {
+                                    selectedConstellations + constellation.name
+                                }
+                        },
+                        onSortModeChange = { sortModeName = it.name },
+                        onSvidQueryChange = { svidQuery = it },
+                        onFrozenChange = { frozen = it },
+                        onTtffReset = { viewModel.resetTtff() },
+                        onSatelliteClick = { selectedSatellite = it },
+                    )
+                }
+                liveState is SatelliteUiState.Error -> {
                     ErrorContent(
-                        message = state.message,
+                        message = liveState.message,
                         onRetry = { viewModel.startListening() },
                     )
                 }
