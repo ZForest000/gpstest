@@ -1,6 +1,8 @@
 package com.example.gpstest.domain.repository
 
+import android.content.Context
 import android.net.Uri
+import com.example.gpstest.R
 import com.example.gpstest.data.local.AGpsFileHandler
 import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
@@ -42,6 +44,7 @@ import java.io.IOException
  * isReturnDefaultValues=true 让裸 android.util.Log 静默返回默认值。
  */
 class AGpsRepositoryImplTest {
+    private val context: Context = mockk(relaxed = true)
     private val dataSource: AGpsDataSource = mockk(relaxed = true)
     private val downloader: AGpsDownloader = mockk(relaxed = true)
     private val fileHandler: AGpsFileHandler = mockk(relaxed = true)
@@ -70,6 +73,10 @@ class AGpsRepositoryImplTest {
     fun setUp() {
         mockkStatic(Uri::class)
         every { Uri.parse(any()) } returns mockk(relaxed = true)
+        every { context.getString(R.string.agps_file_read_fail) } returns "无法读取文件"
+        every { context.getString(R.string.agps_validation_fail) } returns "验证失败"
+        every { context.getString(R.string.agps_cache_write_fail) } returns "写入缓存失败"
+        every { context.getString(R.string.agps_inject_fail) } returns "注入失败"
         storedHistory = emptyList()
         every { historyStore.history } answers { flowOf(storedHistory) }
         coEvery { historyStore.replaceAll(any()) } coAnswers {
@@ -90,6 +97,7 @@ class AGpsRepositoryImplTest {
     ): AGpsRepositoryImpl {
         every { settingsStore.settings } returns flowOf(settings)
         return AGpsRepositoryImpl(
+            context,
             dataSource,
             downloader,
             fileHandler,

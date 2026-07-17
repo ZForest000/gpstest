@@ -102,7 +102,7 @@ class MainActivity : ComponentActivity() {
         val settingsStore = AGpsSettingsStore(app)
         val historyStore = AGpsInjectionHistoryStore(app)
         val repository =
-            AGpsRepositoryImpl(dataSource, downloader, fileHandler, settingsStore, historyStore)
+            AGpsRepositoryImpl(app, dataSource, downloader, fileHandler, settingsStore, historyStore)
         AGpsViewModelFactory(app, repository)
     }
 

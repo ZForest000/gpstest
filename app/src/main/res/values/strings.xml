@@ -262,6 +262,9 @@
     <string name="agps_error_prefix">错误: %1$s</string>
     <string name="agps_import_success">文件导入并注入成功</string>
     <string name="agps_import_fail">导入失败</string>
+    <string name="agps_file_read_fail">无法读取文件</string>
+    <string name="agps_cache_write_fail">写入缓存失败</string>
+    <string name="agps_inject_fail">注入失败</string>
     
     <!-- Location -->
     <string name="location_info">位置信息</string>

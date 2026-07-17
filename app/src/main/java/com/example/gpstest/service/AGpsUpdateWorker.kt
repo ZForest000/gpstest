@@ -39,6 +39,7 @@ class AGpsUpdateWorker(
         val downloader = AGpsDownloaderImpl()
         val repository =
             AGpsRepositoryImpl(
+                context = applicationContext,
                 dataSource = dataSource,
                 downloader = downloader,
                 fileHandler = AGpsFileHandlerImpl(applicationContext),

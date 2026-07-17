@@ -1,7 +1,9 @@
 package com.example.gpstest.domain.repository
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.example.gpstest.R
 import com.example.gpstest.data.local.AGpsFileHandler
 import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
@@ -34,6 +36,7 @@ import kotlinx.coroutines.sync.withLock
  * 调用方应在启动时调用 [hydrateHistory] 加载已保存记录。
  */
 class AGpsRepositoryImpl(
+    private val context: Context,
     private val dataSource: AGpsDataSource,
     private val downloader: AGpsDownloader,
     private val fileHandler: AGpsFileHandler,
@@ -286,7 +289,9 @@ class AGpsRepositoryImpl(
         val uri = Uri.parse(fileUri)
         val readResult = fileHandler.readFile(uri)
         if (readResult.isFailure) {
-            val error = readResult.exceptionOrNull()?.message ?: "无法读取文件"
+            val error =
+                readResult.exceptionOrNull()?.message
+                    ?: context.getString(R.string.agps_file_read_fail)
             Log.e(TAG, "importAndInject: read failed: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(readResult.exceptionOrNull() ?: Exception(error))
@@ -295,7 +300,9 @@ class AGpsRepositoryImpl(
         val data = readResult.getOrThrow()
         val validationResult = validator.validate(data, sourceUrl = fileUri)
         if (!validationResult.isValid) {
-            val error = validationResult.details ?: "验证失败"
+            val error =
+                validationResult.details
+                    ?: context.getString(R.string.agps_validation_fail)
             Log.e(TAG, "importAndInject: validation failed: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(Exception(error))
@@ -303,7 +310,9 @@ class AGpsRepositoryImpl(
 
         val writeResult = fileHandler.writeCacheFile(IMPORT_CACHE_FILE_NAME, data)
         if (writeResult.isFailure) {
-            val error = writeResult.exceptionOrNull()?.message ?: "写入缓存失败"
+            val error =
+                writeResult.exceptionOrNull()?.message
+                    ?: context.getString(R.string.agps_cache_write_fail)
             Log.e(TAG, "importAndInject: cache write failed: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(writeResult.exceptionOrNull() ?: Exception(error))
@@ -321,7 +330,9 @@ class AGpsRepositoryImpl(
             return Result.success(Unit)
         }
 
-        val error = injectResult.exceptionOrNull()?.message ?: "注入失败"
+        val error =
+            injectResult.exceptionOrNull()?.message
+                ?: context.getString(R.string.agps_inject_fail)
         Log.e(TAG, "importAndInject: inject failed: $error")
         addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
         return Result.failure(injectResult.exceptionOrNull() ?: Exception(error))
@@ -382,7 +393,9 @@ class AGpsRepositoryImpl(
         val readResult = fileHandler.readFile(uri)
 
         if (readResult.isFailure) {
-            val error = readResult.exceptionOrNull()?.message ?: "无法读取文件"
+            val error =
+                readResult.exceptionOrNull()?.message
+                    ?: context.getString(R.string.agps_file_read_fail)
             Log.e(TAG, "validateFile: Failed to read file: $error")
             return FileValidationResult(
                 isValid = false,
