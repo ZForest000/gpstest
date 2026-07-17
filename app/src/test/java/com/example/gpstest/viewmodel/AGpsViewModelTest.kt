@@ -56,6 +56,7 @@ class AGpsViewModelTest {
         every { repository.status } returns statusFlow
         every { repository.settings } returns settingsFlow
         every { repository.injectionHistory } returns historyFlow
+        coEvery { repository.hydrateHistory() } just Runs
         // AGpsUpdateWorker 伴生对象静态方法桩（schedule/cancel 需 Context + WorkManager）
         mockkObject(AGpsUpdateWorker)
         every { AGpsUpdateWorker.schedule(any(), any()) } just Runs

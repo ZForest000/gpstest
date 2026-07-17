@@ -53,6 +53,12 @@ class AGpsViewModel(
         }
     }
 
+    init {
+        viewModelScope.launch {
+            repository.hydrateHistory()
+        }
+    }
+
     private val _validationResult = MutableStateFlow<FileValidationResult?>(null)
     val validationResult: StateFlow<FileValidationResult?> = _validationResult.asStateFlow()
 

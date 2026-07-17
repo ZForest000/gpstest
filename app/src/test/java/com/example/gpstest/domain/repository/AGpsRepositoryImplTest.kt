@@ -1,35 +1,44 @@
 package com.example.gpstest.domain.repository
 
+import android.net.Uri
 import com.example.gpstest.data.local.AGpsFileHandler
+import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
 import com.example.gpstest.data.source.AGpsDataSource
 import com.example.gpstest.data.source.AGpsDownloader
 import com.example.gpstest.data.validator.XtraDataValidator
+import com.example.gpstest.domain.model.AGpsInjectionRecord
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.DataStatus
 import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.domain.model.InjectionSource
 import com.example.gpstest.domain.model.InjectionType
 import com.example.gpstest.domain.model.MultipathIndicator
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
+import java.io.File
 import java.io.IOException
 
 /**
  * AGpsRepositoryImpl 单元测试。覆盖多 URL 回退、注入验证阈值、历史记录上限、时间衰减状态机。
  *
- * 策略：4 个依赖用 MockK 桩，注入真实 XtraDataValidator（显式参数，避开 BuildConfig.DEBUG 默认）。
+ * 策略：依赖用 MockK 桩，注入真实 XtraDataValidator（显式参数，避开 BuildConfig.DEBUG 默认）。
  * isReturnDefaultValues=true 让裸 android.util.Log 静默返回默认值。
  */
 class AGpsRepositoryImplTest {
@@ -37,6 +46,7 @@ class AGpsRepositoryImplTest {
     private val downloader: AGpsDownloader = mockk(relaxed = true)
     private val fileHandler: AGpsFileHandler = mockk(relaxed = true)
     private val settingsStore: AGpsSettingsStore = mockk(relaxed = true)
+    private val historyStore: AGpsInjectionHistoryStore = mockk(relaxed = true)
 
     // strictMode=false 以跳过 MIME 校验，让 makeValidData() 通过；显式传参避开 BuildConfig.DEBUG
     private val validator =
@@ -53,11 +63,32 @@ class AGpsRepositoryImplTest {
             "https://xtrapath3.izatcloud.net/xtra3grc.bin",
         )
 
+    @Before
+    fun setUp() {
+        mockkStatic(Uri::class)
+        every { Uri.parse(any()) } returns mockk(relaxed = true)
+        every { historyStore.history } returns flowOf(emptyList())
+        coEvery { historyStore.replaceAll(any()) } returns Unit
+        coEvery { historyStore.clear() } returns Unit
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Uri::class)
+    }
+
     private fun makeRepository(
         settings: AGpsSettings = AGpsSettings(downloadUrl = "https://user.example.com/xtra.bin"),
     ): AGpsRepositoryImpl {
         every { settingsStore.settings } returns flowOf(settings)
-        return AGpsRepositoryImpl(dataSource, downloader, fileHandler, settingsStore, validator)
+        return AGpsRepositoryImpl(
+            dataSource,
+            downloader,
+            fileHandler,
+            settingsStore,
+            historyStore,
+            validator,
+        )
     }
 
     /** 有效二进制数据：字节数组循环填充 0-255，足够大小通过校验。 */
@@ -527,5 +558,140 @@ class AGpsRepositoryImplTest {
 
             assertTrue(result.isValid)
             assertEquals(makeValidData().size, result.fileSize)
+        }
+
+    // --- importAndInject ---
+
+    @Test
+    fun `importAndInject succeeds when read validate cache and inject all succeed`() =
+        runTest {
+            val repo = makeRepository()
+            val data = makeValidData()
+            val cacheFile = File("/tmp/agps_import_xtra.bin")
+            coEvery { fileHandler.readFile(any()) } returns Result.success(data)
+            coEvery { fileHandler.writeCacheFile("agps_import_xtra.bin", data) } returns
+                Result.success(cacheFile)
+            coEvery { dataSource.injectXtraFromUrl("file://${cacheFile.absolutePath}") } returns
+                Result.success(Unit)
+
+            val result = repo.importAndInject("content://downloads/xtra.bin")
+
+            assertTrue(result.isSuccess)
+            assertEquals(DataStatus.VALID, repo.status.first().ephemerisStatus)
+            val history = repo.injectionHistory.first()
+            assertEquals(1, history.size)
+            assertTrue(history[0].success)
+            assertEquals(InjectionType.XTRA, history[0].type)
+            assertEquals(InjectionSource.MANUAL, history[0].source)
+            coVerify { historyStore.replaceAll(match { it.size == 1 && it[0].success }) }
+        }
+
+    @Test
+    fun `importAndInject fails and records when file read fails`() =
+        runTest {
+            val repo = makeRepository()
+            coEvery { fileHandler.readFile(any()) } returns
+                Result.failure(IOException("cannot open"))
+
+            val result = repo.importAndInject("content://downloads/missing.bin")
+
+            assertTrue(result.isFailure)
+            val history = repo.injectionHistory.first()
+            assertEquals(1, history.size)
+            assertFalse(history[0].success)
+            assertEquals(InjectionSource.MANUAL, history[0].source)
+            coVerify(exactly = 0) { fileHandler.writeCacheFile(any(), any()) }
+            coVerify(exactly = 0) { dataSource.injectXtraFromUrl(any()) }
+        }
+
+    @Test
+    fun `importAndInject fails and records when validation fails`() =
+        runTest {
+            val repo = makeRepository()
+            coEvery { fileHandler.readFile(any()) } returns Result.success(ByteArray(10))
+
+            val result = repo.importAndInject("content://downloads/tiny.bin")
+
+            assertTrue(result.isFailure)
+            val history = repo.injectionHistory.first()
+            assertEquals(1, history.size)
+            assertFalse(history[0].success)
+            coVerify(exactly = 0) { dataSource.injectXtraFromUrl(any()) }
+        }
+
+    @Test
+    fun `importAndInject fails and records when injection fails`() =
+        runTest {
+            val repo = makeRepository()
+            val data = makeValidData()
+            val cacheFile = File("/tmp/agps_import_xtra.bin")
+            coEvery { fileHandler.readFile(any()) } returns Result.success(data)
+            coEvery { fileHandler.writeCacheFile(any(), any()) } returns Result.success(cacheFile)
+            coEvery { dataSource.injectXtraFromUrl(any()) } returns
+                Result.failure(IOException("HAL rejected"))
+
+            val result = repo.importAndInject("content://downloads/xtra.bin")
+
+            assertTrue(result.isFailure)
+            val history = repo.injectionHistory.first()
+            assertEquals(1, history.size)
+            assertFalse(history[0].success)
+            assertNotNull(history[0].errorMessage)
+        }
+
+    // --- history store wiring ---
+
+    @Test
+    fun `hydrateHistory loads records from store into memory`() =
+        runTest {
+            val stored =
+                listOf(
+                    AGpsInjectionRecord(
+                        id = "1",
+                        type = InjectionType.XTRA,
+                        source = InjectionSource.MANUAL,
+                        timestamp = 100L,
+                        success = true,
+                    ),
+                )
+            every { historyStore.history } returns flowOf(stored)
+            val repo = makeRepository()
+
+            repo.hydrateHistory()
+
+            assertEquals(stored, repo.injectionHistory.first())
+        }
+
+    @Test
+    fun `clearInjectionHistory clears memory and store`() =
+        runTest {
+            val repo = makeRepository()
+            coEvery { dataSource.injectTime(any()) } returns Result.success(Unit)
+            repo.injectTime()
+            assertEquals(1, repo.injectionHistory.first().size)
+
+            repo.clearInjectionHistory()
+
+            assertTrue(repo.injectionHistory.first().isEmpty())
+            coVerify { historyStore.clear() }
+        }
+
+    @Test
+    fun `addRecord write-through persists history via replaceAll`() =
+        runTest {
+            val repo = makeRepository()
+            coEvery { dataSource.injectTime(any()) } returns Result.success(Unit)
+
+            repo.injectTime()
+
+            coVerify {
+                historyStore.replaceAll(
+                    match { list ->
+                        list.size == 1 &&
+                            list[0].type == InjectionType.TIME &&
+                            list[0].success
+                    },
+                )
+            }
         }
 }

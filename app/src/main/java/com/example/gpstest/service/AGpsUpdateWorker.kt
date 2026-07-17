@@ -6,6 +6,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.example.gpstest.data.local.AGpsFileHandlerImpl
+import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
 import com.example.gpstest.data.source.AGpsDataSourceImpl
 import com.example.gpstest.data.source.AGpsDownloaderImpl
@@ -39,10 +41,9 @@ class AGpsUpdateWorker(
             AGpsRepositoryImpl(
                 dataSource = dataSource,
                 downloader = downloader,
-                fileHandler =
-                    com.example.gpstest.data.local
-                        .AGpsFileHandlerImpl(applicationContext),
+                fileHandler = AGpsFileHandlerImpl(applicationContext),
                 settingsStore = settingsStore,
+                historyStore = AGpsInjectionHistoryStore(applicationContext),
             )
 
         val result = repository.downloadAndInject()

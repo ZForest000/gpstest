@@ -40,6 +40,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.gpstest.data.local.AGpsFileHandlerImpl
+import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
 import com.example.gpstest.data.local.SatelliteHistoryDataStore
 import com.example.gpstest.data.local.SettingsStore
@@ -99,7 +100,9 @@ class MainActivity : ComponentActivity() {
         val downloader = AGpsDownloaderImpl()
         val fileHandler = AGpsFileHandlerImpl(app)
         val settingsStore = AGpsSettingsStore(app)
-        val repository = AGpsRepositoryImpl(dataSource, downloader, fileHandler, settingsStore)
+        val historyStore = AGpsInjectionHistoryStore(app)
+        val repository =
+            AGpsRepositoryImpl(dataSource, downloader, fileHandler, settingsStore, historyStore)
         AGpsViewModelFactory(app, repository)
     }
 

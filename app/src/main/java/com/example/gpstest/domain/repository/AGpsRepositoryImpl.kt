@@ -3,6 +3,7 @@ package com.example.gpstest.domain.repository
 import android.net.Uri
 import android.util.Log
 import com.example.gpstest.data.local.AGpsFileHandler
+import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
 import com.example.gpstest.data.source.AGpsDataSource
 import com.example.gpstest.data.source.AGpsDownloader
@@ -26,12 +27,16 @@ import kotlinx.coroutines.flow.update
  * 实现多 URL 回落策略：用户配置 URL → 3 个 Qualcomm 默认地址。
  * 通过 [LocationManager.sendExtraCommand] 将 XTRA 数据的 URL 直接传递给
  * GPS HAL（硬件层内部处理下载），避免在 Java/Kotlin 层复制大二进制数据。
+ *
+ * 注入历史采用写穿缓存：内存 [MutableStateFlow] + [AGpsInjectionHistoryStore] 持久化。
+ * 调用方应在启动时调用 [hydrateHistory] 加载已保存记录。
  */
 class AGpsRepositoryImpl(
     private val dataSource: AGpsDataSource,
     private val downloader: AGpsDownloader,
     private val fileHandler: AGpsFileHandler,
     private val settingsStore: AGpsSettingsStore,
+    private val historyStore: AGpsInjectionHistoryStore,
     private val validator: XtraDataValidator = XtraDataValidator(),
 ) : AGpsRepository {
     companion object {
@@ -49,6 +54,8 @@ class AGpsRepositoryImpl(
         // 至少 50% 可见卫星有有效星历或历书才认为注入成功
         // 低于此比例常意味着数据过期或下载了错误文件（如 HTML 错误页面）
         private const val MIN_SUCCESS_RATIO = 0.5f
+
+        private const val IMPORT_CACHE_FILE_NAME = "agps_import_xtra.bin"
     }
 
     private val _status = MutableStateFlow(AGpsStatus())
@@ -255,7 +262,63 @@ class AGpsRepositoryImpl(
         settingsStore.updateSettings(settings)
     }
 
-    private fun addRecord(
+    override suspend fun hydrateHistory() {
+        _injectionHistory.value = historyStore.history.first()
+    }
+
+    override suspend fun clearInjectionHistory() {
+        _injectionHistory.value = emptyList()
+        historyStore.clear()
+    }
+
+    override suspend fun importAndInject(fileUri: String): Result<Unit> {
+        Log.d(TAG, "importAndInject: $fileUri")
+
+        val uri = Uri.parse(fileUri)
+        val readResult = fileHandler.readFile(uri)
+        if (readResult.isFailure) {
+            val error = readResult.exceptionOrNull()?.message ?: "无法读取文件"
+            Log.e(TAG, "importAndInject: read failed: $error")
+            addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
+            return Result.failure(readResult.exceptionOrNull() ?: Exception(error))
+        }
+
+        val data = readResult.getOrThrow()
+        val validationResult = validator.validate(data, sourceUrl = fileUri)
+        if (!validationResult.isValid) {
+            val error = validationResult.details ?: "验证失败"
+            Log.e(TAG, "importAndInject: validation failed: $error")
+            addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
+            return Result.failure(Exception(error))
+        }
+
+        val writeResult = fileHandler.writeCacheFile(IMPORT_CACHE_FILE_NAME, data)
+        if (writeResult.isFailure) {
+            val error = writeResult.exceptionOrNull()?.message ?: "写入缓存失败"
+            Log.e(TAG, "importAndInject: cache write failed: $error")
+            addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
+            return Result.failure(writeResult.exceptionOrNull() ?: Exception(error))
+        }
+
+        val file = writeResult.getOrThrow()
+        val injectUrl = "file://${file.absolutePath}"
+        Log.d(TAG, "importAndInject: injecting via $injectUrl")
+        val injectResult = dataSource.injectXtraFromUrl(injectUrl)
+
+        if (injectResult.isSuccess) {
+            Log.d(TAG, "importAndInject: success")
+            addRecord(InjectionType.XTRA, InjectionSource.MANUAL, true)
+            updateStatusAfterInjection()
+            return Result.success(Unit)
+        }
+
+        val error = injectResult.exceptionOrNull()?.message ?: "注入失败"
+        Log.e(TAG, "importAndInject: inject failed: $error")
+        addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
+        return Result.failure(injectResult.exceptionOrNull() ?: Exception(error))
+    }
+
+    private suspend fun addRecord(
         type: InjectionType,
         source: InjectionSource,
         success: Boolean,
@@ -271,8 +334,10 @@ class AGpsRepositoryImpl(
                 errorMessage = errorMessage,
             )
 
-        // 历史记录上限 50 条，新的插入头部，最旧的移除
-        _injectionHistory.update { listOf(record) + it.take(49) }
+        // 历史记录上限 50 条，新的插入头部，最旧的移除；写穿到 DataStore
+        val updated = listOf(record) + _injectionHistory.value.take(49)
+        _injectionHistory.value = updated
+        historyStore.replaceAll(updated)
     }
 
     private fun updateStatusAfterInjection() {

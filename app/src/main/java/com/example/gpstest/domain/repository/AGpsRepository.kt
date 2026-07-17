@@ -62,6 +62,18 @@ interface AGpsRepository {
 
     /** 从当前配置的 URL 下载并验证数据源是否有效。 */
     suspend fun validateCurrentSource(): FileValidationResult
+
+    /**
+     * 从本地文件导入并注入 XTRA 数据。
+     * 流程：读取 → 校验 → 写入缓存 → 通过 file:// URL 注入。
+     */
+    suspend fun importAndInject(fileUri: String): Result<Unit>
+
+    /** 从持久化存储加载注入历史到内存缓存。调用方应在启动时调用一次。 */
+    suspend fun hydrateHistory()
+
+    /** 清除内存与持久化中的注入历史。 */
+    suspend fun clearInjectionHistory()
 }
 
 /**
