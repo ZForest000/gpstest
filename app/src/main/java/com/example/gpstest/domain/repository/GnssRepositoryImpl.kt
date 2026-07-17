@@ -3,6 +3,7 @@ package com.example.gpstest.domain.repository
 import com.example.gpstest.data.source.GnssDataSource
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
+import com.example.gpstest.domain.model.NmeaSentence
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.sample
 
@@ -16,6 +17,9 @@ class GnssRepositoryImpl(
     private val dataSource: GnssDataSource,
 ) : GnssRepository {
     override fun getGnssData(): Flow<GnssData> = dataSource.getGnssData().sample(UI_SAMPLE_INTERVAL_MS)
+
+    // NMEA 报文不采样：原始数据按行展示，采样会丢失报文。
+    override fun getNmeaSentences(): Flow<NmeaSentence> = dataSource.getNmeaSentences()
 
     override suspend fun isGnssSupported(): Boolean = dataSource.isSupported()
 

@@ -11,6 +11,7 @@ import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.location.OnNmeaMessageListener
 import android.os.Build
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
@@ -19,6 +20,7 @@ import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.MultipathIndicator
+import com.example.gpstest.domain.model.NmeaSentence
 import com.example.gpstest.domain.model.PseudorangeMeasurement
 import com.example.gpstest.domain.model.PseudorangeResult
 import com.example.gpstest.domain.model.PseudorangeStatus
@@ -452,6 +454,40 @@ class GnssDataSourceImpl(
                     locationManager?.unregisterGnssMeasurementsCallback(measurementCallback)
                     locationManager?.removeUpdates(locationListener)
                     sensorManager?.unregisterListener(pressureListener)
+                } catch (e: Exception) {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+
+    override fun getNmeaSentences(): Flow<NmeaSentence> =
+        callbackFlow {
+            val lm = locationManager ?: run { close(); return@callbackFlow }
+
+            val listener =
+                OnNmeaMessageListener { message, timestamp ->
+                    if (!isClosedForSend) {
+                        trySend(NmeaSentence(timestampMs = timestamp, message = message))
+                    }
+                }
+
+            // API 30 (R) 起新增 Executor 重载；旧重载在 R 上被标记 deprecated。
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    lm.addNmeaListener(context.mainExecutor, listener)
+                } else {
+                    @Suppress("DEPRECATION")
+                    lm.addNmeaListener(listener)
+                }
+            } catch (e: SecurityException) {
+                // 缺少位置权限或设备不支持 NMEA：直接关闭流
+                close(e)
+                return@callbackFlow
+            }
+
+            awaitClose {
+                try {
+                    lm.removeNmeaListener(listener)
                 } catch (e: Exception) {
                     // Ignore cleanup errors
                 }

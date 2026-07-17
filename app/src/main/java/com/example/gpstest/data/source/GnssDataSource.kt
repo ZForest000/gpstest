@@ -2,6 +2,7 @@ package com.example.gpstest.data.source
 
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
+import com.example.gpstest.domain.model.NmeaSentence
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -16,6 +17,14 @@ interface GnssDataSource {
      * 调用方应在生命周期感知的协程作用域中收集此 Flow。
      */
     fun getGnssData(): Flow<GnssData>
+
+    /**
+     * 返回原始 NMEA 报文流（独立于 [getGnssData]，不参与 250ms 采样）。
+     *
+     * 底层通过 [android.location.LocationManager.addNmeaListener] 注册监听器，
+     * 在 [callbackFlow] 的 awaitClose 中注销。需要位置权限才能收到报文。
+     */
+    fun getNmeaSentences(): Flow<NmeaSentence>
 
     /** 设备是否支持 GPS（存在 GPS provider）。仿真器或无 GPS 设备返回 false。 */
     fun isSupported(): Boolean
