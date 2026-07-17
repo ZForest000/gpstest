@@ -14,6 +14,7 @@ data class AppSettings(
     val snapshotIntervalMs: Long = DEFAULT_SNAPSHOT_INTERVAL_MS,
     val maxSnapshots: Int = DEFAULT_MAX_SNAPSHOTS,
     val retentionDays: Int = DEFAULT_RETENTION_DAYS,
+    val nmeaEnabled: Boolean = true,
 ) {
     companion object {
         const val DEFAULT_SNAPSHOT_INTERVAL_MS = 60_000L

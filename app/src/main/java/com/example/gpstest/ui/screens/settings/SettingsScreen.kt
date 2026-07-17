@@ -79,6 +79,15 @@ fun SettingsScreen(
             }
 
             item {
+                NmeaCard(
+                    nmeaEnabled = settings.nmeaEnabled,
+                    onNmeaEnabledChange = { enabled ->
+                        viewModel.updateSettings(settings.copy(nmeaEnabled = enabled))
+                    },
+                )
+            }
+
+            item {
                 SnapshotCard(
                     settings = settings,
                     onSettingsChange = { viewModel.updateSettings(it) },
@@ -128,6 +137,41 @@ private fun AppearanceCard(
                     label = { Text(stringResource(R.string.settings_dark_mode_off)) },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun NmeaCard(
+    nmeaEnabled: Boolean,
+    onNmeaEnabledChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.settings_nmea_enabled),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.settings_nmea_enabled_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = nmeaEnabled,
+                onCheckedChange = onNmeaEnabledChange,
+            )
         }
     }
 }

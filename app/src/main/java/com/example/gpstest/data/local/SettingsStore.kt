@@ -25,6 +25,7 @@ class SettingsStore(
         private val SNAPSHOT_INTERVAL_MS = longPreferencesKey("snapshot_interval_ms")
         private val MAX_SNAPSHOTS = intPreferencesKey("max_snapshots")
         private val RETENTION_DAYS = intPreferencesKey("retention_days")
+        private val NMEA_ENABLED = booleanPreferencesKey("nmea_enabled")
     }
 
     val settings: Flow<AppSettings> =
@@ -39,6 +40,7 @@ class SettingsStore(
                     prefs[SNAPSHOT_INTERVAL_MS] ?: AppSettings.DEFAULT_SNAPSHOT_INTERVAL_MS,
                 maxSnapshots = prefs[MAX_SNAPSHOTS] ?: AppSettings.DEFAULT_MAX_SNAPSHOTS,
                 retentionDays = prefs[RETENTION_DAYS] ?: AppSettings.DEFAULT_RETENTION_DAYS,
+                nmeaEnabled = prefs[NMEA_ENABLED] ?: true,
             )
         }
 
@@ -49,6 +51,7 @@ class SettingsStore(
             prefs[SNAPSHOT_INTERVAL_MS] = settings.snapshotIntervalMs
             prefs[MAX_SNAPSHOTS] = settings.maxSnapshots
             prefs[RETENTION_DAYS] = settings.retentionDays
+            prefs[NMEA_ENABLED] = settings.nmeaEnabled
         }
     }
 }

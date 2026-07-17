@@ -14,6 +14,7 @@ class SettingsTest {
         assertEquals(AppSettings.DEFAULT_SNAPSHOT_INTERVAL_MS, settings.snapshotIntervalMs)
         assertEquals(AppSettings.DEFAULT_MAX_SNAPSHOTS, settings.maxSnapshots)
         assertEquals(AppSettings.DEFAULT_RETENTION_DAYS, settings.retentionDays)
+        assertTrue(settings.nmeaEnabled)
     }
 
     @Test
@@ -49,6 +50,7 @@ class SettingsTest {
                 snapshotIntervalMs = 30_000L,
                 maxSnapshots = 50,
                 retentionDays = 3,
+                nmeaEnabled = false,
             )
         val copied = original.copy(darkMode = DarkModeConfig.OFF)
         assertEquals(DarkModeConfig.OFF, copied.darkMode)
@@ -56,6 +58,7 @@ class SettingsTest {
         assertEquals(30_000L, copied.snapshotIntervalMs)
         assertEquals(50, copied.maxSnapshots)
         assertEquals(3, copied.retentionDays)
+        assertFalse(copied.nmeaEnabled)
     }
 
     @Test

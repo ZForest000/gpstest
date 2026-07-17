@@ -16,6 +16,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Help
@@ -44,17 +45,21 @@ import com.example.gpstest.data.local.SatelliteHistoryDataStore
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.AGpsDataSourceImpl
 import com.example.gpstest.data.source.AGpsDownloaderImpl
+import com.example.gpstest.data.source.GnssDataSource
 import com.example.gpstest.data.source.GnssDataSourceImpl
 import com.example.gpstest.domain.repository.AGpsRepositoryImpl
+import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.GnssRepositoryImpl
 import com.example.gpstest.domain.repository.SatelliteHistoryRepositoryImpl
 import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
 import com.example.gpstest.ui.screens.help.HelpScreen
 import com.example.gpstest.ui.screens.history.HistoryScreen
+import com.example.gpstest.ui.screens.nmea.NmeaScreen
 import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
 import com.example.gpstest.ui.screens.settings.SettingsScreen
 import com.example.gpstest.ui.theme.Theme
 import com.example.gpstest.viewmodel.AGpsViewModel
+import com.example.gpstest.viewmodel.NmeaViewModel
 import com.example.gpstest.viewmodel.SatelliteViewModel
 import com.example.gpstest.viewmodel.SettingsViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,20 +74,23 @@ enum class PermissionState {
 }
 
 class MainActivity : ComponentActivity() {
+    // Activity 级共享依赖，避免 Satellite / NMEA 各自创建 GnssDataSourceImpl
+    private val appSettingsStore by lazy { SettingsStore(application) }
+    private val gnssDataSource: GnssDataSource by lazy { GnssDataSourceImpl(application) }
+    private val gnssRepository: GnssRepository by lazy { GnssRepositoryImpl(gnssDataSource) }
+
     private val settingsViewModel: SettingsViewModel by viewModels {
-        val app = application
-        val settingsStore = SettingsStore(app)
-        SettingsViewModelFactory(app, settingsStore)
+        SettingsViewModelFactory(application, appSettingsStore)
     }
 
     private val satelliteViewModel: SatelliteViewModel by viewModels {
-        val app = application
-        val dataSource = GnssDataSourceImpl(app)
-        val gnssRepository = GnssRepositoryImpl(dataSource)
-        val settingsStore = SettingsStore(app)
-        val historyDataStore = SatelliteHistoryDataStore(app, settingsStore)
+        val historyDataStore = SatelliteHistoryDataStore(application, appSettingsStore)
         val historyRepository = SatelliteHistoryRepositoryImpl(historyDataStore)
-        SatelliteViewModelFactory(app, gnssRepository, historyRepository, settingsStore)
+        SatelliteViewModelFactory(application, gnssRepository, historyRepository, appSettingsStore)
+    }
+
+    private val nmeaViewModel: NmeaViewModel by viewModels {
+        NmeaViewModelFactory(application, gnssRepository, appSettingsStore)
     }
 
     private val agpsViewModel: AGpsViewModel by viewModels {
@@ -108,6 +116,7 @@ class MainActivity : ComponentActivity() {
             if (isGranted) {
                 _permissionState.value = PermissionState.GRANTED
                 satelliteViewModel.startListening()
+                nmeaViewModel.onPermissionChanged(true)
             } else {
                 if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     _permissionState.value = PermissionState.PERMANENTLY_DENIED
@@ -115,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     _permissionState.value = PermissionState.DENIED
                 }
                 satelliteViewModel.setPermissionDenied()
+                nmeaViewModel.onPermissionChanged(false)
             }
         }
 
@@ -132,6 +142,7 @@ class MainActivity : ComponentActivity() {
                 Surface {
                     GpsTestApp(
                         satelliteViewModel = satelliteViewModel,
+                        nmeaViewModel = nmeaViewModel,
                         agpsViewModel = agpsViewModel,
                         settingsViewModel = settingsViewModel,
                         permissionStateFlow = _permissionState,
@@ -161,8 +172,10 @@ class MainActivity : ComponentActivity() {
         if (granted) {
             _permissionState.value = PermissionState.GRANTED
             satelliteViewModel.startListening()
+            nmeaViewModel.onPermissionChanged(true)
         } else {
             satelliteViewModel.setPermissionDenied()
+            nmeaViewModel.onPermissionChanged(false)
             if (hasRequestedPermission &&
                 !shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
             ) {
@@ -191,6 +204,8 @@ sealed class Screen(
 
     object History : Screen("history")
 
+    object Nmea : Screen("nmea")
+
     object AGps : Screen("agps")
 
     object Help : Screen("help")
@@ -202,6 +217,7 @@ sealed class Screen(
 @androidx.compose.runtime.Composable
 fun GpsTestApp(
     satelliteViewModel: SatelliteViewModel,
+    nmeaViewModel: NmeaViewModel,
     agpsViewModel: AGpsViewModel,
     settingsViewModel: SettingsViewModel,
     permissionStateFlow: StateFlow<PermissionState>,
@@ -274,6 +290,13 @@ fun GpsTestApp(
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
                 androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.AutoMirrored.Filled.Article, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_nmea)) },
+                    selected = currentRoute == Screen.Nmea.route,
+                    onClick = { navigateAndCloseDrawer(Screen.Nmea.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+                androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Help, contentDescription = null) },
                     label = { Text("帮助") },
                     selected = currentRoute == Screen.Help.route,
@@ -331,6 +354,22 @@ fun GpsTestApp(
                 HistoryScreen(
                     viewModel = satelliteViewModel,
                     onNavigateBack = safeNavigateBack,
+                )
+            }
+            composable(Screen.Nmea.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
+                NmeaScreen(
+                    viewModel = nmeaViewModel,
+                    permissionState = permissionState,
+                    onRequestPermission = onRequestPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenDrawer = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    },
                 )
             }
             composable(Screen.AGps.route) {
@@ -393,6 +432,20 @@ class SettingsViewModelFactory(
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
             return SettingsViewModel(application, settingsStore) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+class NmeaViewModelFactory(
+    private val application: Application,
+    private val gnssRepository: GnssRepository,
+    private val settingsStore: SettingsStore,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(NmeaViewModel::class.java)) {
+            return NmeaViewModel(application, gnssRepository, settingsStore) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

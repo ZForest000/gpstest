@@ -49,6 +49,21 @@
     <!-- NMEA Data -->
     <string name="nmea_no_data">暂无NMEA数据</string>
     <string name="nmea_sentence_format">[%1$tH:%1$tM:%1$tS.%1$tL] %2$s</string>
+    <string name="nav_nmea">NMEA</string>
+    <string name="nmea_freeze">冻结</string>
+    <string name="nmea_resume">继续</string>
+    <string name="nmea_clear">清空</string>
+    <string name="nmea_share">分享</string>
+    <string name="nmea_share_chooser">分享 NMEA 文件</string>
+    <string name="nmea_export_failed">导出失败，缓冲区为空或写入出错</string>
+    <string name="nmea_rate_format">%.0f Hz</string>
+    <string name="nmea_buffer_format">%1$d / %2$d</string>
+    <string name="nmea_filter_all">全部</string>
+    <string name="nmea_parsed_title">解析摘要</string>
+    <string name="nmea_parsed_gga">GGA: 质量%1$d · 卫星%2$d · HDOP %3$s · 海拔 %4$s</string>
+    <string name="nmea_parsed_rmc">RMC: %1$s · 航速 %2$s kn · 航向 %3$s°</string>
+    <string name="nmea_disabled">NMEA 输出已关闭，请在设置中开启</string>
+    <string name="nmea_type_count_format">%1$s (%2$d)</string>
 
     <!-- Settings -->
     <string name="settings_title">设置</string>
