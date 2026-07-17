@@ -45,7 +45,7 @@
 
 ### 📋 当前未实现功能速查
 
-> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互、U3 历史趋势/导出、**B3 NMEA 监听**均已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
+> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互、U3 历史趋势/导出、**B3 NMEA 监听**、**U4 列表筛选/排序/冻结**、**U5 A-GPS 补全**均已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
 
 | 编号   | 功能                                                   | 优先级 | 工作量 | 章节 |
 | ------ | ------------------------------------------------------ | ------ | ------ | ---- |
@@ -53,8 +53,6 @@
 | **G2** | RINEX 3.x 导出                                         | P1     | 大     | 二   |
 | **G3** | GnssAntennaInfo 接入                                   | P2     | 中     | 二   |
 | **G4** | GnssNavigationMessage 导航电文                         | P3     | 大     | 二   |
-| **U4** | 卫星列表筛选/排序/冻结                                 | P2     | 中     | 三   |
-| **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块)               | P2     | 中     | 三   |
 | **U6** | 信噪比柱状图 + DOP 实时曲线                            | P3     | 中     | 三   |
 | **E1** | Release minify 开启 + ProGuard 补全                    | P2     | 中     | 四   |
 | **E2** | CI 增加 lint / 覆盖率 / instrumented 测试              | P2     | 小     | 四   |
@@ -64,7 +62,7 @@
 | **E7** | 历史存储迁移 Room                                      | P3     | 大     | 四   |
 | **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3     | 小     | 四   |
 
-**下一步建议**：B3/U3 已完成。优先 **G3 GnssAntennaInfo**（为 G2 RINEX 铺路）或 **U4 列表筛选/排序/冻结**（体验快赢）；G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
+**下一步建议**：Wave A（U4/U5）已完成。优先 **G3 GnssAntennaInfo**（为 G2 RINEX 铺路）或工程化 E2/E1；G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -347,51 +345,33 @@
 
 ---
 
-### U4. 卫星列表筛选/排序/冻结（P2，工作量：中）
+### U4. 卫星列表筛选/排序/冻结 ✅ 已实现（P2，工作量：中）
 
-**现状**：`SatelliteListScreen.kt` 卫星分三组（usedInFix/visibleOnly/searching）固定渲染，无任何筛选。grep UI 目录无 `FilterChip`/`OutlinedTextField`/search 相关代码。数据实时刷新，无法"冻结"画面观察。
+**现状（已实现）**：
 
-**问题/缺口**：多星座时列表很长，无法按 GPS/北斗/Galileo 过滤、按信号强度排序、按 SVID 搜索。无法暂停数据流仔细看一帧。
+1. **领域查询**：`SatelliteListQuery` + `SatelliteSortMode` 支持星座集合过滤、SVID 子串搜索、CN0/仰角/SVID 排序。
+2. **UI 工具栏**：`SatelliteFilterBar`（FilterChip 星座、排序 Chip、SVID 搜索框、冻结/解冻按钮）。
+3. **列表接线**：`SatelliteListScreen` 对三组卫星应用 query；冻结时快照列表，实时状态变化不覆盖冻结帧。
+4. **单测**：`SatelliteListQueryTest` 覆盖过滤/排序组合。
 
-**建议方案**：
+**涉及文件**：`domain/util/SatelliteListQuery.kt`、`domain/model/SatelliteSortMode`、`ui/components/SatelliteFilterBar.kt`、`ui/screens/satellite/SatelliteListScreen.kt`、对应测试与 strings。
 
-1. 顶部加 `FilterChip` 行：按星座（GPS/GLONASS/Galileo/BeiDou/QZSS/SBAS）切换显示。
-2. 排序下拉：信号强度（强→弱）、仰角（高→低）、SVID。
-3. SVID 搜索框：`OutlinedTextField` 输入 SVID 即时过滤。
-4. 冻结按钮：暂停 `collectAsState` 的更新（用 `mutableStateOf<Boolean>` 控制）。
-
-**涉及文件**：`ui/screens/satellite/SatelliteListScreen.kt`、可能新增 `ui/components/FilterBar.kt`。
-
-**依赖与风险**：筛选状态需在配置改变（旋转）时保留；冻结期间需明确视觉提示。
-
-**ROI**：中工作量 / 中价值 — 多星座场景下的实用增强。
+**ROI**：已兑现 — 多星座长列表可筛可排可冻帧观察。
 
 ---
 
-### U5. A-GPS 补全（P2，工作量：中）
+### U5. A-GPS 补全 ✅ 已实现（P2，工作量：中）
 
-**现状**：
+**现状（已实现）**：
 
-- `strings.xml:179` 定义了 `import_file`（导入文件）文案，但 `AGpsManagerScreen.kt:207-274` 的 `ManualActionsCard` **没有"导入"按钮**——文案是死的。
-- `AGpsSettingsStore.kt:25` 存了 `DOWNLOAD_URL`，但 UI 上无输入框让用户改源地址（只能用默认 XTRA URL）。
-- `AutoUpdateCard`（`:196-201`）只有开关，无滑块/输入改 `updateIntervalHours`。
-- 注入历史列表（`AGpsRepositoryImpl.kt:55-56` 的 `_injectionHistory`）只在内存，进程被杀即丢失；无上限/清除。
+1. **文件导入**：`AGpsFileHandler` 读 Uri → 校验 → 缓存 → `importAndInject`；UI 导入按钮 + Activity Result。
+2. **URL / 间隔**：`AGpsManagerScreen` 下载 URL 输入框 + 1/6/12/24h 间隔 Chip，写入 `AGpsSettingsStore`。
+3. **注入历史持久化**：`AGpsInjectionHistoryStore`（DataStore，上限 50）+ 清除按钮；Worker 注入不再整表清空。
+4. **ViewModel**：`importAndInject` / `clearInjectionHistory` 暴露；Snackbar 走标准 Host。
 
-**问题/缺口**：A-GPS 管理功能半成品，多个文案/字段已定义但无 UI 入口。用户无法自定义源、无法调间隔、无法持久化注入历史。
+**涉及文件**：`AGpsFileHandler(Impl).kt`、`AGpsInjectionHistoryStore.kt`、`AGpsRepository(Impl).kt`、`AGpsViewModel.kt`、`AGpsManagerScreen.kt`、`AGpsSettingsStore.kt` + 单测。
 
-**建议方案**：
-
-1. 补「导入文件」按钮，调用已有的 `AGpsFileHandler`（30 行）。
-2. 下载 URL 输入框（`OutlinedTextField`），写入 `AGpsSettingsStore.DOWNLOAD_URL`。
-3. 更新间隔滑块（`Slider`）或下拉，1/6/12/24 小时可选。
-4. 注入历史持久化到 DataStore，加上限（如 50 条）和清除按钮。
-5. 修复 Snackbar 用法（`:135-160` 改用标准 `SnackbarHostState`）。
-
-**涉及文件**：`ui/screens/agps/AGpsManagerScreen.kt`、`data/local/AGpsSettingsStore.kt`、`domain/repository/AGpsRepositoryImpl.kt:55-56`。
-
-**依赖与风险**：URL 输入需校验格式；历史持久化需定义数据模型。
-
-**ROI**：中工作量 / 中价值 — 补全已有设计，激活多个死代码。
+**ROI**：已兑现 — 激活 import_file、可自定义源与间隔、历史可持久可清除。
 
 ---
 
@@ -641,13 +621,13 @@
 
 **目标**：让已实现的功能真正好用，补全半成品。
 
-| 顺序 | 条目                              | 预估工作量 | 关键产出                                  |
-| ---- | --------------------------------- | ---------- | ----------------------------------------- |
-| 1    | **U1** 设置屏幕 ✅                | —          | 已实现：主题三态 + 快照配置               |
-| 2    | **U3** 历史趋势图 + CSV 导出 ✅   | —          | 已实现：趋势图/CSV/详情钻取/删除/筛选     |
-| 3    | **U4** 卫星列表筛选/排序/冻结     | 中         | 多星座场景实用增强                        |
-| 4    | **U5** A-GPS 补全                 | 中         | 激活 import_file 文案、URL 编辑、间隔调节 |
-| 5    | **U2 续** 天空图缩放/动画/指北 ✅ | —          | 已实现；可选截图分享仍未做                |
+| 顺序 | 条目                              | 预估工作量 | 关键产出                               |
+| ---- | --------------------------------- | ---------- | -------------------------------------- |
+| 1    | **U1** 设置屏幕 ✅                | —          | 已实现：主题三态 + 快照配置            |
+| 2    | **U3** 历史趋势图 + CSV 导出 ✅   | —          | 已实现：趋势图/CSV/详情钻取/删除/筛选  |
+| 3    | **U4** 卫星列表筛选/排序/冻结 ✅  | —          | 已实现：FilterChip/排序/SVID 搜索/冻结 |
+| 4    | **U5** A-GPS 补全 ✅              | —          | 已实现：导入/URL/间隔/历史持久化       |
+| 5    | **U2 续** 天空图缩放/动画/指北 ✅ | —          | 已实现；可选截图分享仍未做             |
 
 **依赖**：U3 已完成（可选依赖 U1 快照配置）；其余独立。
 **风险**：U3 快照字段扩展已用可选字段兼容旧 JSON。
@@ -683,8 +663,8 @@
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI lint      │
 │ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ✅ │ ──→│ E1 minify       │
-│ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选     │    │ E3 Timber+崩溃   │
-└──────────────────┘    │ B3 NMEA监听 ✅   │    │ U5 A-GPS补全    │    │ E5 i18n          │
+│ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选 ✅ │    │ E3 Timber+崩溃   │
+└──────────────────┘    │ B3 NMEA监听 ✅   │    │ U5 A-GPS补全 ✅│    │ E5 i18n          │
                         └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
                                                                          │ E6-E8, G4, U6    │
                                                                          └──────────────────┘
@@ -714,6 +694,8 @@
 | **Location 精度 + 闰秒 G7** | —        | ✅ 已实现 (2026-07-15)          | `LocationInfo` 垂直/航向/速度精度 + `GnssClockData.leapSecond` + LocationCard/ClockInfoCard 展示 + 测试                 |
 | **G1 伪距 + WLS 核心**      | —        | ✅ 阶段 1/2 已实现 (2026-07-15) | `PseudorangeCalculator.kt` + `PositionSolver.kt`：伪距推导、纯领域迭代 WLS、黄金与边界测试；真实星历/卫星位置接线待后续 |
 | **B3 NMEA 监听**            | —        | ✅ 已实现                       | `addNmeaListener` → `Flow<NmeaSentence>` + `NmeaParser` + `NmeaScreen`/导出/设置开关 + 领域单测                         |
+| **U4 列表筛选/排序/冻结**   | —        | ✅ 已实现                       | `SatelliteListQuery` + `SatelliteFilterBar` + 冻结快照；星座/SVID/CN0·仰角排序 + 单测                                   |
+| **U5 A-GPS 补全**           | —        | ✅ 已实现                       | 文件导入、URL 编辑、1/6/12/24h 间隔、注入历史 DataStore 持久化/清除 + ViewModel/UI 接线                                 |
 
 ### 专业/调试功能
 
