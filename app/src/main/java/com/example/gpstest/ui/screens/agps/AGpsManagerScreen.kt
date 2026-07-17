@@ -1,7 +1,12 @@
 package com.example.gpstest.ui.screens.agps
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,12 +24,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +41,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -43,10 +54,11 @@ import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.ui.components.AGpsStatusCard
 import com.example.gpstest.viewmodel.AGpsUiState
 import com.example.gpstest.viewmodel.AGpsViewModel
-import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private val INTERVAL_HOURS = listOf(1, 6, 12, 24)
 
 @OptIn(ExperimentalMaterial3Api::class)
 // 4 个区域：状态卡片 → 自动更新配置 → 手动操作按钮 → 注入历史（含验证结果卡片）
@@ -61,6 +73,32 @@ fun AGpsManagerScreen(
     val settings by viewModel.settings.collectAsState()
     val history by viewModel.injectionHistory.collectAsState()
     val validationResult by viewModel.validationResult.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val dismissLabel = stringResource(R.string.dismiss)
+
+    val importLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri: Uri? ->
+            uri?.let { viewModel.importAndInject(it) }
+        }
+
+    LaunchedEffect(uiState) {
+        when (val state = uiState) {
+            is AGpsUiState.Success -> {
+                snackbarHostState.showSnackbar(message = state.message)
+                viewModel.clearMessage()
+            }
+            is AGpsUiState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = state.message,
+                    actionLabel = dismissLabel,
+                )
+                viewModel.clearMessage()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -76,6 +114,7 @@ fun AGpsManagerScreen(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier = modifier,
     ) { paddingValues ->
         LazyColumn(
@@ -100,6 +139,7 @@ fun AGpsManagerScreen(
             item {
                 ManualActionsCard(
                     onDownloadClick = { viewModel.downloadAndInject() },
+                    onImportClick = { importLauncher.launch("*/*") },
                     onValidateSourceClick = {
                         viewModel.validateCurrentSource()
                     },
@@ -120,10 +160,19 @@ fun AGpsManagerScreen(
 
             if (history.isNotEmpty()) {
                 item {
-                    Text(
-                        text = stringResource(R.string.injection_history),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.injection_history),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        TextButton(onClick = { viewModel.clearInjectionHistory() }) {
+                            Text(stringResource(R.string.agps_clear_history))
+                        }
+                    }
                 }
 
                 items(history) { record ->
@@ -131,42 +180,24 @@ fun AGpsManagerScreen(
                 }
             }
         }
-
-        when (val state = uiState) {
-            is AGpsUiState.Success -> {
-                LaunchedEffect(state) {
-                    delay(2000)
-                    viewModel.clearMessage()
-                }
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                ) {
-                    Text(state.message)
-                }
-            }
-            is AGpsUiState.Error -> {
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { viewModel.clearMessage() }) {
-                            Text(stringResource(R.string.dismiss))
-                        }
-                    },
-                ) {
-                    Text(state.message)
-                }
-            }
-            else -> {}
-        }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun AutoUpdateCard(
     settings: AGpsSettings,
     onSettingsChange: (AGpsSettings) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var urlText by remember { mutableStateOf(settings.downloadUrl) }
+    var urlError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(settings.downloadUrl) {
+        urlText = settings.downloadUrl
+        urlError = false
+    }
+
     Card(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -200,6 +231,67 @@ private fun AutoUpdateCard(
                     },
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(R.string.agps_interval_hours),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                INTERVAL_HOURS.forEach { hours ->
+                    FilterChip(
+                        selected = settings.updateIntervalHours == hours,
+                        onClick = {
+                            onSettingsChange(settings.copy(updateIntervalHours = hours))
+                        },
+                        label = { Text(hours.toString()) },
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = urlText,
+                onValueChange = {
+                    urlText = it
+                    urlError = false
+                },
+                label = { Text(stringResource(R.string.agps_download_url)) },
+                isError = urlError,
+                supportingText =
+                    if (urlError) {
+                        { Text(stringResource(R.string.agps_url_invalid)) }
+                    } else {
+                        null
+                    },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = {
+                    val trimmed = urlText.trim()
+                    if (isValidDownloadUrl(trimmed)) {
+                        urlError = false
+                        onSettingsChange(settings.copy(downloadUrl = trimmed))
+                    } else {
+                        urlError = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.agps_save_url))
+            }
         }
     }
 }
@@ -207,6 +299,7 @@ private fun AutoUpdateCard(
 @Composable
 private fun ManualActionsCard(
     onDownloadClick: () -> Unit,
+    onImportClick: () -> Unit,
     onValidateSourceClick: () -> Unit,
     onTimeClick: () -> Unit,
     onClearClick: () -> Unit,
@@ -239,6 +332,16 @@ private fun ManualActionsCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            OutlinedButton(
+                onClick = onImportClick,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.import_file))
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -248,7 +351,7 @@ private fun ManualActionsCard(
                     enabled = !isLoading,
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text("验证下载源")
+                    Text(stringResource(R.string.agps_validate_source))
                 }
 
                 OutlinedButton(
@@ -298,7 +401,14 @@ private fun ValidationResultCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = if (result.isValid) "验证成功" else "验证失败",
+                    text =
+                        stringResource(
+                            if (result.isValid) {
+                                R.string.agps_validation_ok
+                            } else {
+                                R.string.agps_validation_fail
+                            },
+                        ),
                     style = MaterialTheme.typography.titleMedium,
                     color =
                         if (result.isValid) {
@@ -308,7 +418,7 @@ private fun ValidationResultCard(
                         },
                 )
                 TextButton(onClick = onDismiss) {
-                    Text("关闭")
+                    Text(stringResource(R.string.dismiss))
                 }
             }
 
@@ -322,7 +432,7 @@ private fun ValidationResultCard(
             if (!result.isValid && result.errorMessage != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "错误: ${result.errorMessage}",
+                    text = stringResource(R.string.agps_error_prefix, result.errorMessage),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
@@ -391,6 +501,13 @@ private fun HistoryItem(
             }
         }
     }
+}
+
+private fun isValidDownloadUrl(url: String): Boolean {
+    if (url.isBlank()) return false
+    return url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.startsWith("file://")
 }
 
 private fun formatTimestamp(timestamp: Long): String {

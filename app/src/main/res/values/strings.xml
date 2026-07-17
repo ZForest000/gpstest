@@ -251,6 +251,16 @@
     <string name="success">成功</string>
     <string name="failed">失败</string>
     <string name="dismiss">关闭</string>
+    <string name="agps_download_url">下载地址</string>
+    <string name="agps_save_url">保存地址</string>
+    <string name="agps_url_invalid">请输入有效的 http(s) 地址</string>
+    <string name="agps_interval_hours">更新间隔（小时）</string>
+    <string name="agps_clear_history">清除历史</string>
+    <string name="agps_validate_source">验证下载源</string>
+    <string name="agps_validation_ok">验证成功</string>
+    <string name="agps_validation_fail">验证失败</string>
+    <string name="agps_error_prefix">错误: %1$s</string>
+    <string name="agps_import_success">文件导入并注入成功</string>
     
     <!-- Location -->
     <string name="location_info">位置信息</string>
