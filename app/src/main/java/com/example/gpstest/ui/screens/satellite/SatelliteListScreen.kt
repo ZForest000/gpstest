@@ -20,17 +20,22 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
+import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
+import com.example.gpstest.domain.model.SatelliteSortMode
+import com.example.gpstest.domain.util.SatelliteListQuery
 import com.example.gpstest.ui.components.ClockInfoCard
 import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
 import com.example.gpstest.ui.components.ConstellationStatCard
@@ -41,6 +46,7 @@ import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.PermissionRequiredContent
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
+import com.example.gpstest.ui.components.SatelliteFilterBar
 import com.example.gpstest.ui.components.StatBar
 import com.example.gpstest.ui.components.TtffCard
 import com.example.gpstest.viewmodel.SatelliteUiState
@@ -61,6 +67,48 @@ fun SatelliteListScreen(
     val gnssCapabilities by viewModel.gnssCapabilities.collectAsState()
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var selectedConstellations by rememberSaveable {
+        mutableStateOf(emptySet<String>())
+    }
+    var sortModeName by rememberSaveable {
+        mutableStateOf(SatelliteSortMode.CN0_DESC.name)
+    }
+    var svidQuery by rememberSaveable { mutableStateOf("") }
+    var frozen by rememberSaveable { mutableStateOf(false) }
+    var frozenSuccess by remember { mutableStateOf<SatelliteUiState.Success?>(null) }
+
+    LaunchedEffect(frozen, uiState) {
+        if (frozen) {
+            val success = uiState as? SatelliteUiState.Success
+            if (frozenSuccess == null && success != null) {
+                frozenSuccess = success
+            }
+        } else {
+            frozenSuccess = null
+        }
+    }
+
+    val sortMode =
+        remember(sortModeName) {
+            runCatching { SatelliteSortMode.valueOf(sortModeName) }
+                .getOrDefault(SatelliteSortMode.CN0_DESC)
+        }
+    val selectedConstellationEnums =
+        remember(selectedConstellations) {
+            selectedConstellations
+                .mapNotNull { name ->
+                    runCatching { Constellation.valueOf(name) }.getOrNull()
+                }.toSet()
+        }
+    val listQuery =
+        remember(selectedConstellationEnums, svidQuery, sortMode) {
+            SatelliteListQuery(
+                constellations = selectedConstellationEnums.takeIf { it.isNotEmpty() },
+                svidQuery = svidQuery,
+                sortMode = sortMode,
+            )
+        }
 
     Scaffold(
         topBar = {
@@ -98,19 +146,42 @@ fun SatelliteListScreen(
                     )
                 }
                 is SatelliteUiState.Success -> {
-                    val allSatellites = state.usedInFix + state.visibleOnly + state.searching
+                    val displayState =
+                        if (frozen && frozenSuccess != null) {
+                            frozenSuccess!!
+                        } else {
+                            state
+                        }
+                    val allSatellites =
+                        displayState.usedInFix + displayState.visibleOnly + displayState.searching
                     SatelliteListContent(
-                        usedInFix = state.usedInFix,
-                        visibleOnly = state.visibleOnly,
-                        searching = state.searching,
-                        totalCount = state.totalCount,
+                        usedInFix = displayState.usedInFix,
+                        visibleOnly = displayState.visibleOnly,
+                        searching = displayState.searching,
+                        totalCount = displayState.totalCount,
                         allSatellites = allSatellites,
-                        location = state.location,
-                        clock = state.clock,
-                        dumpsysData = state.dumpsysData,
-                        dopInfo = state.dopInfo,
+                        location = displayState.location,
+                        clock = displayState.clock,
+                        dumpsysData = displayState.dumpsysData,
+                        dopInfo = displayState.dopInfo,
                         gnssCapabilities = gnssCapabilities,
                         ttffState = ttffState,
+                        listQuery = listQuery,
+                        selectedConstellations = selectedConstellationEnums,
+                        sortMode = sortMode,
+                        svidQuery = svidQuery,
+                        frozen = frozen,
+                        onConstellationToggle = { constellation ->
+                            selectedConstellations =
+                                if (constellation.name in selectedConstellations) {
+                                    selectedConstellations - constellation.name
+                                } else {
+                                    selectedConstellations + constellation.name
+                                }
+                        },
+                        onSortModeChange = { sortModeName = it.name },
+                        onSvidQueryChange = { svidQuery = it },
+                        onFrozenChange = { frozen = it },
                         onTtffReset = { viewModel.resetTtff() },
                         onSatelliteClick = { selectedSatellite = it },
                     )
@@ -153,11 +224,23 @@ private fun SatelliteListContent(
     dopInfo: com.example.gpstest.domain.model.DopInfo?,
     gnssCapabilities: com.example.gpstest.domain.model.GnssCapabilitiesInfo?,
     ttffState: com.example.gpstest.viewmodel.TtffState,
+    listQuery: SatelliteListQuery,
+    selectedConstellations: Set<Constellation>,
+    sortMode: SatelliteSortMode,
+    svidQuery: String,
+    frozen: Boolean,
+    onConstellationToggle: (Constellation) -> Unit,
+    onSortModeChange: (SatelliteSortMode) -> Unit,
+    onSvidQueryChange: (String) -> Unit,
+    onFrozenChange: (Boolean) -> Unit,
     onTtffReset: () -> Unit,
     onSatelliteClick: (GnssSatellite) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val visibleCount = usedInFix.size + visibleOnly.size
+    val filteredUsedInFix = remember(usedInFix, listQuery) { listQuery.applyTo(usedInFix) }
+    val filteredVisibleOnly = remember(visibleOnly, listQuery) { listQuery.applyTo(visibleOnly) }
+    val filteredSearching = remember(searching, listQuery) { listQuery.applyTo(searching) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -211,13 +294,26 @@ private fun SatelliteListContent(
             )
         }
 
+        item {
+            SatelliteFilterBar(
+                selectedConstellations = selectedConstellations,
+                sortMode = sortMode,
+                svidQuery = svidQuery,
+                frozen = frozen,
+                onConstellationToggle = onConstellationToggle,
+                onSortModeChange = onSortModeChange,
+                onSvidQueryChange = onSvidQueryChange,
+                onFrozenChange = onFrozenChange,
+            )
+        }
+
         if (gnssCapabilities != null) {
             item {
                 GnssCapabilitiesCard(capabilities = gnssCapabilities)
             }
         }
 
-        if (usedInFix.isNotEmpty()) {
+        if (filteredUsedInFix.isNotEmpty()) {
             item {
                 Text(
                     text = stringResource(R.string.used_in_fix),
@@ -225,7 +321,7 @@ private fun SatelliteListContent(
                 )
             }
             itemsIndexed(
-                items = usedInFix,
+                items = filteredUsedInFix,
                 key = { index, satellite ->
                     "used_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
                 },
@@ -237,7 +333,7 @@ private fun SatelliteListContent(
             }
         }
 
-        if (visibleOnly.isNotEmpty()) {
+        if (filteredVisibleOnly.isNotEmpty()) {
             item {
                 Text(
                     text = stringResource(R.string.visible_not_in_fix),
@@ -245,7 +341,7 @@ private fun SatelliteListContent(
                 )
             }
             itemsIndexed(
-                items = visibleOnly,
+                items = filteredVisibleOnly,
                 key = { index, satellite ->
                     "visible_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
                 },
@@ -257,7 +353,7 @@ private fun SatelliteListContent(
             }
         }
 
-        if (searching.isNotEmpty()) {
+        if (filteredSearching.isNotEmpty()) {
             item {
                 Text(
                     text = stringResource(R.string.searching),
@@ -265,7 +361,7 @@ private fun SatelliteListContent(
                 )
             }
             itemsIndexed(
-                items = searching,
+                items = filteredSearching,
                 key = { index, satellite ->
                     "searching_${satellite.constellation.name}_${satellite.svid}_${satellite.carrierFrequencyHz ?: -1f}_$index"
                 },
