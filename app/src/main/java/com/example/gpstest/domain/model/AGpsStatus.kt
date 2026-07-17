@@ -1,5 +1,7 @@
 package com.example.gpstest.domain.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * A-GPS 辅助数据在设备上的有效性状态。
  *
@@ -31,6 +33,7 @@ enum class DataStatus {
 }
 
 /** 单次 A-GPS 注入操作的日志记录。id 使用时间戳以保证唯一性。 */
+@Serializable
 data class AGpsInjectionRecord(
     val id: String,
     val type: InjectionType,
@@ -41,6 +44,7 @@ data class AGpsInjectionRecord(
 )
 
 /** 注入数据类型：TIME 时间同步、EPHEMERIS 星历、ALMANAC 历书、XTRA 预测数据。 */
+@Serializable
 enum class InjectionType {
     TIME,
     EPHEMERIS,
@@ -49,6 +53,7 @@ enum class InjectionType {
 }
 
 /** 注入触发来源：MANUAL 用户手动、AUTO_DOWNLOAD 自动下载、NETWORK 网络时间同步。 */
+@Serializable
 enum class InjectionSource {
     MANUAL,
     AUTO_DOWNLOAD,
