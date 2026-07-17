@@ -46,6 +46,8 @@ class AGpsUpdateWorker(
                 historyStore = AGpsInjectionHistoryStore(applicationContext),
             )
 
+        // 先 hydrate，再注入；addRecord 也会 store-merge，双保险防历史被空内存覆盖
+        repository.hydrateHistory()
         val result = repository.downloadAndInject()
 
         return if (result.isSuccess) {

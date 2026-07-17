@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A-GPS 仓库实现。核心编排器：下载 → 验证 → 注入 → 状态跟踪。
@@ -65,6 +67,9 @@ class AGpsRepositoryImpl(
 
     private val _injectionHistory = MutableStateFlow<List<AGpsInjectionRecord>>(emptyList())
     override val injectionHistory: Flow<List<AGpsInjectionRecord>> = _injectionHistory.asStateFlow()
+
+    // 串行化历史读写，避免 Worker 空内存 / hydrate 竞态把 DataStore 历史覆盖成单条
+    private val historyMutex = Mutex()
 
     // 回落策略：先尝试用户配置的 URL，失败后依次尝试 3 个默认地址
     // 每种 URL 的下载 + 注入均失败后才切换下一个
@@ -263,12 +268,16 @@ class AGpsRepositoryImpl(
     }
 
     override suspend fun hydrateHistory() {
-        _injectionHistory.value = historyStore.history.first()
+        historyMutex.withLock {
+            _injectionHistory.value = historyStore.history.first()
+        }
     }
 
     override suspend fun clearInjectionHistory() {
-        _injectionHistory.value = emptyList()
-        historyStore.clear()
+        historyMutex.withLock {
+            _injectionHistory.value = emptyList()
+            historyStore.clear()
+        }
     }
 
     override suspend fun importAndInject(fileUri: String): Result<Unit> {
@@ -334,10 +343,13 @@ class AGpsRepositoryImpl(
                 errorMessage = errorMessage,
             )
 
-        // 历史记录上限 50 条，新的插入头部，最旧的移除；写穿到 DataStore
-        val updated = listOf(record) + _injectionHistory.value.take(49)
-        _injectionHistory.value = updated
-        historyStore.replaceAll(updated)
+        historyMutex.withLock {
+            // 始终以 store 为权威源合并，避免未 hydrate 的空内存写穿抹掉已有记录
+            val existing = historyStore.history.first()
+            val updated = (listOf(record) + existing).take(50)
+            historyStore.replaceAll(updated)
+            _injectionHistory.value = updated
+        }
     }
 
     private fun updateStatusAfterInjection() {

@@ -48,6 +48,9 @@ class AGpsRepositoryImplTest {
     private val settingsStore: AGpsSettingsStore = mockk(relaxed = true)
     private val historyStore: AGpsInjectionHistoryStore = mockk(relaxed = true)
 
+    // 有状态 mock：模拟 DataStore，使 addRecord 的 store-merge 在单测中可累积
+    private var storedHistory: List<AGpsInjectionRecord> = emptyList()
+
     // strictMode=false 以跳过 MIME 校验，让 makeValidData() 通过；显式传参避开 BuildConfig.DEBUG
     private val validator =
         XtraDataValidator(
@@ -67,9 +70,14 @@ class AGpsRepositoryImplTest {
     fun setUp() {
         mockkStatic(Uri::class)
         every { Uri.parse(any()) } returns mockk(relaxed = true)
-        every { historyStore.history } returns flowOf(emptyList())
-        coEvery { historyStore.replaceAll(any()) } returns Unit
-        coEvery { historyStore.clear() } returns Unit
+        storedHistory = emptyList()
+        every { historyStore.history } answers { flowOf(storedHistory) }
+        coEvery { historyStore.replaceAll(any()) } coAnswers {
+            storedHistory = firstArg()
+        }
+        coEvery { historyStore.clear() } coAnswers {
+            storedHistory = emptyList()
+        }
     }
 
     @After
@@ -654,7 +662,7 @@ class AGpsRepositoryImplTest {
                         success = true,
                     ),
                 )
-            every { historyStore.history } returns flowOf(stored)
+            storedHistory = stored
             val repo = makeRepository()
 
             repo.hydrateHistory()
@@ -693,5 +701,68 @@ class AGpsRepositoryImplTest {
                     },
                 )
             }
+        }
+
+    @Test
+    fun `addRecord merges with store when memory is empty so worker cannot wipe history`() =
+        runTest {
+            storedHistory =
+                listOf(
+                    AGpsInjectionRecord(
+                        id = "prior",
+                        type = InjectionType.XTRA,
+                        source = InjectionSource.MANUAL,
+                        timestamp = 100L,
+                        success = true,
+                    ),
+                )
+            val repo = makeRepository()
+            // 模拟 Worker：未 hydrate，内存为空，直接 inject 写历史
+            assertTrue(repo.injectionHistory.first().isEmpty())
+            coEvery { dataSource.injectTime(any()) } returns Result.success(Unit)
+
+            repo.injectTime()
+
+            val history = repo.injectionHistory.first()
+            assertEquals(2, history.size)
+            assertEquals(InjectionType.TIME, history[0].type)
+            assertEquals("prior", history[1].id)
+            assertEquals(2, storedHistory.size)
+            assertEquals("prior", storedHistory[1].id)
+        }
+
+    @Test
+    fun `addRecord prefers store over stale memory when hydrate race leaves memory empty`() =
+        runTest {
+            storedHistory =
+                listOf(
+                    AGpsInjectionRecord(
+                        id = "stored-1",
+                        type = InjectionType.XTRA,
+                        source = InjectionSource.AUTO_DOWNLOAD,
+                        timestamp = 50L,
+                        success = true,
+                    ),
+                    AGpsInjectionRecord(
+                        id = "stored-2",
+                        type = InjectionType.TIME,
+                        source = InjectionSource.MANUAL,
+                        timestamp = 40L,
+                        success = false,
+                        errorMessage = "old",
+                    ),
+                )
+            val repo = makeRepository()
+            // UI inject 发生在 hydrateHistory 完成前：内存仍 empty
+            coEvery { dataSource.injectTime(any()) } returns Result.success(Unit)
+
+            repo.injectTime()
+
+            val history = repo.injectionHistory.first()
+            assertEquals(3, history.size)
+            assertEquals(InjectionType.TIME, history[0].type)
+            assertEquals("stored-1", history[1].id)
+            assertEquals("stored-2", history[2].id)
+            assertEquals(3, storedHistory.size)
         }
 }
