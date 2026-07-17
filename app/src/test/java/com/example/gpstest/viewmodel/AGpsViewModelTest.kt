@@ -1,6 +1,7 @@
 package com.example.gpstest.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.domain.model.AGpsStatus
 import com.example.gpstest.domain.model.DataStatus
@@ -194,6 +195,70 @@ class AGpsViewModelTest {
 
             io.mockk.verify(exactly = 0) { AGpsUpdateWorker.schedule(any(), any()) }
             io.mockk.verify(exactly = 1) { AGpsUpdateWorker.cancel(any()) }
+        }
+
+    // --- importAndInject 状态机 ---
+
+    @Test
+    fun `importAndInject transitions to Success when repository succeeds`() =
+        runTest(testDispatcher) {
+            val uri = mockk<Uri>()
+            every { uri.toString() } returns "content://downloads/xtra.bin"
+            coEvery { repository.importAndInject("content://downloads/xtra.bin") } returns
+                Result.success(Unit)
+
+            viewModel.importAndInject(uri)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value is AGpsUiState.Success)
+            assertEquals(
+                "文件导入并注入成功",
+                (viewModel.uiState.value as AGpsUiState.Success).message,
+            )
+            coVerify { repository.importAndInject("content://downloads/xtra.bin") }
+        }
+
+    @Test
+    fun `importAndInject transitions to Error when repository fails`() =
+        runTest(testDispatcher) {
+            val uri = mockk<Uri>()
+            every { uri.toString() } returns "content://downloads/bad.bin"
+            coEvery { repository.importAndInject("content://downloads/bad.bin") } returns
+                Result.failure(Exception("invalid xtra"))
+
+            viewModel.importAndInject(uri)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue("应为 Error，实际: $state", state is AGpsUiState.Error)
+            assertTrue((state as AGpsUiState.Error).message.contains("invalid xtra"))
+        }
+
+    @Test
+    fun `importAndInject falls back to default message when exception has no message`() =
+        runTest(testDispatcher) {
+            val uri = mockk<Uri>()
+            every { uri.toString() } returns "content://downloads/xtra.bin"
+            coEvery { repository.importAndInject(any()) } returns Result.failure(Exception())
+
+            viewModel.importAndInject(uri)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as AGpsUiState.Error
+            assertEquals("导入失败", state.message)
+        }
+
+    // --- clearInjectionHistory ---
+
+    @Test
+    fun `clearInjectionHistory calls repository clearInjectionHistory`() =
+        runTest(testDispatcher) {
+            coEvery { repository.clearInjectionHistory() } just Runs
+
+            viewModel.clearInjectionHistory()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { repository.clearInjectionHistory() }
         }
 
     // --- validateCurrentSource ---

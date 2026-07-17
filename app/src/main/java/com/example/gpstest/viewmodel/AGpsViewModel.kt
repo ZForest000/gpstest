@@ -138,6 +138,25 @@ class AGpsViewModel(
         _validationResult.value = null
     }
 
+    fun importAndInject(uri: Uri) {
+        viewModelScope.launch {
+            _uiState.value = AGpsUiState.Injecting
+            val result = repository.importAndInject(uri.toString())
+            _uiState.value =
+                if (result.isSuccess) {
+                    AGpsUiState.Success("文件导入并注入成功")
+                } else {
+                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "导入失败")
+                }
+        }
+    }
+
+    fun clearInjectionHistory() {
+        viewModelScope.launch {
+            repository.clearInjectionHistory()
+        }
+    }
+
     fun validateCurrentSource() {
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Downloading
