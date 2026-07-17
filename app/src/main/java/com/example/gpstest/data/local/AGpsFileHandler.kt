@@ -10,7 +10,10 @@ import java.io.IOException
 interface AGpsFileHandler {
     suspend fun readFile(uri: Uri): Result<ByteArray>
 
-    suspend fun writeCacheFile(fileName: String, data: ByteArray): Result<File>
+    suspend fun writeCacheFile(
+        fileName: String,
+        data: ByteArray,
+    ): Result<File>
 
     fun getSupportedTypes(): List<String>
 }
@@ -37,7 +40,10 @@ class AGpsFileHandlerImpl(
             }
         }
 
-    override suspend fun writeCacheFile(fileName: String, data: ByteArray): Result<File> =
+    override suspend fun writeCacheFile(
+        fileName: String,
+        data: ByteArray,
+    ): Result<File> =
         withContext(Dispatchers.IO) {
             try {
                 val file = File(context.cacheDir, fileName)
