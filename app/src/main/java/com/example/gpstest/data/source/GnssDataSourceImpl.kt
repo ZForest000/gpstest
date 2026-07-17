@@ -462,7 +462,11 @@ class GnssDataSourceImpl(
 
     override fun getNmeaSentences(): Flow<NmeaSentence> =
         callbackFlow {
-            val lm = locationManager ?: run { close(); return@callbackFlow }
+            val lm =
+                locationManager ?: run {
+                    close()
+                    return@callbackFlow
+                }
 
             val listener =
                 OnNmeaMessageListener { message, timestamp ->

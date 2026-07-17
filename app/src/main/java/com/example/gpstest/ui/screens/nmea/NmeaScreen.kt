@@ -69,9 +69,10 @@ fun NmeaScreen(
     val shareFailedText = stringResource(R.string.nmea_export_failed)
     val shareTitle = stringResource(R.string.nmea_share_chooser)
 
-    val filtered = remember(uiState.sentences, uiState.typeFilter) {
-        uiState.filteredSentences
-    }
+    val filtered =
+        remember(uiState.sentences, uiState.typeFilter) {
+            uiState.filteredSentences
+        }
 
     LaunchedEffect(filtered.size, uiState.frozen) {
         if (!uiState.frozen && filtered.isNotEmpty()) {

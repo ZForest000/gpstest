@@ -5,7 +5,6 @@ import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
