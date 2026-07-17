@@ -45,29 +45,26 @@
 
 ### 📋 当前未实现功能速查
 
-> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互（一期+续）已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
+> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互、U3 历史趋势/导出、**B3 NMEA 监听**均已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
 
-| 编号   | 功能                                               | 优先级 | 工作量 | 章节 |
-| ------ | -------------------------------------------------- | ------ | ------ | ---- |
-| **B3** | NMEA 监听接线(文案已预留,代码零命中)               | P2     | 中     | 一   |
-| **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置） | P1     | 大     | 二   |
-| **G2** | RINEX 3.x 导出                                     | P1     | 大     | 二   |
-| **G3** | GnssAntennaInfo 接入                               | P2     | 中     | 二   |
-| **G4** | GnssNavigationMessage 导航电文                     | P3     | 大     | 二   |
+| 编号   | 功能                                                   | 优先级 | 工作量 | 章节 |
+| ------ | ------------------------------------------------------ | ------ | ------ | ---- |
+| **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置）     | P1     | 大     | 二   |
+| **G2** | RINEX 3.x 导出                                         | P1     | 大     | 二   |
+| **G3** | GnssAntennaInfo 接入                                   | P2     | 中     | 二   |
+| **G4** | GnssNavigationMessage 导航电文                         | P3     | 大     | 二   |
+| **U4** | 卫星列表筛选/排序/冻结                                 | P2     | 中     | 三   |
+| **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块)               | P2     | 中     | 三   |
+| **U6** | 信噪比柱状图 + DOP 实时曲线                            | P3     | 中     | 三   |
+| **E1** | Release minify 开启 + ProGuard 补全                    | P2     | 中     | 四   |
+| **E2** | CI 增加 lint / 覆盖率 / instrumented 测试              | P2     | 小     | 四   |
+| **E3** | Timber + 崩溃上报(54 处裸 Log)                         | P2     | 中     | 四   |
+| **E5** | 国际化 i18n(仅 values/,4 处硬编码中文)                 | P2     | 中     | 四   |
+| **E6** | Version Catalog 迁移                                   | P3     | 小     | 四   |
+| **E7** | 历史存储迁移 Room                                      | P3     | 大     | 四   |
+| **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3     | 小     | 四   |
 
-| **U3** | 历史趋势图 + CSV 导出 + 详情钻取 ✅ | P1 | 大 | 三 |
-| **U4** | 卫星列表筛选/排序/冻结 | P2 | 中 | 三 |
-| **U5** | A-GPS 补全(import_file/URL编辑/间隔滑块) | P2 | 中 | 三 |
-| **U6** | 信噪比柱状图 + DOP 实时曲线 | P3 | 中 | 三 |
-| **E1** | Release minify 开启 + ProGuard 补全 | P2 | 中 | 四 |
-| **E2** | CI 增加 lint / 覆盖率 / instrumented 测试 | P2 | 小 | 四 |
-| **E3** | Timber + 崩溃上报(54 处裸 Log) | P2 | 中 | 四 |
-| **E5** | 国际化 i18n(仅 values/,4 处硬编码中文) | P2 | 中 | 四 |
-| **E6** | Version Catalog 迁移 | P3 | 小 | 四 |
-| **E7** | 历史存储迁移 Room | P3 | 大 | 四 |
-| **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3 | 小 | 四 |
-
-**下一步建议**：U3 已完成。优先 **G3 GnssAntennaInfo** 或 **B3 NMEA 监听**；G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
+**下一步建议**：B3/U3 已完成。优先 **G3 GnssAntennaInfo**（为 G2 RINEX 铺路）或 **U4 列表筛选/排序/冻结**（体验快赢）；G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -118,24 +115,21 @@
 
 ---
 
-### B3. NMEA 监听完全未接线（P2，工作量：中）
+### B3. NMEA 监听完全未接线 ✅ 已实现（P2，工作量：中）
 
-**现状**：`strings.xml:49-51` 已预留 `nmea_*` 文案和格式化字符串，但全代码库 grep `onNmeaMessage`/`addNmeaListener`/`registerNmea` **零命中**。文案是死代码。
+**现状（已实现）**：
 
-**问题/缺口**：NMEA 是 GNSS 数据交换的事实标准（`$GPGGA`、`$GPGSV`、`$GPRMC` 等），许多用户期望日志记录与导出；也能交叉验证内部回调数据。当前完全没有 NMEA 能力。
+1. **数据通路**：`GnssDataSourceImpl.getNmeaSentences()` 通过 `LocationManager.addNmeaListener` 注册，输出 `Flow<NmeaSentence>`；`GnssRepository` 透传且**不**参与 250ms 采样。
+2. **领域层**：`NmeaSentence` / `NmeaParsedSnapshot` + `NmeaParser`（GGA/RMC 轻量解析）+ 单元测试。
+3. **UI**：`NmeaScreen` + `NmeaViewModel`（环形缓冲、类型过滤、暂停、GGA/RMC 摘要）+ 抽屉导航 `Screen.Nmea`。
+4. **导出**：`NmeaExportHelper` 写 cache + FileProvider `ACTION_SEND` 分享 `.nmea`。
+5. **设置**：`SettingsStore.nmeaEnabled` + 设置页开关。
 
-**建议方案**：
+**涉及文件**：`GnssDataSource(Impl).kt`、`GnssRepository(Impl).kt`、`domain/model/Nmea*.kt`、`domain/util/NmeaParser.kt`、`viewmodel/NmeaViewModel.kt`、`ui/screens/nmea/NmeaScreen.kt`、`data/local/NmeaExportHelper.kt`、`MainActivity.kt`、`SettingsStore`/`SettingsScreen`、对应测试。
 
-1. 在 `GnssDataSourceImpl` 中用 `LocationManager.addNmeaListener(executor, callback)`（API 24+）注册监听。
-2. 将 NMEA 句子收集到 `Flow<String>` 或缓冲列表。
-3. 新增 `NmeaScreen` 屏幕展示实时语句流，或并入 SatelliteList 的新 Tab。
-4. 后续可配合 G2（RINEX 导出）做 NMEA 日志文件导出。
+**提交**：`4d79b8d` 领域模型与解析、`6844633` 屏幕/设置/导出/导航、`67ec289` ktlint 校验。
 
-**涉及文件**：`data/source/GnssDataSourceImpl.kt`、`domain/model/`（新增 NMEA 模型）、新建 `ui/screens/nmea/`。
-
-**依赖与风险**：高频 NMEA 流可能影响性能，需做节流；部分 OEM 设备不输出完整语句。
-
-**ROI**：中工作量 / 中价值 — 文案已就绪，是调试工具的基础能力补全，但优先级低于 B1。
+**ROI**：已兑现 — 调试基础能力补全，可实时查看与导出 NMEA。
 
 ---
 
@@ -636,10 +630,10 @@
 | 1    | **U2** 天空图交互（一期+续） ✅              | 中         | SVID/过滤/缩放/动画/指北已落地                         |
 | 2    | **G7** Location 精度字段 + 闰秒 ✅           | 小         | 垂直/航向/速度精度 + 闰秒采集与展示                    |
 | 3    | **G1** 伪距 + WLS 核心 ✅；后续电文/星历接线 | 大         | 已完成纯领域解算；后续实现真实定位解与系统位置残差对比 |
-| 4    | **B3** NMEA 监听                             | 中         | 补全调试基础能力                                       |
+| 4    | **B3** NMEA 监听 ✅                          | —          | 已实现：监听/解析/屏幕/导出/设置开关                   |
 
-**依赖**：G6/U2/G7 已完成；G1 阶段 1/2 已完成，后续依赖导航电文、星历与实时卫星位置。
-**风险**：G1 后续卫星位置计算复杂，不可按直接伪距 API 实现；NMEA 高频流需节流。
+**依赖**：G6/U2/G7/B3 已完成；G1 阶段 1/2 已完成，后续依赖导航电文、星历与实时卫星位置。
+**风险**：G1 后续卫星位置计算复杂，不可按直接伪距 API 实现。
 
 ---
 
@@ -690,7 +684,7 @@
 │ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI lint      │
 │ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ✅ │ ──→│ E1 minify       │
 │ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选     │    │ E3 Timber+崩溃   │
-└──────────────────┘    │ B3 NMEA监听      │    │ U5 A-GPS补全    │    │ E5 i18n          │
+└──────────────────┘    │ B3 NMEA监听 ✅   │    │ U5 A-GPS补全    │    │ E5 i18n          │
                         └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
                                                                          │ E6-E8, G4, U6    │
                                                                          └──────────────────┘
@@ -719,6 +713,7 @@
 | **设置屏幕 U1**             | —        | ✅ 已实现                       | `SettingsScreen` + `SettingsStore` + 深色三态 + 快照 interval/max/retention 接线 + 7 测试                               |
 | **Location 精度 + 闰秒 G7** | —        | ✅ 已实现 (2026-07-15)          | `LocationInfo` 垂直/航向/速度精度 + `GnssClockData.leapSecond` + LocationCard/ClockInfoCard 展示 + 测试                 |
 | **G1 伪距 + WLS 核心**      | —        | ✅ 阶段 1/2 已实现 (2026-07-15) | `PseudorangeCalculator.kt` + `PositionSolver.kt`：伪距推导、纯领域迭代 WLS、黄金与边界测试；真实星历/卫星位置接线待后续 |
+| **B3 NMEA 监听**            | —        | ✅ 已实现                       | `addNmeaListener` → `Flow<NmeaSentence>` + `NmeaParser` + `NmeaScreen`/导出/设置开关 + 领域单测                         |
 
 ### 专业/调试功能
 
