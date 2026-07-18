@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.DumpsysGnssData
+import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.AppSettings
 import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
@@ -51,10 +52,14 @@ class SatelliteViewModel(
     private val _gnssCapabilities = MutableStateFlow<GnssCapabilitiesInfo?>(null)
     val gnssCapabilities: StateFlow<GnssCapabilitiesInfo?> = _gnssCapabilities.asStateFlow()
 
+    private val _antennaInfos = MutableStateFlow<List<AntennaInfo>>(emptyList())
+    val antennaInfos: StateFlow<List<AntennaInfo>> = _antennaInfos.asStateFlow()
+
     private var lastSnapshotTime = 0L
     private var autoSaveEnabled = true
     private var snapshotIntervalMs = AppSettings.DEFAULT_SNAPSHOT_INTERVAL_MS
     private var collectionJob: Job? = null
+    private var antennaJob: Job? = null
 
     private val maxSignalHistorySize = 60 // 每颗卫星保留 60 秒历史数据
 
@@ -87,6 +92,22 @@ class SatelliteViewModel(
 
     fun startListening() {
         collectionJob?.cancel()
+        antennaJob?.cancel()
+        _antennaInfos.value = emptyList()
+
+        antennaJob =
+            viewModelScope.launch {
+                try {
+                    repository.getAntennaInfos().collect { list ->
+                        _antennaInfos.value = list
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    _antennaInfos.value = emptyList()
+                }
+            }
+
         collectionJob =
             viewModelScope.launch {
                 try {
@@ -231,8 +252,10 @@ class SatelliteViewModel(
 
     // 取消收集 Job 防止 ViewModel 销毁后仍在发射值
     override fun onCleared() {
-        super.onCleared()
         collectionJob?.cancel()
+        antennaJob?.cancel()
+        _antennaInfos.value = emptyList()
+        super.onCleared()
     }
 }
 

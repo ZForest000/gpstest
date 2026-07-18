@@ -386,6 +386,13 @@
     <string name="cap_unsupported">不支持</string>
     <string name="cap_unknown">未知</string>
 
+    <!-- Antenna phase center (G3) -->
+    <string name="antenna_info_title">天线相位中心</string>
+    <string name="antenna_carrier_format">载波频率：%1$.3f MHz</string>
+    <string name="antenna_pco_format">PCO X/Y/Z：%1$.2f / %2$.2f / %3$.2f mm</string>
+    <string name="antenna_pco_uncertainty_format">不确定度 ±%1$.2f / %2$.2f / %3$.2f mm</string>
+    <string name="antenna_pcv_summary_format">PCV：Δφ=%1$.1f° Δθ=%2$.1f°，网格 %3$d 点，范围 [%4$.2f, %5$.2f] mm</string>
+
     <!-- Help -->
     <string name="help_title">帮助</string>
     <string name="help_ttff_title">TTFF 首次定位时间</string>

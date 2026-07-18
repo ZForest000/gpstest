@@ -32,10 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
+import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.SatelliteSortMode
 import com.example.gpstest.domain.util.SatelliteListQuery
+import com.example.gpstest.ui.components.AntennaInfoCard
 import com.example.gpstest.ui.components.ClockInfoCard
 import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
 import com.example.gpstest.ui.components.ConstellationStatCard
@@ -65,6 +67,7 @@ fun SatelliteListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val ttffState by viewModel.ttffState.collectAsState()
     val gnssCapabilities by viewModel.gnssCapabilities.collectAsState()
+    val antennaInfos by viewModel.antennaInfos.collectAsState()
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -149,6 +152,7 @@ fun SatelliteListScreen(
                         dumpsysData = snapshot.dumpsysData,
                         dopInfo = snapshot.dopInfo,
                         gnssCapabilities = gnssCapabilities,
+                        antennaInfos = antennaInfos,
                         ttffState = ttffState,
                         listQuery = listQuery,
                         selectedConstellations = selectedConstellationEnums,
@@ -196,6 +200,7 @@ fun SatelliteListScreen(
                         dumpsysData = liveState.dumpsysData,
                         dopInfo = liveState.dopInfo,
                         gnssCapabilities = gnssCapabilities,
+                        antennaInfos = antennaInfos,
                         ttffState = ttffState,
                         listQuery = listQuery,
                         selectedConstellations = selectedConstellationEnums,
@@ -254,6 +259,7 @@ private fun SatelliteListContent(
     dumpsysData: com.example.gpstest.data.source.DumpsysGnssData?,
     dopInfo: com.example.gpstest.domain.model.DopInfo?,
     gnssCapabilities: com.example.gpstest.domain.model.GnssCapabilitiesInfo?,
+    antennaInfos: List<AntennaInfo>,
     ttffState: com.example.gpstest.viewmodel.TtffState,
     listQuery: SatelliteListQuery,
     selectedConstellations: Set<Constellation>,
@@ -341,6 +347,12 @@ private fun SatelliteListContent(
         if (gnssCapabilities != null) {
             item {
                 GnssCapabilitiesCard(capabilities = gnssCapabilities)
+            }
+        }
+
+        if (antennaInfos.isNotEmpty()) {
+            item {
+                AntennaInfoCard(infos = antennaInfos)
             }
         }
 

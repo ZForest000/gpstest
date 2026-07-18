@@ -163,4 +163,11 @@
     <string name="history_location_line">Location: %1$s, %2$s · accuracy %3$s m</string>
     <string name="history_dop_line">DOP: P%1$s H%2$s V%3$s</string>
     <string name="history_ttff_line">TTFF: %.1f s</string>
+
+    <!-- Antenna phase center (G3) -->
+    <string name="antenna_info_title">Antenna phase center</string>
+    <string name="antenna_carrier_format">Carrier: %1$.3f MHz</string>
+    <string name="antenna_pco_format">PCO X/Y/Z: %1$.2f / %2$.2f / %3$.2f mm</string>
+    <string name="antenna_pco_uncertainty_format">Uncertainty ±%1$.2f / %2$.2f / %3$.2f mm</string>
+    <string name="antenna_pcv_summary_format">PCV: Δφ=%1$.1f° Δθ=%2$.1f°, %3$d samples, range [%4$.2f, %5$.2f] mm</string>
 </resources>
