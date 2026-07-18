@@ -8,11 +8,12 @@ enum class HelpGuideSection {
     ;
 
     companion object {
-        val readingOrder = listOf(
-            QUICK_DIAGNOSTICS,
-            SCREEN_GUIDE,
-            METRICS_REFERENCE,
-            AGPS_AND_ADVANCED,
-        )
+        val readingOrder =
+            listOf(
+                QUICK_DIAGNOSTICS,
+                SCREEN_GUIDE,
+                METRICS_REFERENCE,
+                AGPS_AND_ADVANCED,
+            )
     }
 }
