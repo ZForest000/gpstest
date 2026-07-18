@@ -2,7 +2,6 @@ package com.example.gpstest.domain.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.example.gpstest.R
 import com.example.gpstest.data.local.AGpsFileHandler
 import com.example.gpstest.data.local.AGpsInjectionHistoryStore
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
 /**
  * A-GPS 仓库实现。核心编排器：下载 → 验证 → 注入 → 状态跟踪。
@@ -77,7 +77,7 @@ class AGpsRepositoryImpl(
     // 回落策略：先尝试用户配置的 URL，失败后依次尝试 3 个默认地址
     // 每种 URL 的下载 + 注入均失败后才切换下一个
     override suspend fun downloadAndInject(): Result<Unit> {
-        Log.d(TAG, "downloadAndInject: Starting...")
+        Timber.tag(TAG).d("downloadAndInject: Starting...")
         val currentSettings = settings.first()
         val urls =
             (listOf(currentSettings.downloadUrl) + downloader.getDefaultUrls())
@@ -87,12 +87,12 @@ class AGpsRepositoryImpl(
         val errors = mutableListOf<String>()
 
         for (url in urls) {
-            Log.d(TAG, "downloadAndInject: Verifying download source: $url")
+            Timber.tag(TAG).d("downloadAndInject: Verifying download source: $url")
             val downloadResult = downloader.download(url)
 
             if (downloadResult.isFailure) {
                 val error = downloadResult.exceptionOrNull()?.message ?: "Unknown error"
-                Log.w(TAG, "downloadAndInject: Download failed: $error")
+                Timber.tag(TAG).w("downloadAndInject: Download failed: $error")
                 errors.add("Download($url): $error")
                 continue
             }
@@ -100,34 +100,34 @@ class AGpsRepositoryImpl(
             val data = downloadResult.getOrThrow()
             if (data.isEmpty()) {
                 val error = "Empty data"
-                Log.w(TAG, "downloadAndInject: Download returned empty data from $url")
+                Timber.tag(TAG).w("downloadAndInject: Download returned empty data from $url")
                 errors.add("Download($url): $error")
                 continue
             }
 
-            Log.d(TAG, "downloadAndInject: Download verified (${data.size} bytes), injecting via URL")
+            Timber.tag(TAG).d("downloadAndInject: Download verified (${data.size} bytes), injecting via URL")
             val injectResult = dataSource.injectXtraFromUrl(url)
 
             if (injectResult.isSuccess) {
-                Log.d(TAG, "downloadAndInject: URL injection command accepted")
+                Timber.tag(TAG).d("downloadAndInject: URL injection command accepted")
                 addRecord(InjectionType.XTRA, InjectionSource.AUTO_DOWNLOAD, true)
                 updateStatusAfterInjection()
                 return Result.success(Unit)
             } else {
                 val error = injectResult.exceptionOrNull()?.message ?: "Unknown error"
-                Log.w(TAG, "downloadAndInject: URL injection failed: $error")
+                Timber.tag(TAG).w("downloadAndInject: URL injection failed: $error")
                 errors.add("Inject($url): $error")
             }
         }
 
         val allErrors = errors.joinToString("; ")
-        Log.e(TAG, "downloadAndInject: All methods failed: $allErrors")
+        Timber.tag(TAG).e("downloadAndInject: All methods failed: $allErrors")
         addRecord(InjectionType.XTRA, InjectionSource.AUTO_DOWNLOAD, false, allErrors)
         return Result.failure(Exception("All download and injection methods failed: $allErrors"))
     }
 
     override suspend fun injectTime(): Result<Unit> {
-        Log.d(TAG, "injectTime: Starting...")
+        Timber.tag(TAG).d("injectTime: Starting...")
         val result = dataSource.injectTime(System.currentTimeMillis())
 
         addRecord(
@@ -141,12 +141,14 @@ class AGpsRepositoryImpl(
             updateTimeStatusAfterInjection()
         }
 
-        Log.d(TAG, "injectTime: Result: ${if (result.isSuccess) "success" else result.exceptionOrNull()?.message}")
+        Timber.tag(TAG).d(
+            "injectTime: Result: ${if (result.isSuccess) "success" else result.exceptionOrNull()?.message}",
+        )
         return result
     }
 
     override suspend fun clearApsData(): Result<Unit> {
-        Log.d(TAG, "clearApsData: Starting...")
+        Timber.tag(TAG).d("clearApsData: Starting...")
         val result = dataSource.clearApsData()
 
         if (result.isSuccess) {
@@ -158,9 +160,9 @@ class AGpsRepositoryImpl(
                     lastInjectionTime = null,
                 )
             }
-            Log.d(TAG, "clearApsData: Success, status reset to UNKNOWN")
+            Timber.tag(TAG).d("clearApsData: Success, status reset to UNKNOWN")
         } else {
-            Log.e(TAG, "clearApsData: Failed: ${result.exceptionOrNull()?.message}")
+            Timber.tag(TAG).e("clearApsData: Failed: ${result.exceptionOrNull()?.message}")
         }
 
         return result
@@ -170,7 +172,7 @@ class AGpsRepositoryImpl(
     // 因此改为统计注入后可见卫星中 hasEphemeris/hasAlmanac 的比例来推断
     override suspend fun verifyInjection(satellites: List<GnssSatellite>): InjectionVerification {
         if (satellites.isEmpty()) {
-            Log.d(TAG, "verifyInjection: No satellites to verify")
+            Timber.tag(TAG).d("verifyInjection: No satellites to verify")
             return InjectionVerification(
                 satellitesWithEphemeris = 0,
                 satellitesWithAlmanac = 0,
@@ -190,8 +192,7 @@ class AGpsRepositoryImpl(
 
         val isSuccess = ephemerisRatio >= MIN_SUCCESS_RATIO || almanacRatio >= MIN_SUCCESS_RATIO
 
-        Log.d(
-            TAG,
+        Timber.tag(TAG).d(
             "verifyInjection: ephemeris=$withEphemeris/$total (${(ephemerisRatio * 100).toInt()}%), " +
                 "almanac=$withAlmanac/$total (${(almanacRatio * 100).toInt()}%), success=$isSuccess",
         )
@@ -284,7 +285,7 @@ class AGpsRepositoryImpl(
     }
 
     override suspend fun importAndInject(fileUri: String): Result<Unit> {
-        Log.d(TAG, "importAndInject: $fileUri")
+        Timber.tag(TAG).d("importAndInject: $fileUri")
 
         val uri = Uri.parse(fileUri)
         val readResult = fileHandler.readFile(uri)
@@ -292,7 +293,7 @@ class AGpsRepositoryImpl(
             val error =
                 readResult.exceptionOrNull()?.message
                     ?: context.getString(R.string.agps_file_read_fail)
-            Log.e(TAG, "importAndInject: read failed: $error")
+            Timber.tag(TAG).e("importAndInject: read failed: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(readResult.exceptionOrNull() ?: Exception(error))
         }
@@ -303,7 +304,7 @@ class AGpsRepositoryImpl(
             val error =
                 validationResult.details
                     ?: context.getString(R.string.agps_validation_fail)
-            Log.e(TAG, "importAndInject: validation failed: $error")
+            Timber.tag(TAG).e("importAndInject: validation failed: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(Exception(error))
         }
@@ -313,18 +314,18 @@ class AGpsRepositoryImpl(
             val error =
                 writeResult.exceptionOrNull()?.message
                     ?: context.getString(R.string.agps_cache_write_fail)
-            Log.e(TAG, "importAndInject: cache write failed: $error")
+            Timber.tag(TAG).e("importAndInject: cache write failed: $error")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
             return Result.failure(writeResult.exceptionOrNull() ?: Exception(error))
         }
 
         val file = writeResult.getOrThrow()
         val injectUrl = "file://${file.absolutePath}"
-        Log.d(TAG, "importAndInject: injecting via $injectUrl")
+        Timber.tag(TAG).d("importAndInject: injecting via $injectUrl")
         val injectResult = dataSource.injectXtraFromUrl(injectUrl)
 
         if (injectResult.isSuccess) {
-            Log.d(TAG, "importAndInject: success")
+            Timber.tag(TAG).d("importAndInject: success")
             addRecord(InjectionType.XTRA, InjectionSource.MANUAL, true)
             updateStatusAfterInjection()
             return Result.success(Unit)
@@ -333,7 +334,7 @@ class AGpsRepositoryImpl(
         val error =
             injectResult.exceptionOrNull()?.message
                 ?: context.getString(R.string.agps_inject_fail)
-        Log.e(TAG, "importAndInject: inject failed: $error")
+        Timber.tag(TAG).e("importAndInject: inject failed: $error")
         addRecord(InjectionType.XTRA, InjectionSource.MANUAL, false, error)
         return Result.failure(injectResult.exceptionOrNull() ?: Exception(error))
     }
@@ -387,7 +388,7 @@ class AGpsRepositoryImpl(
     }
 
     override suspend fun validateFile(fileUri: String): FileValidationResult {
-        Log.d(TAG, "validateFile: $fileUri")
+        Timber.tag(TAG).d("validateFile: $fileUri")
 
         val uri = Uri.parse(fileUri)
         val readResult = fileHandler.readFile(uri)
@@ -396,7 +397,7 @@ class AGpsRepositoryImpl(
             val error =
                 readResult.exceptionOrNull()?.message
                     ?: context.getString(R.string.agps_file_read_fail)
-            Log.e(TAG, "validateFile: Failed to read file: $error")
+            Timber.tag(TAG).e("validateFile: Failed to read file: $error")
             return FileValidationResult(
                 isValid = false,
                 fileSize = 0,
@@ -406,12 +407,12 @@ class AGpsRepositoryImpl(
         }
 
         val data = readResult.getOrThrow()
-        Log.d(TAG, "validateFile: File read succeeded, size: ${data.size} bytes")
+        Timber.tag(TAG).d("validateFile: File read succeeded, size: ${data.size} bytes")
 
         val validationResult = validator.validate(data, sourceUrl = fileUri)
 
         if (!validationResult.isValid) {
-            Log.e(TAG, "validateFile: Validation failed: ${validationResult.details}")
+            Timber.tag(TAG).e("validateFile: Validation failed: ${validationResult.details}")
             return FileValidationResult(
                 isValid = false,
                 fileSize = data.size,
@@ -421,7 +422,7 @@ class AGpsRepositoryImpl(
             )
         }
 
-        Log.i(TAG, "validateFile: File is valid | ${validator.getSizeStatistics(data)}")
+        Timber.tag(TAG).i("validateFile: File is valid | ${validator.getSizeStatistics(data)}")
         return FileValidationResult(
             isValid = true,
             fileSize = data.size,
@@ -430,12 +431,12 @@ class AGpsRepositoryImpl(
     }
 
     override suspend fun validateCurrentSource(): FileValidationResult {
-        Log.d(TAG, "validateCurrentSource: Starting...")
+        Timber.tag(TAG).d("validateCurrentSource: Starting...")
         val currentSettings = settings.first()
         val url = currentSettings.downloadUrl.trim()
 
         if (url.isEmpty()) {
-            Log.e(TAG, "validateCurrentSource: Download URL is empty")
+            Timber.tag(TAG).e("validateCurrentSource: Download URL is empty")
             return FileValidationResult(
                 isValid = false,
                 fileSize = 0,
@@ -444,12 +445,12 @@ class AGpsRepositoryImpl(
             )
         }
 
-        Log.d(TAG, "validateCurrentSource: Downloading from $url")
+        Timber.tag(TAG).d("validateCurrentSource: Downloading from $url")
         val downloadResult = downloader.download(url)
 
         if (downloadResult.isFailure) {
             val error = downloadResult.exceptionOrNull()?.message ?: "下载失败"
-            Log.e(TAG, "validateCurrentSource: Download failed: $error")
+            Timber.tag(TAG).e("validateCurrentSource: Download failed: $error")
             return FileValidationResult(
                 isValid = false,
                 fileSize = 0,
@@ -461,7 +462,7 @@ class AGpsRepositoryImpl(
         val data = downloadResult.getOrThrow()
 
         if (data.isEmpty()) {
-            Log.e(TAG, "validateCurrentSource: Downloaded data is empty")
+            Timber.tag(TAG).e("validateCurrentSource: Downloaded data is empty")
             return FileValidationResult(
                 isValid = false,
                 fileSize = 0,
@@ -470,11 +471,11 @@ class AGpsRepositoryImpl(
             )
         }
 
-        Log.d(TAG, "validateCurrentSource: Downloaded ${data.size} bytes, validating...")
+        Timber.tag(TAG).d("validateCurrentSource: Downloaded ${data.size} bytes, validating...")
         val validationResult = validator.validate(data, sourceUrl = url)
 
         if (!validationResult.isValid) {
-            Log.e(TAG, "validateCurrentSource: Validation failed: ${validationResult.details}")
+            Timber.tag(TAG).e("validateCurrentSource: Validation failed: ${validationResult.details}")
             return FileValidationResult(
                 isValid = false,
                 fileSize = data.size,
@@ -484,7 +485,7 @@ class AGpsRepositoryImpl(
             )
         }
 
-        Log.i(TAG, "validateCurrentSource: Source is valid | ${validator.getSizeStatistics(data)}")
+        Timber.tag(TAG).i("validateCurrentSource: Source is valid | ${validator.getSizeStatistics(data)}")
         return FileValidationResult(
             isValid = true,
             fileSize = data.size,

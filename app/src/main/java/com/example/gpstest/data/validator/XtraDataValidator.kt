@@ -1,8 +1,8 @@
 package com.example.gpstest.data.validator
 
-import android.util.Log
 import com.example.gpstest.BuildConfig
 import java.security.MessageDigest
+import timber.log.Timber
 
 data class ValidationResult(
     val isValid: Boolean,
@@ -67,17 +67,11 @@ class XtraDataValidator(
     }
 
     private fun logInfo(message: String) {
-        try {
-            Log.i(TAG, message)
-        } catch (_: Exception) {
-        }
+        Timber.tag(TAG).i(message)
     }
 
     private fun logWarn(message: String) {
-        try {
-            Log.w(TAG, message)
-        } catch (_: Exception) {
-        }
+        Timber.tag(TAG).w(message)
     }
 
     fun validate(

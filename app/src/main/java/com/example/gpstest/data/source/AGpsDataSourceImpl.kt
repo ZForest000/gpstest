@@ -3,10 +3,10 @@ package com.example.gpstest.data.source
 import android.content.Context
 import android.location.LocationManager
 import android.os.Bundle
-import android.util.Log
 import com.example.gpstest.domain.model.AGpsStatus
 import com.example.gpstest.domain.model.DataStatus
 import java.io.IOException
+import timber.log.Timber
 
 class AGpsDataSourceImpl(
     private val context: Context,
@@ -19,7 +19,7 @@ class AGpsDataSourceImpl(
         get() = context.getSystemService(LocationManager::class.java)
 
     override suspend fun injectXtraFromUrl(url: String): Result<Unit> {
-        Log.d(TAG, "injectXtraFromUrl: url = $url")
+        Timber.tag(TAG).d("injectXtraFromUrl: url = $url")
         if (url.isBlank()) {
             return Result.failure(IOException("XTRA下载地址为空"))
         }
@@ -28,12 +28,12 @@ class AGpsDataSourceImpl(
     }
 
     override suspend fun injectTime(timeMillis: Long): Result<Unit> {
-        Log.d(TAG, "injectTime: timeMillis = $timeMillis")
+        Timber.tag(TAG).d("injectTime: timeMillis = $timeMillis")
         return sendGpsCommand("force_time_injection", null)
     }
 
     override suspend fun clearApsData(): Result<Unit> {
-        Log.d(TAG, "clearApsData: clearing A-GPS data")
+        Timber.tag(TAG).d("clearApsData: clearing A-GPS data")
 
         val commands =
             listOf(
@@ -53,24 +53,24 @@ class AGpsDataSourceImpl(
                         command,
                         null,
                     )
-                Log.d(TAG, "clearApsData: command '$command' result: $result")
+                Timber.tag(TAG).d("clearApsData: command '$command' result: $result")
                 if (result == true) {
                     anySuccess = true
                 }
             } catch (e: SecurityException) {
-                Log.e(TAG, "clearApsData: SecurityException for '$command': ${e.message}")
+                Timber.tag(TAG).e("clearApsData: SecurityException for '$command': ${e.message}")
                 errors.add("$command: Permission denied")
             } catch (e: Exception) {
-                Log.e(TAG, "clearApsData: Exception for '$command': ${e.message}", e)
+                Timber.tag(TAG).e(e, "clearApsData: Exception for '$command': ${e.message}")
                 errors.add("$command: ${e.message}")
             }
         }
 
         return if (anySuccess) {
-            Log.d(TAG, "clearApsData: At least one command succeeded")
+            Timber.tag(TAG).d("clearApsData: At least one command succeeded")
             Result.success(Unit)
         } else {
-            Log.e(TAG, "clearApsData: All commands failed: ${errors.joinToString()}")
+            Timber.tag(TAG).e("clearApsData: All commands failed: ${errors.joinToString()}")
             Result.failure(Exception("清除命令执行失败，设备可能不支持此功能"))
         }
     }
@@ -101,18 +101,18 @@ class AGpsDataSourceImpl(
                     extras,
                 )
             if (success) {
-                Log.d(TAG, "sendGpsCommand: '$command' command sent successfully")
+                Timber.tag(TAG).d("sendGpsCommand: '$command' command sent successfully")
                 Result.success(Unit)
             } else {
                 val error = "设备拒绝执行命令: $command"
-                Log.e(TAG, "sendGpsCommand: $error")
+                Timber.tag(TAG).e("sendGpsCommand: $error")
                 Result.failure(IOException(error))
             }
         } catch (e: SecurityException) {
-            Log.e(TAG, "sendGpsCommand: SecurityException for '$command': ${e.message}")
+            Timber.tag(TAG).e("sendGpsCommand: SecurityException for '$command': ${e.message}")
             Result.failure(Exception("Permission denied: ${e.message}"))
         } catch (e: Exception) {
-            Log.e(TAG, "sendGpsCommand: Exception for '$command': ${e.message}", e)
+            Timber.tag(TAG).e(e, "sendGpsCommand: Exception for '$command': ${e.message}")
             Result.failure(e)
         }
     }

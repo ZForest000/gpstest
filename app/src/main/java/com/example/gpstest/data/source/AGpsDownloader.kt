@@ -1,6 +1,5 @@
 package com.example.gpstest.data.source
 
-import android.util.Log
 import com.example.gpstest.data.validator.XtraDataValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -9,6 +8,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import timber.log.Timber
 
 interface AGpsDownloader {
     suspend fun download(url: String): Result<ByteArray>
@@ -53,7 +53,7 @@ class AGpsDownloaderImpl(
             }
 
             if (!urlObj.encodedPath.endsWith(".bin", ignoreCase = true)) {
-                Log.w(TAG, "validateUrl: 警告: URL路径不以.bin结尾: ${urlObj.encodedPath}")
+                Timber.tag(TAG).w("validateUrl: 警告: URL路径不以.bin结尾: ${urlObj.encodedPath}")
             }
 
             return UrlValidationResult(true)
@@ -64,12 +64,12 @@ class AGpsDownloaderImpl(
 
     override suspend fun download(url: String): Result<ByteArray> =
         withContext(Dispatchers.IO) {
-            Log.d(TAG, "download: Starting download from $url")
+            Timber.tag(TAG).d("download: Starting download from $url")
 
             val urlValidation = validateUrl(url)
             if (!urlValidation.isValid) {
                 val error = "URL验证失败: ${urlValidation.error}"
-                Log.e(TAG, "download: $error")
+                Timber.tag(TAG).e("download: $error")
                 return@withContext Result.failure(IOException(error))
             }
 
@@ -81,42 +81,42 @@ class AGpsDownloaderImpl(
                         .build()
 
                 client.newCall(request).execute().use { response ->
-                    Log.d(TAG, "download: Response code = ${response.code}, message = ${response.message}")
+                    Timber.tag(TAG).d("download: Response code = ${response.code}, message = ${response.message}")
 
                     if (!response.isSuccessful) {
                         val error = "HTTP ${response.code}: ${response.message}"
-                        Log.e(TAG, "download: $error")
+                        Timber.tag(TAG).e("download: $error")
                         return@withContext Result.failure(IOException(error))
                     }
 
                     val body =
                         response.body ?: run {
-                            Log.e(TAG, "download: Empty response body")
+                            Timber.tag(TAG).e("download: Empty response body")
                             return@withContext Result.failure(IOException("Empty response body"))
                         }
 
                     val data = body.bytes()
                     if (data.isEmpty()) {
-                        Log.e(TAG, "download: Downloaded empty data")
+                        Timber.tag(TAG).e("download: Downloaded empty data")
                         return@withContext Result.failure(IOException("Downloaded empty data"))
                     }
 
                     val mimeType = response.header("content-type")
-                    Log.d(TAG, "download: Downloaded ${data.size} bytes, MIME type: $mimeType")
+                    Timber.tag(TAG).d("download: Downloaded ${data.size} bytes, MIME type: $mimeType")
 
                     val validationResult = validator.validate(data, mimeType, url)
                     if (!validationResult.isValid) {
                         val error = "数据验证失败: ${validationResult.details} (错误类型: ${validationResult.errorType})"
-                        Log.e(TAG, "download: $error")
-                        Log.e(TAG, "download: 数据统计: ${validator.getSizeStatistics(data)}")
+                        Timber.tag(TAG).e("download: $error")
+                        Timber.tag(TAG).e("download: 数据统计: ${validator.getSizeStatistics(data)}")
                         return@withContext Result.failure(IOException(error))
                     }
 
-                    Log.i(TAG, "download: 数据验证通过 | ${validator.getSizeStatistics(data)}")
+                    Timber.tag(TAG).i("download: 数据验证通过 | ${validator.getSizeStatistics(data)}")
                     Result.success(data)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "download: Exception: ${e.message}", e)
+                Timber.tag(TAG).e(e, "download: Exception: ${e.message}")
                 Result.failure(e)
             }
         }
