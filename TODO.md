@@ -51,12 +51,11 @@
 | ------ | -------------------------------------------------- | ------ | ------ | ---- |
 | **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置） | P1     | 大     | 二   |
 | **G2** | RINEX 3.x 导出                                     | P1     | 大     | 二   |
-| **G3** | GnssAntennaInfo 接入                               | P2     | 中     | 二   |
 | **G4** | GnssNavigationMessage 导航电文                     | P3     | 大     | 二   |
 | **U6** | 信噪比柱状图 + DOP 实时曲线                        | P3     | 中     | 三   |
 | **E7** | 历史存储迁移 Room                                  | P3     | 大     | 四   |
 
-**下一步建议**：Wave B 已完成。优先 **G3 GnssAntennaInfo**（为 G2 RINEX 铺路）或 **G1 导航电文/星历接线**；G1 不应按“直接读取伪距 API”实现。
+**下一步建议**：G3 已完成。优先 **G1 导航电文/星历接线**（为 G2 RINEX 提供观测数据），随后 **G2 RINEX 导出**（已可消费 G3 天线头部）；G1 不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -175,24 +174,11 @@
 
 ---
 
-### G3. GnssAntennaInfo 接入（P2，工作量：中）
+### G3. GnssAntennaInfo 接入 ✅ 已实现（P2，工作量：中）
 
-**现状**：`proguard-rules.pro:11-38` 明确保留了 `GnssAntennaInfo`/`PhaseCenterOffset` 类，但全代码库 grep `registerAntennaInfoListener`、`PhaseCenterOffset` **零命中**，从未调用。
+**现状（已实现）**：`GnssDataSourceImpl.getAntennaInfos()` 通过 `LocationManager.registerAntennaInfoListener`（API 30+）独立 Flow 采集；`AntennaInfo` + `PhaseCenterVariationSummary` 领域模型 + 纯 `AntennaInfoMapper`；Repository 透传（不采样）；`SatelliteViewModel.antennaInfos: StateFlow<List<AntennaInfo>>`；`AntennaInfoCard` 紧随 `GnssCapabilitiesCard` 展示（空列表自动隐藏）；中英文资源齐备；ProGuard 已 keep `GnssAntennaInfo` 及相关 LocationManager 方法。单元测试覆盖 mapper。
 
-**问题/缺口**：天线相位中心偏移（PCO）和相位中心变化（PCV）对高精度测量至关重要。proguard 配置说明设计时考虑过，但未实现。
-
-**建议方案**：
-
-1. 在 `GnssDataSourceImpl` 中 `LocationManager.registerAntennaInfoCallback`（API 31+）。
-2. 新增 `domain/model/GnssAntennaInfo.kt` 数据类。
-3. 新增「天线信息」卡片或在 ClockInfoCard 旁扩展，展示 PCO/PCV。
-4. 数据可用于 G2（RINEX 头部的天线信息段）。
-
-**涉及文件**：`data/source/GnssDataSourceImpl.kt`、新增 `domain/model/GnssAntennaInfo.kt`、UI 卡片。
-
-**依赖与风险**：API 31+，部分设备无天线信息；需在 UI 提示"设备不支持"。
-
-**ROI**：中工作量 / 中价值 — G2 RINEX 的前置依赖之一，独立价值偏低但组合价值高。
+**剩余缺口**：设备端真机冒烟（API 30+ 设备的 PCO/PCV 数值展示）；G2 RINEX 头部消费 `AntennaInfo` 字段时再扩展（如完整 PCV 网格、`SphericalCorrections` 信号增益表）。
 
 ---
 
@@ -544,21 +530,21 @@
 
 **目标**：提升工程质量、可观测性、测试覆盖。可与前三阶段并行，或作为「无功能需求时的填充」。
 
-| 顺序 | 条目                      | 预估工作量 | 关键产出                            |
-| ---- | ------------------------- | ---------- | ----------------------------------- |
-| 1    | **E2** CI ✅              | —          | push/PR + ktlint + lintDebug        |
-| 2    | **E1** minify ✅          | —          | Release R8 + ProGuard 规则          |
-| 3    | **E3** Timber ✅          | —          | 无 Crashlytics（刻意）              |
-| 4    | **E5** i18n 基线 ✅       | —          | values-en + 主要 UI 资源化          |
-| 5    | **E8** 文档基线 ✅        | —          | CONTRIBUTING/CHANGELOG/ARCHITECTURE |
-| 6    | **E6** Version Catalog ✅ | —          | libs.versions.toml                  |
-| 7    | **G3** GnssAntennaInfo    | 中         | RINEX 头部依赖                      |
-| 8    | **G2** RINEX 导出         | 大         | 专业用户核心诉求（依赖 G1/G3）      |
-| 9    | **E7** Room 迁移          | 大         | 仅在 U3 做厚后                      |
-| 10   | **G4** 导航电文           | 大         | 长线可选                            |
-| 11   | **U6** 柱状图/DOP 曲线    | 中         | 视觉化锦上添花                      |
+| 顺序 | 条目                      | 预估工作量 | 关键产出                                  |
+| ---- | ------------------------- | ---------- | ----------------------------------------- |
+| 1    | **E2** CI ✅              | —          | push/PR + ktlint + lintDebug              |
+| 2    | **E1** minify ✅          | —          | Release R8 + ProGuard 规则                |
+| 3    | **E3** Timber ✅          | —          | 无 Crashlytics（刻意）                    |
+| 4    | **E5** i18n 基线 ✅       | —          | values-en + 主要 UI 资源化                |
+| 5    | **E8** 文档基线 ✅        | —          | CONTRIBUTING/CHANGELOG/ARCHITECTURE       |
+| 6    | **E6** Version Catalog ✅ | —          | libs.versions.toml                        |
+| 7    | **G3** GnssAntennaInfo ✅ | —          | API 30+ 独立 Flow + PCO/PCV 摘要卡片      |
+| 8    | **G2** RINEX 导出         | 大         | 专业用户核心诉求（依赖 G1/G3，G3 已就绪） |
+| 9    | **E7** Room 迁移          | 大         | 仅在 U3 做厚后                            |
+| 10   | **G4** 导航电文           | 大         | 长线可选                                  |
+| 11   | **U6** 柱状图/DOP 曲线    | 中         | 视觉化锦上添花                            |
 
-**建议**：Wave B 工程化已落地；下一优先 G3 或 G1 接线。
+**建议**：Wave B 工程化 + G3 已落地；下一优先 G1 接线（为 G2 RINEX 提供观测）。
 
 ---
 
@@ -571,9 +557,10 @@
 │ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ✅ │ ──→│ E1 minify ✅    │
 │ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选 ✅ │    │ E3 Timber ✅    │
 └──────────────────┘    │ B3 NMEA监听 ✅   │    │ U5 A-GPS补全 ✅│    │ E5/E6/E8 ✅     │
-                        └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
-                                                                         │ E7, G4, U6       │
-                                                                         └──────────────────┘
+                         └──────────────────┘    └──────────────────┘    │ G3 天线 ✅       │
+                                                                          │ G2 RINEX (剩)    │
+                                                                          │ E7, G4, U6       │
+                                                                          └──────────────────┘
 ★ = 阶段内最高优先级
 ```
 
@@ -603,6 +590,7 @@
 | **U4 列表筛选/排序/冻结**   | —        | ✅ 已实现                       | `SatelliteListQuery` + `SatelliteFilterBar` + 冻结快照；星座/SVID/CN0·仰角排序 + 单测                                   |
 | **U5 A-GPS 补全**           | —        | ✅ 已实现                       | 文件导入、URL 编辑、1/6/12/24h 间隔、注入历史 DataStore 持久化/清除 + ViewModel/UI 接线                                 |
 | **Wave B 工程化**           | —        | ✅ 已实现 (2026-07-18)          | E2 CI push/PR+ktlint+lint；E8 文档；E6 Catalog；E1 minify；E3 Timber；E5 values-en 基线                                 |
+| **G3 天线相位中心**         | —        | ✅ 已实现 (2026-07-18)          | `AntennaInfo` + `AntennaInfoMapper` + `GnssDataSourceImpl.getAntennaInfos()` (API 30+) + `AntennaInfoCard` + 中英资源 + 测试 |
 
 ### 专业/调试功能
 
