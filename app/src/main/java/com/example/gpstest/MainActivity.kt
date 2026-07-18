@@ -14,13 +14,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.SatelliteAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,10 +61,13 @@ import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.GnssRepositoryImpl
 import com.example.gpstest.domain.repository.SatelliteHistoryRepositoryImpl
 import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
+import com.example.gpstest.ui.screens.diagnostics.ReceiverDiagnosticsScreen
 import com.example.gpstest.ui.screens.help.HelpScreen
 import com.example.gpstest.ui.screens.history.HistoryScreen
 import com.example.gpstest.ui.screens.navigation.NavigationMessageScreen
 import com.example.gpstest.ui.screens.nmea.NmeaScreen
+import com.example.gpstest.ui.screens.overview.SatelliteOverviewScreen
+import com.example.gpstest.ui.screens.positioning.PositioningScreen
 import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
 import com.example.gpstest.ui.screens.settings.SettingsScreen
 import com.example.gpstest.ui.theme.Theme
@@ -221,9 +230,15 @@ class MainActivity : ComponentActivity() {
 sealed class Screen(
     val route: String,
 ) {
+    object Overview : Screen("overview")
+
     object SatelliteList : Screen("satellite_list")
 
     object SkyChart : Screen("sky_chart")
+
+    object Positioning : Screen("positioning")
+
+    object ReceiverDiagnostics : Screen("receiver_diagnostics")
 
     object History : Screen("history")
 
@@ -268,7 +283,7 @@ fun GpsTestApp(
 
     val navigateAndCloseDrawer: (String) -> Unit = { route ->
         navController.navigate(route) {
-            popUpTo(Screen.SatelliteList.route) { saveState = true }
+            popUpTo(Screen.Overview.route) { saveState = true }
             launchSingleTop = true
             restoreState = true
         }
@@ -281,75 +296,121 @@ fun GpsTestApp(
         drawerState = drawerState,
         drawerContent = {
             androidx.compose.material3.ModalDrawerSheet {
-                androidx.compose.material3.Text(
-                    text = stringResource(R.string.nav_drawer_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(16.dp),
-                )
-                androidx.compose.material3.HorizontalDivider()
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.SatelliteAlt, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_satellite_list)) },
-                    selected = currentRoute == Screen.SatelliteList.route,
-                    onClick = { navigateAndCloseDrawer(Screen.SatelliteList.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Explore, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_sky_chart)) },
-                    selected = currentRoute == Screen.SkyChart.route,
-                    onClick = { navigateAndCloseDrawer(Screen.SkyChart.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_agps)) },
-                    selected = currentRoute == Screen.AGps.route,
-                    onClick = { navigateAndCloseDrawer(Screen.AGps.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.History, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_history)) },
-                    selected = currentRoute == Screen.History.route,
-                    onClick = { navigateAndCloseDrawer(Screen.History.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.AutoMirrored.Filled.Article, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_nmea)) },
-                    selected = currentRoute == Screen.Nmea.route,
-                    onClick = { navigateAndCloseDrawer(Screen.Nmea.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.AutoMirrored.Filled.Article, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_navigation_messages)) },
-                    selected = currentRoute == Screen.NavigationMessages.route,
-                    onClick = { navigateAndCloseDrawer(Screen.NavigationMessages.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Help, contentDescription = null) },
-                    label = { Text(stringResource(R.string.nav_help)) },
-                    selected = currentRoute == Screen.Help.route,
-                    onClick = { navigateAndCloseDrawer(Screen.Help.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
-                androidx.compose.material3.NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text(stringResource(R.string.settings_title)) },
-                    selected = currentRoute == Screen.Settings.route,
-                    onClick = { navigateAndCloseDrawer(Screen.Settings.route) },
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                )
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    androidx.compose.material3.Text(
+                        text = stringResource(R.string.nav_drawer_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                    androidx.compose.material3.HorizontalDivider()
+                    androidx.compose.material3.Text(
+                        text = stringResource(R.string.nav_section_realtime_monitoring),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 28.dp, top = 16.dp, bottom = 8.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_overview)) },
+                        selected = currentRoute == Screen.Overview.route,
+                        onClick = { navigateAndCloseDrawer(Screen.Overview.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.SatelliteAlt, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_satellite_list)) },
+                        selected = currentRoute == Screen.SatelliteList.route,
+                        onClick = { navigateAndCloseDrawer(Screen.SatelliteList.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Explore, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_sky_chart)) },
+                        selected = currentRoute == Screen.SkyChart.route,
+                        onClick = { navigateAndCloseDrawer(Screen.SkyChart.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.MyLocation, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_positioning)) },
+                        selected = currentRoute == Screen.Positioning.route,
+                        onClick = { navigateAndCloseDrawer(Screen.Positioning.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Memory, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_receiver_diagnostics)) },
+                        selected = currentRoute == Screen.ReceiverDiagnostics.route,
+                        onClick = { navigateAndCloseDrawer(Screen.ReceiverDiagnostics.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    androidx.compose.material3.Text(
+                        text = stringResource(R.string.nav_section_data_tools),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 28.dp, top = 8.dp, bottom = 8.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_agps)) },
+                        selected = currentRoute == Screen.AGps.route,
+                        onClick = { navigateAndCloseDrawer(Screen.AGps.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.History, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_history)) },
+                        selected = currentRoute == Screen.History.route,
+                        onClick = { navigateAndCloseDrawer(Screen.History.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.AutoMirrored.Filled.Article, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_nmea)) },
+                        selected = currentRoute == Screen.Nmea.route,
+                        onClick = { navigateAndCloseDrawer(Screen.Nmea.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.AutoMirrored.Filled.Article, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_navigation_messages)) },
+                        selected = currentRoute == Screen.NavigationMessages.route,
+                        onClick = { navigateAndCloseDrawer(Screen.NavigationMessages.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Help, contentDescription = null) },
+                        label = { Text(stringResource(R.string.nav_help)) },
+                        selected = currentRoute == Screen.Help.route,
+                        onClick = { navigateAndCloseDrawer(Screen.Help.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                    androidx.compose.material3.NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                        label = { Text(stringResource(R.string.settings_title)) },
+                        selected = currentRoute == Screen.Settings.route,
+                        onClick = { navigateAndCloseDrawer(Screen.Settings.route) },
+                        modifier = Modifier.padding(horizontal = 12.dp),
+                    )
+                }
             }
         },
     ) {
         NavHost(
             navController = navController,
-            startDestination = Screen.SatelliteList.route,
+            startDestination = Screen.Overview.route,
         ) {
+            composable(Screen.Overview.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
+                SatelliteOverviewScreen(
+                    viewModel = satelliteViewModel,
+                    permissionState = permissionState,
+                    onRequestPermission = onRequestPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                )
+            }
             composable(Screen.SatelliteList.route) {
                 BackHandler(enabled = drawerState.isOpen) {
                     scope.launch { drawerState.close() }
@@ -380,6 +441,30 @@ fun GpsTestApp(
                             drawerState.open()
                         }
                     },
+                )
+            }
+            composable(Screen.Positioning.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
+                PositioningScreen(
+                    viewModel = satelliteViewModel,
+                    permissionState = permissionState,
+                    onRequestPermission = onRequestPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                )
+            }
+            composable(Screen.ReceiverDiagnostics.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
+                ReceiverDiagnosticsScreen(
+                    viewModel = satelliteViewModel,
+                    permissionState = permissionState,
+                    onRequestPermission = onRequestPermission,
+                    onOpenAppSettings = onOpenAppSettings,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
                 )
             }
             composable(Screen.History.route) {

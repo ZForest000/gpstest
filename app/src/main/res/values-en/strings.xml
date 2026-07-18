@@ -4,8 +4,13 @@
 
     <!-- Navigation / drawer -->
     <string name="nav_drawer_title">GNSS Test</string>
+    <string name="nav_overview">Overview</string>
     <string name="nav_satellite_list">Satellites</string>
     <string name="nav_sky_chart">Sky Chart</string>
+    <string name="nav_positioning">Positioning &amp; Accuracy</string>
+    <string name="nav_receiver_diagnostics">Receiver diagnostics</string>
+    <string name="nav_section_realtime_monitoring">Live monitoring</string>
+    <string name="nav_section_data_tools">Data &amp; tools</string>
     <string name="nav_agps">A-GPS</string>
     <string name="nav_history">History</string>
     <string name="nav_help">Help</string>
@@ -35,6 +40,13 @@
 
     <!-- Location card -->
     <string name="location_updated_at">Updated: %1$s</string>
+    <string name="overview_fix_summary_title">Fix status</string>
+    <string name="overview_fix_status">Fix</string>
+    <string name="overview_ttff">TTFF</string>
+    <string name="overview_pdop">PDOP</string>
+    <string name="overview_metric_waiting">Waiting</string>
+    <string name="overview_ttff_value">%1$.1f s</string>
+    <string name="overview_pdop_value">%1$.1f</string>
 
     <!-- Main Screen -->
     <string name="main_title">GPS Debug Tool</string>
@@ -61,8 +73,8 @@
     <string name="satellite_sort_elevation">Elevation</string>
     <string name="satellite_sort_svid">SVID</string>
     <string name="satellite_search_svid">Search SVID</string>
-    <string name="satellite_freeze">Freeze</string>
-    <string name="satellite_resume">Resume</string>
+    <string name="satellite_freeze">Freeze list</string>
+    <string name="satellite_resume">Resume updates</string>
     <string name="satellite_frozen_banner">List frozen — display updates paused</string>
     <string name="constellation_all">All</string>
 

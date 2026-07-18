@@ -13,6 +13,7 @@
 ## 文件结构
 
 - 创建：`app/src/main/java/com/example/gpstest/ui/components/FixStatusSummary.kt`，总览的紧凑定位状态摘要。
+- 创建：`app/src/test/java/com/example/gpstest/ui/components/FixStatusSummaryStateTest.kt`，总览摘要状态映射的纯 JVM 单测。
 - 创建：`app/src/main/java/com/example/gpstest/ui/screens/satellite/SatelliteScreenScaffold.kt`，公共顶栏和 Loading/权限/错误壳层。
 - 创建：`app/src/main/java/com/example/gpstest/ui/screens/overview/SatelliteOverviewScreen.kt`，总览页。
 - 创建：`app/src/main/java/com/example/gpstest/ui/screens/positioning/PositioningScreen.kt`，定位与精度页。
@@ -29,6 +30,9 @@
 - 修改：`app/src/main/res/values-en/strings.xml`
 
 - [ ] 创建 `FixStatusSummary(location, dopInfo, ttffState)`，用一个紧凑 Surface 呈现定位状态、TTFF 和 PDOP；空位置、DOP 或未完成 TTFF 使用资源文本而不显示伪数值。
+- [ ] 先编写 `FixStatusSummaryStateTest`，断言无位置/无 DOP 时输出“无定位、无 TTFF、无 PDOP”，以及完成定位时保留 TTFF 秒数和 PDOP。
+- [ ] 运行 `./gradlew testDebugUnitTest --tests com.example.gpstest.ui.components.FixStatusSummaryStateTest`，预期：生产映射尚不存在导致编译失败。
+- [ ] 添加 `FixStatusSummaryState` 与 `buildFixStatusSummaryState`，再运行同一测试，预期：两条断言通过。
 - [ ] 为总览、定位、接收机诊断、实时监控、数据与工具、定位状态、TTFF 与 PDOP 添加中英文资源。
 - [ ] 运行 `./gradlew ktlintCheck`，预期：新增 Kotlin 文件符合格式。
 

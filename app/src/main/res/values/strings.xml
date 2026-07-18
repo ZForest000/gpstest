@@ -4,8 +4,13 @@
 
     <!-- Navigation / drawer -->
     <string name="nav_drawer_title">GNSS 测试</string>
+    <string name="nav_overview">总览</string>
     <string name="nav_satellite_list">卫星列表</string>
     <string name="nav_sky_chart">天空图</string>
+    <string name="nav_positioning">定位与精度</string>
+    <string name="nav_receiver_diagnostics">接收机诊断</string>
+    <string name="nav_section_realtime_monitoring">实时监控</string>
+    <string name="nav_section_data_tools">数据与工具</string>
     <string name="nav_agps">A-GPS 管理</string>
     <string name="nav_history">历史记录</string>
     <string name="nav_help">帮助</string>
@@ -28,6 +33,13 @@
 
     <!-- Location card -->
     <string name="location_updated_at">更新: %1$s</string>
+    <string name="overview_fix_summary_title">定位状态</string>
+    <string name="overview_fix_status">定位</string>
+    <string name="overview_ttff">TTFF</string>
+    <string name="overview_pdop">PDOP</string>
+    <string name="overview_metric_waiting">等待中</string>
+    <string name="overview_ttff_value">%1$.1f 秒</string>
+    <string name="overview_pdop_value">%1$.1f</string>
 
     <!-- Main Screen -->
     <string name="main_title">GPS调试工具</string>
@@ -54,8 +66,8 @@
     <string name="satellite_sort_elevation">仰角</string>
     <string name="satellite_sort_svid">编号</string>
     <string name="satellite_search_svid">搜索 SVID</string>
-    <string name="satellite_freeze">冻结</string>
-    <string name="satellite_resume">继续</string>
+    <string name="satellite_freeze">冻结列表</string>
+    <string name="satellite_resume">继续更新</string>
     <string name="satellite_frozen_banner">列表已冻结 — 显示暂停更新</string>
     <string name="constellation_all">全部</string>
 
