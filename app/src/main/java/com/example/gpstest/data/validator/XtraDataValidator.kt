@@ -1,8 +1,8 @@
 package com.example.gpstest.data.validator
 
 import com.example.gpstest.BuildConfig
-import java.security.MessageDigest
 import timber.log.Timber
+import java.security.MessageDigest
 
 data class ValidationResult(
     val isValid: Boolean,

@@ -5,8 +5,8 @@ import android.location.LocationManager
 import android.os.Bundle
 import com.example.gpstest.domain.model.AGpsStatus
 import com.example.gpstest.domain.model.DataStatus
-import java.io.IOException
 import timber.log.Timber
+import java.io.IOException
 
 class AGpsDataSourceImpl(
     private val context: Context,

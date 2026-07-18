@@ -6,9 +6,9 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import timber.log.Timber
 
 interface AGpsDownloader {
     suspend fun download(url: String): Result<ByteArray>

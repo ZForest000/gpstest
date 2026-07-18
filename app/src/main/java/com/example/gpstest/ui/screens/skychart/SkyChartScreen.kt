@@ -28,12 +28,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
-import com.example.gpstest.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.PermissionState
+import com.example.gpstest.R
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.ui.components.ErrorContent

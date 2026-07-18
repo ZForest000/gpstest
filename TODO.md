@@ -45,24 +45,18 @@
 
 ### 📋 当前未实现功能速查
 
-> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2 天空图交互、U3 历史趋势/导出、**B3 NMEA 监听**、**U4 列表筛选/排序/冻结**、**U5 A-GPS 补全**均已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
+> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2–U5、**B3 NMEA**、**Wave B 工程化**（E1/E2/E3 Timber/E5/E6/E8）均已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
 
-| 编号   | 功能                                                   | 优先级 | 工作量 | 章节 |
-| ------ | ------------------------------------------------------ | ------ | ------ | ---- |
-| **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置）     | P1     | 大     | 二   |
-| **G2** | RINEX 3.x 导出                                         | P1     | 大     | 二   |
-| **G3** | GnssAntennaInfo 接入                                   | P2     | 中     | 二   |
-| **G4** | GnssNavigationMessage 导航电文                         | P3     | 大     | 二   |
-| **U6** | 信噪比柱状图 + DOP 实时曲线                            | P3     | 中     | 三   |
-| **E1** | Release minify 开启 + ProGuard 补全                    | P2     | 中     | 四   |
-| **E2** | CI 增加 lint / 覆盖率 / instrumented 测试              | P2     | 小     | 四   |
-| **E3** | Timber + 崩溃上报(54 处裸 Log)                         | P2     | 中     | 四   |
-| **E5** | 国际化 i18n(仅 values/,4 处硬编码中文)                 | P2     | 中     | 四   |
-| **E6** | Version Catalog 迁移                                   | P3     | 小     | 四   |
-| **E7** | 历史存储迁移 Room                                      | P3     | 大     | 四   |
-| **E8** | 文档补全(CONTRIBUTING/CHANGELOG/ARCHITECTURE/SECURITY) | P3     | 小     | 四   |
+| 编号   | 功能                                               | 优先级 | 工作量 | 章节 |
+| ------ | -------------------------------------------------- | ------ | ------ | ---- |
+| **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置） | P1     | 大     | 二   |
+| **G2** | RINEX 3.x 导出                                     | P1     | 大     | 二   |
+| **G3** | GnssAntennaInfo 接入                               | P2     | 中     | 二   |
+| **G4** | GnssNavigationMessage 导航电文                     | P3     | 大     | 二   |
+| **U6** | 信噪比柱状图 + DOP 实时曲线                        | P3     | 中     | 三   |
+| **E7** | 历史存储迁移 Room                                  | P3     | 大     | 四   |
 
-**下一步建议**：Wave A（U4/U5）已完成。优先 **G3 GnssAntennaInfo**（为 G2 RINEX 铺路）或工程化 E2/E1；G1 后续应先采集导航电文，再接入外部星历、实时卫星位置与真实观测，不应按“直接读取伪距 API”实现。
+**下一步建议**：Wave B 已完成。优先 **G3 GnssAntennaInfo**（为 G2 RINEX 铺路）或 **G1 导航电文/星历接线**；G1 不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -400,72 +394,27 @@
 
 ## 四、🔧 工程化健康度
 
-### E1. Release minify 开启 + ProGuard 补全（P2，工作量：中）
+### E1. Release minify 开启 + ProGuard 补全 ✅ 已实现（P2，工作量：中）
 
-**现状**：`app/build.gradle.kts:26` `isMinifyEnabled = false`，Release 构建**未开启 R8/混淆/压缩**。`:27-30` 声明了 proguardFiles 但因 minify 关闭而**完全不生效**。`proguard-rules.pro` 缺 kotlinx-serialization、OkHttp、Shizuku、WorkManager 的 keep 规则。
+**现状（已实现）**：`isMinifyEnabled = true` + `isShrinkResources = true`；`proguard-rules.pro` 已补 kotlinx.serialization / OkHttp / WorkManager / Shizuku / GNSS keep；`assembleRelease` 通过。
 
-**问题/缺口**：APK 体积未优化、代码无防护、混淆规则未验证。Release 包发出去等于半成品。
-
-**建议方案**：
-
-1. `app/build.gradle.kts:26` 改 `isMinifyEnabled = true`，启用 `isShrinkResources = true`。
-2. 补 ProGuard 规则：
-    - `-keepclassmembers @kotlinx.serialization.Serializable class **`
-    - OkHttp/Shizuku/WorkManager 官方推荐规则
-3. 本地 `assembleRelease` 实测，验证混淆后功能正常。
-4. 配合 E8 设置 Release 签名配置。
-
-**涉及文件**：`app/build.gradle.kts:26`、`app/proguard-rules.pro`。
-
-**依赖与风险**：混淆可能破坏反射调用（GNSS API、DataStore 序列化），需充分回归测试；无签名配置（见 E8）。
-
-**ROI**：中工作量 / 高价值 — 工程化基础，APK 瘦身 + 代码防护。
+**剩余缺口**：设备端 R8 冒烟（A-GPS/历史/Shizuku）；Release 签名配置仍可选。
 
 ---
 
-### E2. CI 增加 lint / 覆盖率（P2，工作量：小）
+### E2. CI 增加 lint / 覆盖率 ✅ 已实现（P2，工作量：小）
 
-**现状**：`.github/workflows/ci.yml`（61 行）当前步骤：JDK 21 → Android SDK → `test` → `assembleDebug` → `assembleRelease` → 上传 artifact。README 第 251 行自述「缺 ktlintCheck 步骤」。无 Detekt、无 Android Lint、无 JaCoCo 覆盖率、无 instrumented 测试 job、无 dependabot。
+**现状（已实现）**：`push`/`pull_request`（master）+ `workflow_dispatch`；步骤含 `ktlintCheck`、`lintDebug`、`test`、`assembleDebug`/`assembleRelease`；`.github/dependabot.yml` weekly（gradle + github-actions）。
 
-另外：`:25-26` 用 `sed` 删除 `gradle.properties:18` 的机器相关路径（`org.gradle.java.home`）——是 workaround，应改用环境变量。无 Release 签名配置。
-
-**问题/缺口**：CI 不检查代码风格、不收集覆盖率、不跑 Lint，质量门禁缺失。
-
-**建议方案**：
-
-1. CI 增加 `./gradlew ktlintCheck`、`./gradlew lintDebug` 步骤。
-2. 可选 Detekt（静态分析）。
-3. 接入 JaCoCo / Kover 收集覆盖率，上传 Codecov。
-4. 增加 Android emulator job 跑 instrumented 测试（需补 `app/src/androidTest/`，目前为空）。
-5. 移除 `gradle.properties:18` 机器路径，改用 `JAVA_HOME` 环境变量，消除 sed workaround。
-6. 增加 `dependabot.yml`。
-
-**涉及文件**：`.github/workflows/ci.yml`、`gradle.properties:18`、新建 `.github/dependabot.yml`。
-
-**依赖与风险**：CI 时间变长；emulator job 配置复杂。
-
-**ROI**：小工作量 / 高价值 — 质量门禁，防止回归。
+**剩余缺口**：JaCoCo/覆盖率上传、instrumented emulator job、Detekt（可选）。
 
 ---
 
-### E3. Timber + 崩溃上报（P2，工作量：中）
+### E3. Timber 日志 ✅ 已实现（P2，工作量：中；崩溃上报未做）
 
-**现状**：全仓 grep `timber|crashlytics|firebase` **零命中**。4 个文件共 54 处裸用 `android.util.Log`（`AGpsDataSourceImpl.kt` 13、`AGpsDownloader.kt` 12、`AGpsRepositoryImpl.kt` 27、`XtraDataValidator.kt` 2），用硬编码 TAG。**完全无崩溃上报**。
+**现状（已实现）**：Timber 经 Version Catalog 接入；`GpsTestApplication` DebugTree / ReleaseTree；原 4 个 A-GPS 文件 `android.util.Log` 已替换。
 
-**问题/缺口**：Release 包的线上崩溃不可观测；日志不可控（Release 也会打印）；无统一日志框架。
-
-**建议方案**：
-
-1. 引入 `com.jakewharton.timber:timber`，在 `Application.onCreate` 种树（Debug 用 `DebugTree`，Release 用自定义 release tree 或不种）。
-2. 全局替换 54 处 `android.util.Log` 为 `Timber.x()`（自动 TAG）。
-3. 评估接入 Firebase Crashlytics（需 Google 服务配置）或自托管 Sentry。
-4. 在 Release 构建关闭 debug 日志。
-
-**涉及文件**：`app/build.gradle.kts`（加依赖）、新建 `GpsTestApplication.kt`、4 个 Log 使用文件、`AndroidManifest.xml`（注册 Application）。
-
-**依赖与风险**：Crashlytics 需 Firebase 项目；Timber 需全量替换 Log 调用。
-
-**ROI**：中工作量 / 高价值 — 线上可观测性从零到有。
+**刻意未做**：Firebase Crashlytics / Sentry（Wave B 默认 Timber only）。
 
 ---
 
@@ -497,47 +446,17 @@
 
 ---
 
-### E5. 国际化（i18n）（P2，工作量：中）
+### E5. 国际化（i18n）✅ 已实现基线（P2，工作量：中）
 
-**现状**：`app/src/main/res/` 下**只有 `values/`**，无 `values-en/`、`values-zh-rCN/`、`values-night/`。`strings.xml`（320 行）默认中文，但 `app_name = "GPS Debug Tool"`（英文）命名不一致。
+**现状（已实现）**：`values/` 中文默认 + `values-en/strings.xml` 英文；导航/天空图/统计卡/AGpsViewModel 用户可见文案已进资源；`app_name` 中英分离。
 
-更严重：UI 代码存在**硬编码中文字符串**绕过资源系统：
-
-- `AGpsManagerScreen.kt:251` `Text("验证下载源")`
-- `AGpsManagerScreen.kt:311` `Text("关闭")`
-- `SkyChartScreen.kt:61` `title = { Text("天空图") }`
-- `AGpsDownloader.kt:40` `"URL为空"`（错误信息硬编码）
-
-**问题/缺口**：海外用户无法使用；硬编码字符串无法随系统语言切换；维护混乱。
-
-**建议方案**：
-
-1. 抽取所有硬编码中文字符串到 `strings.xml`。
-2. 建立 `values-en/strings.xml` 英文版（或把当前中文移到 `values-zh-rCN/`，`values/` 改英文默认）。
-3. `app/build.gradle.kts` 用 `resourceConfigurations` 限定支持的语言。
-4. 统一 `app_name` 命名。
-
-**涉及文件**：4 个硬编码文件、`app/src/main/res/values/strings.xml`、新建 `values-en/strings.xml`、`app/build.gradle.kts`。
-
-**依赖与风险**：翻译工作量；需审查所有 UI 文案。
-
-**ROI**：中工作量 / 中价值 — 扩大用户群，规范字符串管理。
+**剩余缺口**：部分内部错误串（Downloader/Validator）仍中文；帮助长文案可继续补全英文。
 
 ---
 
-### E6. Version Catalog 迁移（P3，工作量：小）
+### E6. Version Catalog 迁移 ✅ 已实现（P3，工作量：小）
 
-**现状**：所有依赖散写在 `app/build.gradle.kts` 的 `dependencies {}` 中，无 `gradle/libs.versions.toml`。
-
-**问题/缺口**：版本管理分散、跨模块复用难、依赖升级易遗漏。
-
-**建议方案**：迁移到 Gradle Version Catalog（`gradle/libs.versions.toml`），统一管理版本号、库坐标、插件。
-
-**涉及文件**：新建 `gradle/libs.versions.toml`、`build.gradle.kts`（根和 app）、`settings.gradle.kts`。
-
-**依赖与风险**：AGP 8.7.3 原生支持，无兼容问题；需全量替换 dependencies 块。
-
-**ROI**：小工作量 / 低价值 — 长线维护便利，单模块项目短期收益小。
+**现状（已实现）**：`gradle/libs.versions.toml` + 根/app `build.gradle.kts` 使用 `libs.*` 插件与依赖别名。
 
 ---
 
@@ -562,24 +481,11 @@
 
 ---
 
-### E8. 文档补全（P3，工作量：小）
+### E8. 文档补全 ✅ 已实现基线（P3，工作量：小）
 
-**现状**：`README.md`（378 行）很完整。但缺 `CONTRIBUTING.md`（README 第 366-374 行只写了 5 步，无 code style/commit convention/PR 模板）、缺 `CHANGELOG.md`（versionCode=1, versionName="1.0"，无版本历史）、缺 `ARCHITECTURE.md` / ADR、缺 `SECURITY.md`、`CODE_OF_CONDUCT.md`。`docs/` 只有 `superpowers/` 子目录（AI 规划文档）。`TODO.md`（本文档已重构）与旧版 README 功能宣称存在偏差。
+**现状（已实现）**：`CONTRIBUTING.md`、`CHANGELOG.md`、`docs/ARCHITECTURE.md` 已添加（PR/commit 规范、Keep a Changelog、Clean MVVM/DI/管道说明）。
 
-**问题/缺口**：新贡献者无 onboarding 指南；版本演进无记录；架构决策无沉淀。
-
-**建议方案**：
-
-1. 补 `CONTRIBUTING.md`（PR 流程、commit 规范、代码风格、测试要求）。
-2. 补 `CHANGELOG.md`（遵循 Keep a Changelog 格式）。
-3. 补 `docs/ARCHITECTURE.md` 或在 README 内深化（ADR 记录关键决策，如手动 DI vs Hilt）。
-4. 对齐 README 与本文档的功能宣称。
-
-**涉及文件**：新建 `CONTRIBUTING.md`、`CHANGELOG.md`、可选 `docs/adr/`。
-
-**依赖与风险**：无技术风险；需持续维护。
-
-**ROI**：小工作量 / 中价值 — 项目健康度，开源协作基础。
+**剩余缺口**：`SECURITY.md` / `CODE_OF_CONDUCT.md` / ADR 目录仍可选。
 
 ---
 
@@ -638,21 +544,21 @@
 
 **目标**：提升工程质量、可观测性、测试覆盖。可与前三阶段并行，或作为「无功能需求时的填充」。
 
-| 顺序 | 条目                             | 预估工作量 | 关键产出                                    |
-| ---- | -------------------------------- | ---------- | ------------------------------------------- |
-| 1    | **E2** CI 增加 lint/覆盖率       | 小         | 质量门禁；若恢复 push/PR 触发，收益显著提高 |
-| 2    | **E1** Release minify + ProGuard | 中         | APK 瘦身 + 代码防护                         |
-| 3    | **E3** Timber + 崩溃上报         | 中         | 线上可观测性                                |
-| 4    | **E5** i18n                      | 中         | 国际化                                      |
-| 5    | **E8** 文档补全                  | 小         | 协作基础                                    |
-| 6    | **G2** RINEX 导出                | 大         | 专业用户核心诉求（依赖 G1/G3 数据）         |
-| 7    | **G3** GnssAntennaInfo           | 中         | RINEX 头部依赖                              |
-| 8    | **E6** Version Catalog           | 小         | 维护便利                                    |
-| 9    | **E7** Room 迁移                 | 大         | 仅在 U3 做厚后                              |
-| 10   | **G4** 导航电文                  | 大         | 长线可选                                    |
-| 11   | **U6** 柱状图/DOP 曲线           | 中         | 视觉化锦上添花                              |
+| 顺序 | 条目                      | 预估工作量 | 关键产出                            |
+| ---- | ------------------------- | ---------- | ----------------------------------- |
+| 1    | **E2** CI ✅              | —          | push/PR + ktlint + lintDebug        |
+| 2    | **E1** minify ✅          | —          | Release R8 + ProGuard 规则          |
+| 3    | **E3** Timber ✅          | —          | 无 Crashlytics（刻意）              |
+| 4    | **E5** i18n 基线 ✅       | —          | values-en + 主要 UI 资源化          |
+| 5    | **E8** 文档基线 ✅        | —          | CONTRIBUTING/CHANGELOG/ARCHITECTURE |
+| 6    | **E6** Version Catalog ✅ | —          | libs.versions.toml                  |
+| 7    | **G3** GnssAntennaInfo    | 中         | RINEX 头部依赖                      |
+| 8    | **G2** RINEX 导出         | 大         | 专业用户核心诉求（依赖 G1/G3）      |
+| 9    | **E7** Room 迁移          | 大         | 仅在 U3 做厚后                      |
+| 10   | **G4** 导航电文           | 大         | 长线可选                            |
+| 11   | **U6** 柱状图/DOP 曲线    | 中         | 视觉化锦上添花                      |
 
-**建议**：E4 已完成，后续工程化的优先级取决于 CI 是否恢复自动触发；若继续保持仅手动触发，E2 的即时收益低于 U2/G7。
+**建议**：Wave B 工程化已落地；下一优先 G3 或 G1 接线。
 
 ---
 
@@ -661,12 +567,12 @@
 ```
 阶段一·止血(1-2天)         阶段二·核心(3-7天)        阶段三·体验(5-10天)       阶段四·工程化(持续)
 ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI lint      │
-│ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ✅ │ ──→│ E1 minify       │
-│ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选 ✅ │    │ E3 Timber+崩溃   │
-└──────────────────┘    │ B3 NMEA监听 ✅   │    │ U5 A-GPS补全 ✅│    │ E5 i18n          │
+│ B1 dumpsys修复 ★ │    │ U2 天空图 ★ ✅  │    │ U1 设置 ★ ✅   │    │ E2 CI ✅        │
+│ G5 TDOP/GDOP ★   │ ──→│ G7 精度+闰秒 ✅ │ ──→│ U3 历史+导出 ✅ │ ──→│ E1 minify ✅    │
+│ B2 载波相位纠错  │    │ G1 伪距推导+定位 │    │ U4 列表筛选 ✅ │    │ E3 Timber ✅    │
+└──────────────────┘    │ B3 NMEA监听 ✅   │    │ U5 A-GPS补全 ✅│    │ E5/E6/E8 ✅     │
                         └──────────────────┘    └──────────────────┘    │ G2/G3 RINEX      │
-                                                                         │ E6-E8, G4, U6    │
+                                                                         │ E7, G4, U6       │
                                                                          └──────────────────┘
 ★ = 阶段内最高优先级
 ```
@@ -696,6 +602,7 @@
 | **B3 NMEA 监听**            | —        | ✅ 已实现                       | `addNmeaListener` → `Flow<NmeaSentence>` + `NmeaParser` + `NmeaScreen`/导出/设置开关 + 领域单测                         |
 | **U4 列表筛选/排序/冻结**   | —        | ✅ 已实现                       | `SatelliteListQuery` + `SatelliteFilterBar` + 冻结快照；星座/SVID/CN0·仰角排序 + 单测                                   |
 | **U5 A-GPS 补全**           | —        | ✅ 已实现                       | 文件导入、URL 编辑、1/6/12/24h 间隔、注入历史 DataStore 持久化/清除 + ViewModel/UI 接线                                 |
+| **Wave B 工程化**           | —        | ✅ 已实现 (2026-07-18)          | E2 CI push/PR+ktlint+lint；E8 文档；E6 Catalog；E1 minify；E3 Timber；E5 values-en 基线                                 |
 
 ### 专业/调试功能
 
