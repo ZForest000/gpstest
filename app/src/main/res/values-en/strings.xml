@@ -10,6 +10,12 @@
     <string name="nav_history">History</string>
     <string name="nav_help">Help</string>
     <string name="nav_nmea">NMEA</string>
+    <string name="nav_navigation_messages">Navigation messages</string>
+    <string name="navigation_message_title">Navigation message monitor</string>
+    <string name="navigation_message_clear">Clear messages</string>
+    <string name="navigation_message_svid_filter">Filter SVID</string>
+    <string name="navigation_message_empty">No navigation message received. Some devices and signal conditions do not provide this data.</string>
+    <string name="navigation_message_metadata">Status %1$d · message %2$d · subframe %3$d</string>
     <string name="cd_menu">Menu</string>
 
     <!-- Sky chart -->
@@ -170,4 +176,25 @@
     <string name="antenna_pco_format">PCO X/Y/Z: %1$.2f / %2$.2f / %3$.2f mm</string>
     <string name="antenna_pco_uncertainty_format">Uncertainty ±%1$.2f / %2$.2f / %3$.2f mm</string>
     <string name="antenna_pcv_summary_format">PCV: Δφ=%1$.1f° Δθ=%2$.1f°, %3$d samples, range [%4$.2f, %5$.2f] mm</string>
+    <string name="signal_bar_chart_title">Signal-to-noise comparison</string>
+    <string name="dop_trend_chart_title">Live DOP trend</string>
+    <string name="rinex_export">Export RINEX</string>
+    <string name="rinex_share_chooser">Share RINEX observation file</string>
+    <string name="rinex_export_failed">No valid raw observations to export</string>
+    <string name="local_position_title">Local GPS solution</string>
+    <string name="local_position_status">Status: %1$s</string>
+    <string name="local_position_ecef">ECEF: %1$.1f, %2$.1f, %3$.1f m</string>
+    <string name="local_position_clock_bias">Receiver clock bias: %.3f m</string>
+    <string name="local_position_rms">Weighted residual RMS: %.3f m</string>
+    <string name="local_position_available">Available</string>
+    <string name="local_position_insufficient">Not enough valid observations</string>
+    <string name="local_position_invalid_observation">Invalid observation data</string>
+    <string name="local_position_unavailable">Unavailable</string>
+    <string name="local_position_observation_count">Usable observations: %1$d / at least %2$d</string>
+    <string name="local_position_valid_pseudorange_count">Valid GPS pseudoranges: %1$d / GPS satellites %2$d</string>
+    <string name="local_position_ephemeris_count">Loaded ephemerides: %1$d</string>
+    <string name="local_position_missing_ephemeris">Missing navigation message/ephemeris: %1$s</string>
+    <string name="external_ephemeris_downloaded">External GPS ephemeris: downloaded %1$d records</string>
+    <string name="external_ephemeris_cached">External GPS ephemeris: cached %1$d records</string>
+    <string name="external_ephemeris_unavailable">External GPS ephemeris: unavailable</string>
 </resources>

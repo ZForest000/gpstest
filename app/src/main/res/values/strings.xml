@@ -88,6 +88,12 @@
     <string name="nmea_no_data">暂无NMEA数据</string>
     <string name="nmea_sentence_format">[%1$tH:%1$tM:%1$tS.%1$tL] %2$s</string>
     <string name="nav_nmea">NMEA</string>
+    <string name="nav_navigation_messages">导航电文</string>
+    <string name="navigation_message_title">导航电文监视</string>
+    <string name="navigation_message_clear">清空电文</string>
+    <string name="navigation_message_svid_filter">筛选 SVID</string>
+    <string name="navigation_message_empty">尚未收到导航电文。部分设备或卫星信号环境不提供此数据。</string>
+    <string name="navigation_message_metadata">状态 %1$d · 消息 %2$d · 子帧 %3$d</string>
     <string name="nmea_freeze">冻结</string>
     <string name="nmea_resume">继续</string>
     <string name="nmea_clear">清空</string>
@@ -173,6 +179,27 @@
     <string name="no">否</string>
     <string name="signal_chart">信号图表</string>
     <string name="signal_chart_subtitle">最近 %d 次测量</string>
+    <string name="signal_bar_chart_title">信噪比对比</string>
+    <string name="dop_trend_chart_title">DOP 实时趋势</string>
+    <string name="rinex_export">导出 RINEX</string>
+    <string name="rinex_share_chooser">分享 RINEX 观测文件</string>
+    <string name="rinex_export_failed">暂无可导出的有效原始观测</string>
+    <string name="local_position_title">本地 GPS 解算</string>
+    <string name="local_position_status">状态：%1$s</string>
+    <string name="local_position_ecef">ECEF：%1$.1f，%2$.1f，%3$.1f m</string>
+    <string name="local_position_clock_bias">接收机钟差：%.3f m</string>
+    <string name="local_position_rms">加权残差 RMS：%.3f m</string>
+    <string name="local_position_available">已解算</string>
+    <string name="local_position_insufficient">有效观测不足</string>
+    <string name="local_position_invalid_observation">观测数据无效</string>
+    <string name="local_position_unavailable">暂不可用</string>
+    <string name="local_position_observation_count">可用观测：%1$d / 至少 %2$d</string>
+    <string name="local_position_valid_pseudorange_count">有效 GPS 伪距：%1$d / GPS 卫星 %2$d</string>
+    <string name="local_position_ephemeris_count">已加载星历：%1$d</string>
+    <string name="local_position_missing_ephemeris">缺少导航电文/星历：%1$s</string>
+    <string name="external_ephemeris_downloaded">外部 GPS 星历：已下载 %1$d 条</string>
+    <string name="external_ephemeris_cached">外部 GPS 星历：缓存 %1$d 条</string>
+    <string name="external_ephemeris_unavailable">外部 GPS 星历：当前不可用</string>
 
     <!-- Constellations -->
     <string name="constellation_gps">GPS (美国)</string>

@@ -3,8 +3,15 @@ package com.example.gpstest.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gpstest.data.local.ExternalGpsEphemerisProvider
+import com.example.gpstest.data.local.ExternalGpsEphemerisResult
+import com.example.gpstest.data.local.RinexSessionRecorder
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.DumpsysGnssData
+import com.example.gpstest.domain.ephemeris.GpsLnavEphemerisStore
+import com.example.gpstest.domain.ephemeris.GpsObservationBuildResult
+import com.example.gpstest.domain.ephemeris.GpsPositionObservationBuilder
+import com.example.gpstest.domain.export.RinexEpoch
 import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.AppSettings
 import com.example.gpstest.domain.model.DopInfo
@@ -12,17 +19,23 @@ import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssClockData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
+import com.example.gpstest.domain.model.PositionSolution
 import com.example.gpstest.domain.model.SatelliteGroup
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.SatelliteHistoryRepository
 import com.example.gpstest.domain.util.DopCalculator
+import com.example.gpstest.domain.util.PositionSolver
 import com.example.gpstest.ui.components.SignalReading
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * 卫星监控 ViewModel。管理 GNSS 数据收集、信号历史、TTFF 跟踪和快照自动保存。
@@ -36,6 +49,7 @@ class SatelliteViewModel(
     private val repository: GnssRepository,
     private val historyRepository: SatelliteHistoryRepository? = null,
     private val settingsStore: SettingsStore? = null,
+    private val externalEphemerisProvider: ExternalGpsEphemerisProvider? = null,
 ) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<SatelliteUiState>(SatelliteUiState.Loading)
     val uiState: StateFlow<SatelliteUiState> = _uiState.asStateFlow()
@@ -46,6 +60,11 @@ class SatelliteViewModel(
     private val _signalHistory = MutableStateFlow<Map<String, MutableList<SignalReading>>>(emptyMap())
     val signalHistory: StateFlow<Map<String, List<SignalReading>>> = _signalHistory.asStateFlow()
 
+    private val _dopHistory = MutableStateFlow<List<DopInfo>>(emptyList())
+
+    /** 最近 60 次有效 DOP 解算结果，供实时趋势图使用。 */
+    val dopHistory: StateFlow<List<DopInfo>> = _dopHistory.asStateFlow()
+
     private val _ttffState = MutableStateFlow<TtffState>(TtffState.Measuring(System.currentTimeMillis()))
     val ttffState: StateFlow<TtffState> = _ttffState.asStateFlow()
 
@@ -55,13 +74,29 @@ class SatelliteViewModel(
     private val _antennaInfos = MutableStateFlow<List<AntennaInfo>>(emptyList())
     val antennaInfos: StateFlow<List<AntennaInfo>> = _antennaInfos.asStateFlow()
 
+    private val _localPositionSolution = MutableStateFlow<PositionSolution?>(null)
+    val localPositionSolution: StateFlow<PositionSolution?> = _localPositionSolution.asStateFlow()
+
+    private val _localPositionDiagnostics = MutableStateFlow<GpsObservationBuildResult?>(null)
+    val localPositionDiagnostics: StateFlow<GpsObservationBuildResult?> = _localPositionDiagnostics.asStateFlow()
+
+    private val _externalEphemerisResult = MutableStateFlow<ExternalGpsEphemerisResult?>(null)
+    val externalEphemerisResult: StateFlow<ExternalGpsEphemerisResult?> = _externalEphemerisResult.asStateFlow()
+
     private var lastSnapshotTime = 0L
     private var autoSaveEnabled = true
     private var snapshotIntervalMs = AppSettings.DEFAULT_SNAPSHOT_INTERVAL_MS
     private var collectionJob: Job? = null
     private var antennaJob: Job? = null
+    private var navigationJob: Job? = null
+    private var externalEphemerisJob: Job? = null
+    private val rinexRecorder = RinexSessionRecorder()
+    private val ephemerisStore = GpsLnavEphemerisStore()
+    private val ephemerides = mutableMapOf<Int, com.example.gpstest.domain.ephemeris.GpsBroadcastEphemeris>()
 
     private val maxSignalHistorySize = 60 // 每颗卫星保留 60 秒历史数据
+    private val maxDopHistorySize = 60
+    private val externalEphemerisRefreshIntervalMs = 6 * 60 * 60 * 1000L
 
     init {
         loadHistory()
@@ -93,7 +128,41 @@ class SatelliteViewModel(
     fun startListening() {
         collectionJob?.cancel()
         antennaJob?.cancel()
+        navigationJob?.cancel()
+        externalEphemerisJob?.cancel()
         _antennaInfos.value = emptyList()
+        _localPositionSolution.value = null
+        _localPositionDiagnostics.value = null
+        ephemerisStore.clear()
+        ephemerides.clear()
+
+        externalEphemerisProvider?.let { provider ->
+            externalEphemerisJob =
+                viewModelScope.launch {
+                    while (isActive) {
+                        val result = withContext(Dispatchers.IO) { provider.load() }
+                        if (result.ephemerides.isNotEmpty()) {
+                            ephemerides.putAll(result.ephemerides.associateBy { ephemeris -> ephemeris.svid })
+                        }
+                        _externalEphemerisResult.value = result
+
+                        delay(externalEphemerisRefreshIntervalMs)
+                    }
+                }
+        }
+
+        navigationJob =
+            viewModelScope.launch {
+                try {
+                    repository.getNavigationMessages().collect { frame ->
+                        ephemerisStore.add(frame)?.let { ephemeris -> ephemerides[ephemeris.svid] = ephemeris }
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // 导航电文不受支持时保留无本地解状态，主 GNSS 流继续运行。
+                }
+            }
 
         antennaJob =
             viewModelScope.launch {
@@ -130,6 +199,16 @@ class SatelliteViewModel(
 
                         updateTtffState(gnssData.location)
                         updateSignalHistory(satellites)
+                        updateDopHistory(dopInfo)
+                        rinexRecorder.record(gnssData)
+                        val observationResult =
+                            GpsPositionObservationBuilder.analyze(
+                                clock = gnssData.clock,
+                                satellites = satellites,
+                                ephemerides = ephemerides,
+                            )
+                        _localPositionDiagnostics.value = observationResult
+                        _localPositionSolution.value = PositionSolver.solve(observationResult.observations)
                         maybeSaveSnapshot(
                             satellites = satellites,
                             location = gnssData.location,
@@ -180,6 +259,15 @@ class SatelliteViewModel(
     fun getSignalHistoryForSatellite(satellite: GnssSatellite): List<SignalReading> {
         val key = "${satellite.constellation.name}_${satellite.svid}"
         return _signalHistory.value[key] ?: emptyList()
+    }
+
+    fun getRinexEpochs(): List<RinexEpoch> = rinexRecorder.epochs
+
+    fun clearRinexSession() = rinexRecorder.clear()
+
+    private fun updateDopHistory(dopInfo: DopInfo?) {
+        if (dopInfo == null) return
+        _dopHistory.value = (_dopHistory.value + dopInfo).takeLast(maxDopHistorySize)
     }
 
     // 自动保存开启且距离上次快照超过 snapshotIntervalMs 时异步保存
@@ -254,6 +342,8 @@ class SatelliteViewModel(
     override fun onCleared() {
         collectionJob?.cancel()
         antennaJob?.cancel()
+        navigationJob?.cancel()
+        externalEphemerisJob?.cancel()
         _antennaInfos.value = emptyList()
         super.onCleared()
     }

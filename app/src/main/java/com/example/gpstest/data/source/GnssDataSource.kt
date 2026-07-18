@@ -3,6 +3,7 @@ package com.example.gpstest.data.source
 import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
+import com.example.gpstest.domain.model.NavigationMessageFrame
 import com.example.gpstest.domain.model.NmeaSentence
 import kotlinx.coroutines.flow.Flow
 
@@ -26,6 +27,12 @@ interface GnssDataSource {
      * 在 [callbackFlow] 的 awaitClose 中注销。需要位置权限才能收到报文。
      */
     fun getNmeaSentences(): Flow<NmeaSentence>
+
+    /**
+     * 原始导航电文流（API 24+），不参与 [getGnssData] 的采样。
+     * 设备可能不输出电文；这种情况下流保持为空而不影响卫星监控。
+     */
+    fun getNavigationMessages(): Flow<NavigationMessageFrame>
 
     /**
      * 天线相位中心信息流（API 30+）。

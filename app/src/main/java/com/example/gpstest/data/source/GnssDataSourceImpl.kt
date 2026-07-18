@@ -8,6 +8,7 @@ import android.hardware.SensorManager
 import android.location.GnssAntennaInfo
 import android.location.GnssMeasurement
 import android.location.GnssMeasurementsEvent
+import android.location.GnssNavigationMessage
 import android.location.GnssStatus
 import android.location.Location
 import android.location.LocationListener
@@ -22,6 +23,7 @@ import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.MultipathIndicator
+import com.example.gpstest.domain.model.NavigationMessageFrame
 import com.example.gpstest.domain.model.NmeaSentence
 import com.example.gpstest.domain.model.PseudorangeMeasurement
 import com.example.gpstest.domain.model.PseudorangeResult
@@ -497,6 +499,55 @@ class GnssDataSourceImpl(
                     lm.removeNmeaListener(listener)
                 } catch (e: Exception) {
                     // Ignore cleanup errors
+                }
+            }
+        }
+
+    override fun getNavigationMessages(): Flow<NavigationMessageFrame> =
+        callbackFlow {
+            val lm =
+                locationManager ?: run {
+                    close()
+                    return@callbackFlow
+                }
+            val callback =
+                object : GnssNavigationMessage.Callback() {
+                    override fun onGnssNavigationMessageReceived(event: GnssNavigationMessage) {
+                        trySend(
+                            NavigationMessageFrame(
+                                // NavigationMessage 的 type 高字节编码星座（如 0x0101 = GPS L1 C/A）。
+                                constellation = Constellation.fromConstellationType(event.type ushr 8),
+                                svid = event.svid,
+                                type = event.type,
+                                status = event.status,
+                                messageId = event.messageId,
+                                submessageId = event.submessageId,
+                                data = event.data.copyOf(),
+                                timestampMs = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
+
+                    override fun onStatusChanged(status: Int) {
+                        if (status == GnssNavigationMessage.Callback.STATUS_NOT_SUPPORTED) {
+                            close()
+                        }
+                    }
+                }
+            try {
+                lm.registerGnssNavigationMessageCallback(context.mainExecutor, callback)
+            } catch (e: SecurityException) {
+                close(e)
+                return@callbackFlow
+            } catch (e: Exception) {
+                close(e)
+                return@callbackFlow
+            }
+            awaitClose {
+                try {
+                    lm.unregisterGnssNavigationMessageCallback(callback)
+                } catch (_: Exception) {
+                    // 清理失败不影响其他 GNSS 回调。
                 }
             }
         }

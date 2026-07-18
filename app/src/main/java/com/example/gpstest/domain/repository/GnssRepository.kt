@@ -3,6 +3,7 @@ package com.example.gpstest.domain.repository
 import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
+import com.example.gpstest.domain.model.NavigationMessageFrame
 import com.example.gpstest.domain.model.NmeaSentence
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,9 @@ interface GnssRepository {
      * NMEA 速率远低于卫星状态，且 UI 需要逐行展示，采样会丢失报文。
      */
     fun getNmeaSentences(): Flow<NmeaSentence>
+
+    /** 原始 GNSS 导航电文，直接透传数据源而不参与 UI 数据采样。 */
+    fun getNavigationMessages(): Flow<NavigationMessageFrame>
 
     /**
      * 天线相位中心信息流，直接透传数据源，**不**参与 250ms 采样。

@@ -1,5 +1,6 @@
 package com.example.gpstest.ui.screens.satellite
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,9 +31,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
+import com.example.gpstest.data.local.RinexExportHelper
 import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
@@ -42,13 +46,16 @@ import com.example.gpstest.ui.components.ClockInfoCard
 import com.example.gpstest.ui.components.ConstellationHealthSummaryCard
 import com.example.gpstest.ui.components.ConstellationStatCard
 import com.example.gpstest.ui.components.DopCard
+import com.example.gpstest.ui.components.DopTrendChart
 import com.example.gpstest.ui.components.ErrorContent
 import com.example.gpstest.ui.components.GnssCapabilitiesCard
+import com.example.gpstest.ui.components.LocalPositionCard
 import com.example.gpstest.ui.components.LocationCard
 import com.example.gpstest.ui.components.PermissionRequiredContent
 import com.example.gpstest.ui.components.SatelliteCard
 import com.example.gpstest.ui.components.SatelliteDetailSheet
 import com.example.gpstest.ui.components.SatelliteFilterBar
+import com.example.gpstest.ui.components.SignalBarChart
 import com.example.gpstest.ui.components.StatBar
 import com.example.gpstest.ui.components.TtffCard
 import com.example.gpstest.viewmodel.SatelliteUiState
@@ -68,6 +75,13 @@ fun SatelliteListScreen(
     val ttffState by viewModel.ttffState.collectAsState()
     val gnssCapabilities by viewModel.gnssCapabilities.collectAsState()
     val antennaInfos by viewModel.antennaInfos.collectAsState()
+    val dopHistory by viewModel.dopHistory.collectAsState()
+    val localPositionSolution by viewModel.localPositionSolution.collectAsState()
+    val localPositionDiagnostics by viewModel.localPositionDiagnostics.collectAsState()
+    val externalEphemerisResult by viewModel.externalEphemerisResult.collectAsState()
+    val context = LocalContext.current
+    val rinexShareTitle = stringResource(R.string.rinex_share_chooser)
+    val rinexShareFailed = stringResource(R.string.rinex_export_failed)
     var selectedSatellite by remember { mutableStateOf<GnssSatellite?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -125,6 +139,25 @@ fun SatelliteListScreen(
                         )
                     }
                 },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            val location = (uiState as? SatelliteUiState.Success)?.location
+                            val shared =
+                                RinexExportHelper.share(
+                                    context = context,
+                                    epochs = viewModel.getRinexEpochs(),
+                                    location = location,
+                                    chooserTitle = rinexShareTitle,
+                                )
+                            if (!shared) {
+                                Toast.makeText(context, rinexShareFailed, Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.rinex_export))
+                    }
+                },
             )
         },
         modifier = modifier,
@@ -153,6 +186,10 @@ fun SatelliteListScreen(
                         dopInfo = snapshot.dopInfo,
                         gnssCapabilities = gnssCapabilities,
                         antennaInfos = antennaInfos,
+                        dopHistory = dopHistory,
+                        localPositionSolution = localPositionSolution,
+                        localPositionDiagnostics = localPositionDiagnostics,
+                        externalEphemerisResult = externalEphemerisResult,
                         ttffState = ttffState,
                         listQuery = listQuery,
                         selectedConstellations = selectedConstellationEnums,
@@ -201,6 +238,10 @@ fun SatelliteListScreen(
                         dopInfo = liveState.dopInfo,
                         gnssCapabilities = gnssCapabilities,
                         antennaInfos = antennaInfos,
+                        dopHistory = dopHistory,
+                        localPositionSolution = localPositionSolution,
+                        localPositionDiagnostics = localPositionDiagnostics,
+                        externalEphemerisResult = externalEphemerisResult,
                         ttffState = ttffState,
                         listQuery = listQuery,
                         selectedConstellations = selectedConstellationEnums,
@@ -260,6 +301,10 @@ private fun SatelliteListContent(
     dopInfo: com.example.gpstest.domain.model.DopInfo?,
     gnssCapabilities: com.example.gpstest.domain.model.GnssCapabilitiesInfo?,
     antennaInfos: List<AntennaInfo>,
+    dopHistory: List<com.example.gpstest.domain.model.DopInfo>,
+    localPositionSolution: com.example.gpstest.domain.model.PositionSolution?,
+    localPositionDiagnostics: com.example.gpstest.domain.ephemeris.GpsObservationBuildResult?,
+    externalEphemerisResult: com.example.gpstest.data.local.ExternalGpsEphemerisResult?,
     ttffState: com.example.gpstest.viewmodel.TtffState,
     listQuery: SatelliteListQuery,
     selectedConstellations: Set<Constellation>,
@@ -301,6 +346,22 @@ private fun SatelliteListContent(
 
         item {
             DopCard(dopInfo = dopInfo)
+        }
+
+        item {
+            LocalPositionCard(
+                solution = localPositionSolution,
+                diagnostics = localPositionDiagnostics,
+                externalEphemerisResult = externalEphemerisResult,
+            )
+        }
+
+        item {
+            SignalBarChart(satellites = allSatellites)
+        }
+
+        item {
+            DopTrendChart(history = dopHistory)
         }
 
         item {

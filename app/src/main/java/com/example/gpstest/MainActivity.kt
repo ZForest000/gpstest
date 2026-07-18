@@ -42,6 +42,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.gpstest.data.local.AGpsFileHandlerImpl
 import com.example.gpstest.data.local.AGpsInjectionHistoryStore
 import com.example.gpstest.data.local.AGpsSettingsStore
+import com.example.gpstest.data.local.ExternalGpsEphemerisStore
+import com.example.gpstest.data.local.RoomSatelliteHistoryStore
 import com.example.gpstest.data.local.SatelliteHistoryDataStore
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.AGpsDataSourceImpl
@@ -55,11 +57,13 @@ import com.example.gpstest.domain.repository.SatelliteHistoryRepositoryImpl
 import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
 import com.example.gpstest.ui.screens.help.HelpScreen
 import com.example.gpstest.ui.screens.history.HistoryScreen
+import com.example.gpstest.ui.screens.navigation.NavigationMessageScreen
 import com.example.gpstest.ui.screens.nmea.NmeaScreen
 import com.example.gpstest.ui.screens.satellite.SatelliteListScreen
 import com.example.gpstest.ui.screens.settings.SettingsScreen
 import com.example.gpstest.ui.theme.Theme
 import com.example.gpstest.viewmodel.AGpsViewModel
+import com.example.gpstest.viewmodel.NavigationMessageViewModel
 import com.example.gpstest.viewmodel.NmeaViewModel
 import com.example.gpstest.viewmodel.SatelliteViewModel
 import com.example.gpstest.viewmodel.SettingsViewModel
@@ -86,12 +90,25 @@ class MainActivity : ComponentActivity() {
 
     private val satelliteViewModel: SatelliteViewModel by viewModels {
         val historyDataStore = SatelliteHistoryDataStore(application, appSettingsStore)
-        val historyRepository = SatelliteHistoryRepositoryImpl(historyDataStore)
-        SatelliteViewModelFactory(application, gnssRepository, historyRepository, appSettingsStore)
+        val historyRepository =
+            SatelliteHistoryRepositoryImpl(
+                RoomSatelliteHistoryStore(application, historyDataStore, appSettingsStore),
+            )
+        SatelliteViewModelFactory(
+            application,
+            gnssRepository,
+            historyRepository,
+            appSettingsStore,
+            ExternalGpsEphemerisStore(application),
+        )
     }
 
     private val nmeaViewModel: NmeaViewModel by viewModels {
         NmeaViewModelFactory(application, gnssRepository, appSettingsStore)
+    }
+
+    private val navigationMessageViewModel: NavigationMessageViewModel by viewModels {
+        NavigationMessageViewModelFactory(application, gnssRepository)
     }
 
     private val agpsViewModel: AGpsViewModel by viewModels {
@@ -120,6 +137,7 @@ class MainActivity : ComponentActivity() {
                 _permissionState.value = PermissionState.GRANTED
                 satelliteViewModel.startListening()
                 nmeaViewModel.onPermissionChanged(true)
+                navigationMessageViewModel.startListening()
             } else {
                 if (!shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
                     _permissionState.value = PermissionState.PERMANENTLY_DENIED
@@ -146,6 +164,7 @@ class MainActivity : ComponentActivity() {
                     GpsTestApp(
                         satelliteViewModel = satelliteViewModel,
                         nmeaViewModel = nmeaViewModel,
+                        navigationMessageViewModel = navigationMessageViewModel,
                         agpsViewModel = agpsViewModel,
                         settingsViewModel = settingsViewModel,
                         permissionStateFlow = _permissionState,
@@ -176,6 +195,7 @@ class MainActivity : ComponentActivity() {
             _permissionState.value = PermissionState.GRANTED
             satelliteViewModel.startListening()
             nmeaViewModel.onPermissionChanged(true)
+            navigationMessageViewModel.startListening()
         } else {
             satelliteViewModel.setPermissionDenied()
             nmeaViewModel.onPermissionChanged(false)
@@ -209,6 +229,8 @@ sealed class Screen(
 
     object Nmea : Screen("nmea")
 
+    object NavigationMessages : Screen("navigation_messages")
+
     object AGps : Screen("agps")
 
     object Help : Screen("help")
@@ -221,6 +243,7 @@ sealed class Screen(
 fun GpsTestApp(
     satelliteViewModel: SatelliteViewModel,
     nmeaViewModel: NmeaViewModel,
+    navigationMessageViewModel: NavigationMessageViewModel,
     agpsViewModel: AGpsViewModel,
     settingsViewModel: SettingsViewModel,
     permissionStateFlow: StateFlow<PermissionState>,
@@ -300,6 +323,13 @@ fun GpsTestApp(
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
                 androidx.compose.material3.NavigationDrawerItem(
+                    icon = { Icon(Icons.AutoMirrored.Filled.Article, contentDescription = null) },
+                    label = { Text(stringResource(R.string.nav_navigation_messages)) },
+                    selected = currentRoute == Screen.NavigationMessages.route,
+                    onClick = { navigateAndCloseDrawer(Screen.NavigationMessages.route) },
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                )
+                androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Help, contentDescription = null) },
                     label = { Text(stringResource(R.string.nav_help)) },
                     selected = currentRoute == Screen.Help.route,
@@ -375,6 +405,15 @@ fun GpsTestApp(
                     },
                 )
             }
+            composable(Screen.NavigationMessages.route) {
+                BackHandler(enabled = drawerState.isOpen) {
+                    scope.launch { drawerState.close() }
+                }
+                NavigationMessageScreen(
+                    viewModel = navigationMessageViewModel,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                )
+            }
             composable(Screen.AGps.route) {
                 BackHandler { safeNavigateBack() }
                 AGpsManagerScreen(
@@ -404,11 +443,12 @@ class SatelliteViewModelFactory(
     private val gnssRepository: com.example.gpstest.domain.repository.GnssRepository,
     private val historyRepository: com.example.gpstest.domain.repository.SatelliteHistoryRepository,
     private val settingsStore: SettingsStore? = null,
+    private val externalEphemerisProvider: com.example.gpstest.data.local.ExternalGpsEphemerisProvider? = null,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SatelliteViewModel::class.java)) {
-            return SatelliteViewModel(application, gnssRepository, historyRepository, settingsStore) as T
+            return SatelliteViewModel(application, gnssRepository, historyRepository, settingsStore, externalEphemerisProvider) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
@@ -449,6 +489,19 @@ class NmeaViewModelFactory(
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(NmeaViewModel::class.java)) {
             return NmeaViewModel(application, gnssRepository, settingsStore) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+class NavigationMessageViewModelFactory(
+    private val application: Application,
+    private val gnssRepository: GnssRepository,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(NavigationMessageViewModel::class.java)) {
+            return NavigationMessageViewModel(application, gnssRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

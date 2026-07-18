@@ -3,6 +3,7 @@ package com.example.gpstest.data.local
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -24,6 +25,7 @@ class SatelliteHistoryDataStore(
 
     companion object {
         private val SNAPSHOTS_KEY = stringPreferencesKey("snapshots_history")
+        private val ROOM_MIGRATED_KEY = booleanPreferencesKey("room_history_migrated")
         private const val MS_PER_DAY = 24L * 60 * 60 * 1000
     }
 
@@ -89,6 +91,26 @@ class SatelliteHistoryDataStore(
     suspend fun clearHistory() {
         context.historyDataStore.edit { preferences ->
             preferences[SNAPSHOTS_KEY] = "[]"
+        }
+    }
+
+    /** 供 Room 首次迁移读取；仅在成功写入数据库后由调用方标记完成。 */
+    suspend fun readSnapshotsForMigration(): List<SatelliteHistorySnapshot> {
+        val preferences = context.historyDataStore.data.first()
+        if (preferences[ROOM_MIGRATED_KEY] == true) return emptyList()
+        return try {
+            json.decodeFromString(
+                ListSerializer(SatelliteHistorySnapshot.serializer()),
+                preferences[SNAPSHOTS_KEY] ?: "[]",
+            )
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun markRoomMigrationComplete() {
+        context.historyDataStore.edit { preferences ->
+            preferences[ROOM_MIGRATED_KEY] = true
         }
     }
 }

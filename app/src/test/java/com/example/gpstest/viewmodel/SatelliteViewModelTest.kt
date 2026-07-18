@@ -44,14 +44,16 @@ class SatelliteViewModelTest {
         constellation: Constellation = Constellation.GPS,
         cn0DbHz: Float = 30f,
         usedInFix: Boolean = true,
+        azimuthDegrees: Float = 0f,
+        elevationDegrees: Float = 45f,
     ): GnssSatellite =
         GnssSatellite(
             svid = svid,
             constellation = constellation,
             rawConstellationType = constellation.constellationType,
             cn0DbHz = cn0DbHz,
-            azimuthDegrees = 0f,
-            elevationDegrees = 45f,
+            azimuthDegrees = azimuthDegrees,
+            elevationDegrees = elevationDegrees,
             hasAlmanac = true,
             hasEphemeris = true,
             usedInFix = usedInFix,
@@ -134,6 +136,32 @@ class SatelliteViewModelTest {
         }
 
     // --- TTFF ---
+
+    @Test
+    fun `DOP history keeps the most recent 60 valid samples`() =
+        runTest(testDispatcher) {
+            val dataFlow = MutableSharedFlow<GnssData>(extraBufferCapacity = 70)
+            val repository: GnssRepository = mockk()
+            every { repository.getGnssData() } returns dataFlow
+            val historyRepository: SatelliteHistoryRepository = mockk(relaxed = true)
+            every { historyRepository.historySnapshots } returns flowOf(emptyList())
+            val viewModel = SatelliteViewModel(application, repository, historyRepository)
+            val satellites =
+                listOf(
+                    makeSatellite(svid = 1, azimuthDegrees = 20f, elevationDegrees = 25f),
+                    makeSatellite(svid = 2, azimuthDegrees = 120f, elevationDegrees = 45f),
+                    makeSatellite(svid = 3, azimuthDegrees = 220f, elevationDegrees = 35f),
+                    makeSatellite(svid = 4, azimuthDegrees = 310f, elevationDegrees = 60f),
+                )
+
+            viewModel.startListening()
+            advanceUntilIdle()
+            repeat(61) { dataFlow.emit(GnssData(satellites)) }
+            advanceUntilIdle()
+
+            assertEquals(60, viewModel.dopHistory.value.size)
+            assertTrue(viewModel.dopHistory.value.all { it.satelliteCount == 4 })
+        }
 
     @Test
     fun `ttffState transitions to Completed on first non-null location`() =

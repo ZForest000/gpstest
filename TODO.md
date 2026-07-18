@@ -45,17 +45,13 @@
 
 ### 📋 当前未实现功能速查
 
-> 阶段一(止血)已全部完成(B1 ✅ / G5 ✅ / B2 ✅)。U2–U5、**B3 NMEA**、**Wave B 工程化**（E1/E2/E3 Timber/E5/E6/E8）均已实现。以下为**当前仍未实现**的功能,按优先级排列。详见各章节条目。
+> 阶段一(止血)、U2–U6、B3 NMEA、Wave B 工程化、G1/G2/G4 与 E7 均已实现。当前速查表没有尚未实现的主功能；后续仅保留真机验证和长线精度增强项。
 
 | 编号   | 功能                                               | 优先级 | 工作量 | 章节 |
 | ------ | -------------------------------------------------- | ------ | ------ | ---- |
-| **G1** | 本地定位解后续接线（导航电文、星历与实时卫星位置） | P1     | 大     | 二   |
-| **G2** | RINEX 3.x 导出                                     | P1     | 大     | 二   |
-| **G4** | GnssNavigationMessage 导航电文                     | P3     | 大     | 二   |
-| **U6** | 信噪比柱状图 + DOP 实时曲线                        | P3     | 中     | 三   |
-| **E7** | 历史存储迁移 Room                                  | P3     | 大     | 四   |
+| — | 当前无未实现主功能 | — | — | — |
 
-**下一步建议**：G3 已完成。优先 **G1 导航电文/星历接线**（为 G2 RINEX 提供观测数据），随后 **G2 RINEX 导出**（已可消费 G3 天线头部）；G1 不应按“直接读取伪距 API”实现。
+**后续建议**：优先真机验证 GPS L1 C/A 电文、Room JSON 迁移和 RINEX 文件在专业后处理软件中的兼容性；不应按“直接读取伪距 API”实现。
 
 ---
 
@@ -126,7 +122,7 @@
 
 ## 二、🚀 专业 GNSS 能力增强
 
-### G1. 原始伪距推导 + 本地最小二乘定位解（P1，工作量：大，阶段 1/2 已完成）
+### G1. 原始伪距推导 + 本地最小二乘定位解 ✅ 已实现（GPS L1 C/A）
 
 **现状**：阶段 1 已完成伪距推导：`PseudorangeCalculator.kt` 根据 `GnssClockData`、卫星接收时间、测量状态和星座时间基准输出伪距与不确定度，结果已接入 `GnssSatellite` 与卫星详情。阶段 2 已完成纯领域 `PositionSolver.kt`：以调用方提供的卫星 ECEF、已修正伪距和不确定度执行迭代 WLS，含 4x4 部分主元 Gauss-Jordan、明确失败状态和黄金测试。Android `GnssMeasurement` **没有** `getPseudorangeMeters()` / `getPseudorangeUncertaintyMeters()` 直接 API。
 
@@ -153,7 +149,7 @@
 
 ---
 
-### G2. RINEX 3.x 导出（P1，工作量：大）
+### G2. RINEX 3.x 导出 ✅ 已实现
 
 **现状**：全代码库 grep `export|toCsv|RINEX|FileProvider` 在 `.kt` 中**零命中**。已采集的 `accumulatedDeltaRangeMeters`、`receivedSvTimeNanos`、`GnssClockData` 是 RINEX 的输入要素，但没有导出通路。`AndroidManifest.xml:24` 声明了 FileProvider 但未被任何导出功能使用。
 
@@ -182,7 +178,7 @@
 
 ---
 
-### G4. GnssNavigationMessage 导航电文（P3，工作量：大）
+### G4. GnssNavigationMessage 导航电文 ✅ 已实现
 
 **现状**：`proguard-rules.pro:11-12,18,26-27` 保留了 `GnssNavigationMessage` 及 `registerGnssNavigationMessageCallback`，但代码中从未调用。
 
@@ -355,7 +351,7 @@
 
 ---
 
-### U6. 信噪比柱状图 + DOP 实时曲线（P3，工作量：中）
+### U6. 信噪比柱状图 + DOP 实时曲线 ✅ 已实现
 
 **现状**：
 
@@ -446,7 +442,7 @@
 
 ---
 
-### E7. 历史存储迁移 Room（P3，工作量：大）
+### E7. 历史存储迁移 Room ✅ 已实现
 
 **现状**：`SatelliteHistoryDataStore.kt:23` 用 `stringPreferencesKey("snapshots_history")`，100 个快照塞进单个 JSON 字符串。每次写都要「读全量 JSON → 反序列化 → 改 → 序列化 → 写」（`:39-58`），数据增大后变慢且非原子。
 

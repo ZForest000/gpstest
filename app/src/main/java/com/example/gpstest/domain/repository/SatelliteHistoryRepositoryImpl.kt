@@ -1,6 +1,6 @@
 package com.example.gpstest.domain.repository
 
-import com.example.gpstest.data.local.SatelliteHistoryDataStore
+import com.example.gpstest.data.local.RoomSatelliteHistoryStore
 import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
@@ -8,7 +8,7 @@ import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import kotlinx.coroutines.flow.Flow
 
 class SatelliteHistoryRepositoryImpl(
-    private val dataStore: SatelliteHistoryDataStore,
+    private val dataStore: RoomSatelliteHistoryStore,
 ) : SatelliteHistoryRepository {
     override val historySnapshots: Flow<List<SatelliteHistorySnapshot>> = dataStore.snapshots
 
