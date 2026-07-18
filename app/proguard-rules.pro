@@ -10,6 +10,8 @@
 -keep class android.location.GnssClock { *; }
 -keep class android.location.GnssNavigationMessage { *; }
 -keep class android.location.GnssNavigationMessage$* { *; }
+-keep class android.location.GnssAntennaInfo { *; }
+-keep class android.location.GnssAntennaInfo$* { *; }
 
 -keep interface android.location.GnssMeasurement$* { *; }
 -keep interface android.location.GnssMeasurementsEvent$* { *; }
@@ -23,6 +25,9 @@
     public *** unregisterGnssStatusCallback(...);
     public *** registerGnssNavigationMessageCallback(...);
     public *** unregisterGnssNavigationMessageCallback(...);
+    public *** registerAntennaInfoListener(...);
+    public *** unregisterAntennaInfoListener(...);
+    public *** getGnssAntennaInfos(...);
     public *** addGnssMeasurementsListener(...);
     public *** removeGnssMeasurementsListener(...);
     public *** addGnssStatusListener(...);

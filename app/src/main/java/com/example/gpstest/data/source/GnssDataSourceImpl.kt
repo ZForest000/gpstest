@@ -5,6 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.location.GnssAntennaInfo
 import android.location.GnssMeasurement
 import android.location.GnssMeasurementsEvent
 import android.location.GnssStatus
@@ -13,6 +14,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.location.OnNmeaMessageListener
 import android.os.Build
+import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssClockData
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 // dumpsys location 轮询间隔。该命令开销较大（数百 ms），过长则数据陈旧，过短则耗电
 private const val DUMPSYS_POLL_INTERVAL_MS = 5000L
@@ -497,6 +500,77 @@ class GnssDataSourceImpl(
                 }
             }
         }
+
+    override fun getAntennaInfos(): Flow<List<AntennaInfo>> =
+        callbackFlow {
+            val lm = locationManager
+            if (lm == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                trySend(emptyList())
+                close()
+                return@callbackFlow
+            }
+
+            val listener =
+                GnssAntennaInfo.Listener { infos ->
+                    if (!isClosedForSend) {
+                        trySend(mapAntennaInfos(infos))
+                    }
+                }
+
+            try {
+                lm.gnssAntennaInfos?.let { initial ->
+                    trySend(mapAntennaInfos(initial))
+                }
+                lm.registerAntennaInfoListener(context.mainExecutor, listener)
+            } catch (e: SecurityException) {
+                Timber.w(e, "Antenna info listener registration denied")
+                trySend(emptyList())
+                close(e)
+                return@callbackFlow
+            } catch (e: Exception) {
+                Timber.w(e, "Antenna info listener registration failed")
+                trySend(emptyList())
+                close(e)
+                return@callbackFlow
+            }
+
+            awaitClose {
+                try {
+                    lm.unregisterAntennaInfoListener(listener)
+                } catch (_: Exception) {
+                    // ignore cleanup
+                }
+            }
+        }
+
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.R)
+    private fun mapAntennaInfos(infos: List<GnssAntennaInfo>?): List<AntennaInfo> {
+        if (infos.isNullOrEmpty()) return emptyList()
+        return infos.map { platform ->
+            val pco = platform.phaseCenterOffset
+            val pcv = platform.phaseCenterVariationCorrections
+            val summary =
+                if (pcv != null) {
+                    AntennaInfoMapper.summarizePcv(
+                        corrections = pcv.correctionsArray,
+                        deltaPhiDeg = pcv.deltaPhi,
+                        deltaThetaDeg = pcv.deltaTheta,
+                    )
+                } else {
+                    null
+                }
+            AntennaInfoMapper.fromPrimitives(
+                carrierFrequencyMHz = platform.carrierFrequencyMHz.toDouble(),
+                pcoXMm = pco.xOffsetMm,
+                pcoYMm = pco.yOffsetMm,
+                pcoZMm = pco.zOffsetMm,
+                pcoXUncertaintyMm = pco.xOffsetUncertaintyMm,
+                pcoYUncertaintyMm = pco.yOffsetUncertaintyMm,
+                pcoZUncertaintyMm = pco.zOffsetUncertaintyMm,
+                pcvSummary = summary,
+            )
+        }
+    }
 
     override fun isSupported(): Boolean {
         val lm = locationManager ?: return false

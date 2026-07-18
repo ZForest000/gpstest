@@ -1,6 +1,7 @@
 package com.example.gpstest.domain.repository
 
 import com.example.gpstest.data.source.GnssDataSource
+import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.NmeaSentence
@@ -20,6 +21,9 @@ class GnssRepositoryImpl(
 
     // NMEA 报文不采样：原始数据按行展示，采样会丢失报文。
     override fun getNmeaSentences(): Flow<NmeaSentence> = dataSource.getNmeaSentences()
+
+    // 天线信息不采样：更新频率低，直接透传。
+    override fun getAntennaInfos(): Flow<List<AntennaInfo>> = dataSource.getAntennaInfos()
 
     override suspend fun isGnssSupported(): Boolean = dataSource.isSupported()
 

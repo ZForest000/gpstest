@@ -1,5 +1,6 @@
 package com.example.gpstest.data.source
 
+import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.NmeaSentence
@@ -25,6 +26,13 @@ interface GnssDataSource {
      * 在 [callbackFlow] 的 awaitClose 中注销。需要位置权限才能收到报文。
      */
     fun getNmeaSentences(): Flow<NmeaSentence>
+
+    /**
+     * 天线相位中心信息流（API 30+）。
+     * 独立于 [getGnssData]，不参与 250ms 采样。
+     * API < 30 或不支持时立即发出 emptyList 并关闭。
+     */
+    fun getAntennaInfos(): Flow<List<AntennaInfo>>
 
     /** 设备是否支持 GPS（存在 GPS provider）。仿真器或无 GPS 设备返回 false。 */
     fun isSupported(): Boolean
