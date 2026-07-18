@@ -48,26 +48,26 @@ jobs:
               run: ./gradlew assembleRelease
 
             - name: Upload debug APK
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: debug-apk
                   path: app/build/outputs/apk/debug/*.apk
 
             - name: Upload release APK
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               with:
                   name: release-apk
                   path: app/build/outputs/apk/release/*.apk
 
             - name: Upload test results
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               if: always()
               with:
                   name: test-results
                   path: app/build/reports/tests/
 
             - name: Upload lint reports
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v7
               if: always()
               with:
                   name: lint-reports
