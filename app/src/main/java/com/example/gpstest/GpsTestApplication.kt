@@ -5,6 +5,8 @@ import android.util.Log
 import timber.log.Timber
 
 class GpsTestApplication : Application() {
+    val dependencies: AppDependencies by lazy { AppDependencies(this) }
+
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
