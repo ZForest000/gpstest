@@ -532,7 +532,7 @@
     <string name="help_satellite_list_guide_title">卫星列表</string>
     <string name="help_satellite_list_guide_desc">卫星按定位中、可见和搜索中分组显示。可按星座筛选、按信号强度、仰角或卫星编号排序，冻结列表以便比对，并点按卫星查看详情。</string>
     <string name="help_sky_chart_guide_title">天空图</string>
-    <string name="help_sky_chart_guide_desc">圆心表示天顶，外圈表示地平线；卫星的颜色、透明度和大小反映状态或信号。可筛选星座、点按卫星查看信息、拖拽缩放、双击复位，并切换北向上显示。</string>
+    <string name="help_sky_chart_guide_desc">圆心表示天顶，外圈表示地平线；卫星颜色表示星座，透明度表示是否参与定位，大小表示 C/N0。可筛选星座、点按卫星查看信息；单指拖拽用于平移，双指缩放，双击复位，并切换北向上显示。</string>
     <string name="help_positioning_guide_title">定位与精度</string>
     <string name="help_positioning_guide_desc">可重置首次定位时间以开始新的计时，查看实时精度因子趋势；本地解算需要足够的有效伪距观测和相应星历，条件不足时不会给出可信结果。</string>
     <string name="help_diagnostics_guide_title">接收机诊断</string>

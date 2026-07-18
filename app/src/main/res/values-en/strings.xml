@@ -224,7 +224,7 @@
     <string name="help_satellite_list_guide_title">Satellite list</string>
     <string name="help_satellite_list_guide_desc">Satellites are grouped as in fix, visible, and searching. Filter by constellation, sort by signal strength, elevation, or SVID, freeze the list for comparison, and tap a satellite for details.</string>
     <string name="help_sky_chart_guide_title">Sky chart</string>
-    <string name="help_sky_chart_guide_desc">The center represents the zenith and the outer ring the horizon; satellite color, transparency, and size reflect status or signal. Filter constellations, tap satellites for information, drag to zoom, double-tap to reset, and toggle north-up orientation.</string>
+    <string name="help_sky_chart_guide_desc">The center represents the zenith and the outer ring the horizon; satellite color indicates constellation, transparency indicates whether it is used in the fix, and size indicates C/N0. Filter constellations, tap satellites for information, drag with one finger to pan, pinch with two fingers to zoom, double-tap to reset, and toggle north-up orientation.</string>
     <string name="help_positioning_guide_title">Positioning &amp; accuracy</string>
     <string name="help_positioning_guide_desc">Reset TTFF to begin a new timing session and review live DOP trends. Local positioning requires enough valid pseudorange observations and matching ephemerides; it does not produce a reliable solution when those conditions are not met.</string>
     <string name="help_diagnostics_guide_title">Receiver diagnostics</string>
