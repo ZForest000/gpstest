@@ -100,3 +100,4 @@ compose_generated/
 .omc/
 .zcode/
 skills-lock.json
+.worktrees/
