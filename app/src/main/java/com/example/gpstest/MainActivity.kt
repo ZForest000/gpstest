@@ -45,21 +45,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.gpstest.data.local.AGpsFileHandlerImpl
-import com.example.gpstest.data.local.AGpsInjectionHistoryStore
-import com.example.gpstest.data.local.AGpsSettingsStore
-import com.example.gpstest.data.local.ExternalGpsEphemerisStore
-import com.example.gpstest.data.local.RoomSatelliteHistoryStore
-import com.example.gpstest.data.local.SatelliteHistoryDataStore
 import com.example.gpstest.data.local.SettingsStore
-import com.example.gpstest.data.source.AGpsDataSourceImpl
-import com.example.gpstest.data.source.AGpsDownloaderImpl
-import com.example.gpstest.data.source.GnssDataSource
-import com.example.gpstest.data.source.GnssDataSourceImpl
-import com.example.gpstest.domain.repository.AGpsRepositoryImpl
 import com.example.gpstest.domain.repository.GnssRepository
-import com.example.gpstest.domain.repository.GnssRepositoryImpl
-import com.example.gpstest.domain.repository.SatelliteHistoryRepositoryImpl
 import com.example.gpstest.ui.screens.agps.AGpsManagerScreen
 import com.example.gpstest.ui.screens.diagnostics.ReceiverDiagnosticsScreen
 import com.example.gpstest.ui.screens.help.HelpScreen
@@ -88,48 +75,33 @@ enum class PermissionState {
 }
 
 class MainActivity : ComponentActivity() {
-    // Activity 级共享依赖，避免 Satellite / NMEA 各自创建 GnssDataSourceImpl
-    private val appSettingsStore by lazy { SettingsStore(application) }
-    private val gnssDataSource: GnssDataSource by lazy { GnssDataSourceImpl(application) }
-    private val gnssRepository: GnssRepository by lazy { GnssRepositoryImpl(gnssDataSource) }
+    private val dependencies: AppDependencies
+        get() = (application as GpsTestApplication).dependencies
 
     private val settingsViewModel: SettingsViewModel by viewModels {
-        SettingsViewModelFactory(application, appSettingsStore)
+        SettingsViewModelFactory(application, dependencies.appSettingsStore)
     }
 
     private val satelliteViewModel: SatelliteViewModel by viewModels {
-        val historyDataStore = SatelliteHistoryDataStore(application, appSettingsStore)
-        val historyRepository =
-            SatelliteHistoryRepositoryImpl(
-                RoomSatelliteHistoryStore(application, historyDataStore, appSettingsStore),
-            )
         SatelliteViewModelFactory(
             application,
-            gnssRepository,
-            historyRepository,
-            appSettingsStore,
-            ExternalGpsEphemerisStore(application),
+            dependencies.gnssRepository,
+            dependencies.satelliteHistoryRepository,
+            dependencies.appSettingsStore,
+            dependencies.externalGpsEphemerisProvider,
         )
     }
 
     private val nmeaViewModel: NmeaViewModel by viewModels {
-        NmeaViewModelFactory(application, gnssRepository, appSettingsStore)
+        NmeaViewModelFactory(application, dependencies.gnssRepository, dependencies.appSettingsStore)
     }
 
     private val navigationMessageViewModel: NavigationMessageViewModel by viewModels {
-        NavigationMessageViewModelFactory(application, gnssRepository)
+        NavigationMessageViewModelFactory(application, dependencies.gnssRepository)
     }
 
     private val agpsViewModel: AGpsViewModel by viewModels {
-        val app = application
-        val dataSource = AGpsDataSourceImpl(app)
-        val downloader = AGpsDownloaderImpl()
-        val fileHandler = AGpsFileHandlerImpl(app)
-        val settingsStore = AGpsSettingsStore(app)
-        val historyStore = AGpsInjectionHistoryStore(app)
-        val repository =
-            AGpsRepositoryImpl(app, dataSource, downloader, fileHandler, settingsStore, historyStore)
-        AGpsViewModelFactory(app, repository)
+        AGpsViewModelFactory(application, dependencies.agpsRepository)
     }
 
     private val _permissionState = MutableStateFlow(PermissionState.DENIED)

@@ -6,12 +6,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.example.gpstest.data.local.AGpsFileHandlerImpl
-import com.example.gpstest.data.local.AGpsInjectionHistoryStore
-import com.example.gpstest.data.local.AGpsSettingsStore
-import com.example.gpstest.data.source.AGpsDataSourceImpl
-import com.example.gpstest.data.source.AGpsDownloaderImpl
-import com.example.gpstest.domain.repository.AGpsRepositoryImpl
+import com.example.gpstest.AppDependencies
+import com.example.gpstest.GpsTestApplication
 import kotlinx.coroutines.flow.first
 import java.util.concurrent.TimeUnit
 
@@ -26,26 +22,18 @@ class AGpsUpdateWorker(
     context: Context,
     workerParams: WorkerParameters,
 ) : CoroutineWorker(context, workerParams) {
-    // WorkManager 反序列化 Worker 时无法注入依赖，因此在此处重建全部依赖链
+    private val dependencies: AppDependencies
+        get() = (applicationContext as GpsTestApplication).dependencies
+
     override suspend fun doWork(): Result {
-        val settingsStore = AGpsSettingsStore(applicationContext)
+        val settingsStore = dependencies.agpsSettingsStore
         val settings = settingsStore.settings.first()
 
         if (!settings.autoUpdateEnabled) {
             return Result.success()
         }
 
-        val dataSource = AGpsDataSourceImpl(applicationContext)
-        val downloader = AGpsDownloaderImpl()
-        val repository =
-            AGpsRepositoryImpl(
-                context = applicationContext,
-                dataSource = dataSource,
-                downloader = downloader,
-                fileHandler = AGpsFileHandlerImpl(applicationContext),
-                settingsStore = settingsStore,
-                historyStore = AGpsInjectionHistoryStore(applicationContext),
-            )
+        val repository = dependencies.agpsRepository
 
         // 先 hydrate，再注入；addRecord 也会 store-merge，双保险防历史被空内存覆盖
         repository.hydrateHistory()
