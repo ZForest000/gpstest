@@ -517,4 +517,48 @@
     <string name="help_baseband_cn0_desc">基带处理后的信噪比，与C/N0类似但经过数字信号处理。通常略低于射频端的C/N0。</string>
     <string name="help_multipath_title">多路径检测</string>
     <string name="help_multipath_desc">指示信号是否经过反射到达接收器。多路径效应会降低定位精度。</string>
+
+    <!-- Complete GNSS help guide -->
+    <string name="help_quick_diagnostics_title">快速诊断</string>
+    <string name="help_quick_diagnostics_content">开始排查前，请确认应用具备精确位置权限、系统定位服务已开启，并尽量在开阔环境中测试。</string>
+    <string name="help_no_satellites_title">未发现卫星</string>
+    <string name="help_no_satellites_desc">依次检查精确位置权限、系统定位服务、飞行模式与省电限制；随后移至无遮挡的室外环境，静待接收机完成搜索。室内、车库、密集建筑和金属遮挡都会显著削弱信号。</string>
+    <string name="help_ttff_accuracy_factors_title">首次定位时间与精度的影响因素</string>
+    <string name="help_ttff_accuracy_factors_desc">星历和时间信息、可见卫星数量与几何分布、建筑或植被遮挡、信号反射造成的多路径，以及设备天线和接收机性能都会影响首次定位时间与实际定位精度。</string>
+
+    <string name="help_screen_guide_title">页面操作</string>
+    <string name="help_overview_title">总览</string>
+    <string name="help_overview_desc">集中查看定位状态、已用于定位的卫星数量、首次定位时间、位置和主要精度指标，用于快速判断当前接收状态。</string>
+    <string name="help_satellite_list_guide_title">卫星列表</string>
+    <string name="help_satellite_list_guide_desc">卫星按定位中、可见和搜索中分组显示。可按星座筛选、按信号强度、仰角或卫星编号排序，冻结列表以便比对，并点按卫星查看详情。</string>
+    <string name="help_sky_chart_guide_title">天空图</string>
+    <string name="help_sky_chart_guide_desc">圆心表示天顶，外圈表示地平线；卫星的颜色、透明度和大小反映状态或信号。可筛选星座、点按卫星查看信息、拖拽缩放、双击复位，并切换北向上显示。</string>
+    <string name="help_positioning_guide_title">定位与精度</string>
+    <string name="help_positioning_guide_desc">可重置首次定位时间以开始新的计时，查看实时精度因子趋势；本地解算需要足够的有效伪距观测和相应星历，条件不足时不会给出可信结果。</string>
+    <string name="help_diagnostics_guide_title">接收机诊断</string>
+    <string name="help_diagnostics_guide_desc">查看接收机时钟、支持能力和天线信息。原始观测数据与设备支持情况决定能否导出 RINEX；缺少有效原始观测时无法生成文件。</string>
+    <string name="help_history_guide_title">历史</string>
+    <string name="help_history_guide_desc">手动保存当前快照，或按设置自动保存；可按时间范围筛选、导出为 CSV 分享，并清理不再需要的历史记录。</string>
+    <string name="help_nmea_guide_title">NMEA</string>
+    <string name="help_nmea_guide_desc">先在设置中开启 NMEA 输出。页面支持冻结显示、清空缓冲区、按语句类型筛选和分享导出内容；设备未提供 NMEA 时不会出现数据。</string>
+    <string name="help_navigation_messages_guide_title">导航电文</string>
+    <string name="help_navigation_messages_guide_desc">导航电文为空通常表示设备、系统版本、接收机实现或当前信号条件未提供该数据，并不代表卫星监控本身失效。</string>
+    <string name="help_settings_guide_title">设置</string>
+    <string name="help_settings_guide_desc">可调整应用主题、NMEA 输出开关，以及历史快照的保存和自动快照策略。</string>
+
+    <string name="help_metrics_reference_title">指标边界</string>
+    <string name="help_location_accuracy_boundary_title">位置精度</string>
+    <string name="help_location_accuracy_boundary_desc">Android 提供的位置精度是估计半径，表示当前位置可能落在该半径范围内的估计程度，并非保证的实际误差。</string>
+    <string name="help_dop_cn0_boundary_title">精度因子与信号强度分级</string>
+    <string name="help_dop_cn0_boundary_desc">精度因子和载噪比分级均为经验参考。它们只能辅助判断卫星几何和信号状况，不能单独保证实际定位结果。</string>
+
+    <string name="help_agps_advanced_title">A-GPS 与高级能力</string>
+    <string name="help_agps_actions_title">辅助数据操作</string>
+    <string name="help_agps_actions_desc">下载或导入辅助数据后进行校验并尝试注入，以补充接收机的辅助信息；同步时间可协助时间相关初始化；自动更新会按计划获取数据；清除用于移除当前辅助数据后重新开始。</string>
+    <string name="help_agps_injection_limit_title">注入结果的限制</string>
+    <string name="help_agps_injection_limit_desc">注入成功只表示系统接受了请求，不表示设备会立刻获得定位。设备或厂商实现可能拒绝、忽略或延后处理相关命令。</string>
+    <string name="help_agps_custom_url_title">自定义下载地址</string>
+    <string name="help_agps_custom_url_desc">仅使用可信提供方的加密下载地址。来自未知来源的数据可能失效、被篡改或不适用于设备。</string>
+    <string name="help_privileged_diagnostics_title">Shizuku 与 root 诊断</string>
+    <string name="help_privileged_diagnostics_desc">Shizuku 和 root 仅用于可选的扩展诊断。未授权不会影响普通卫星监控；ADB 授权与 root 权限不同，前者不等同于获得系统最高权限。</string>
 </resources>

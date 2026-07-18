@@ -209,4 +209,48 @@
     <string name="external_ephemeris_downloaded">External GPS ephemeris: downloaded %1$d records</string>
     <string name="external_ephemeris_cached">External GPS ephemeris: cached %1$d records</string>
     <string name="external_ephemeris_unavailable">External GPS ephemeris: unavailable</string>
+
+    <!-- Complete GNSS help guide -->
+    <string name="help_quick_diagnostics_title">Quick diagnostics</string>
+    <string name="help_quick_diagnostics_content">Before troubleshooting, confirm that precise location permission is granted, system location services are enabled, and testing is performed in an open environment where possible.</string>
+    <string name="help_no_satellites_title">No satellites found</string>
+    <string name="help_no_satellites_desc">Check precise location permission, system location services, airplane mode, and battery restrictions in that order. Then move outdoors with a clear view of the sky and allow the receiver time to search. Indoor spaces, garages, dense buildings, and metal obstructions can greatly weaken signals.</string>
+    <string name="help_ttff_accuracy_factors_title">TTFF and accuracy factors</string>
+    <string name="help_ttff_accuracy_factors_desc">Ephemeris and time information, the number and geometry of visible satellites, building or vegetation obstruction, reflected-signal multipath, and the device antenna and receiver all affect TTFF and actual positioning accuracy.</string>
+
+    <string name="help_screen_guide_title">Screen guide</string>
+    <string name="help_overview_title">Overview</string>
+    <string name="help_overview_desc">View fix status, satellites used in the fix, TTFF, location, and key accuracy metrics together to quickly assess the current receiver state.</string>
+    <string name="help_satellite_list_guide_title">Satellite list</string>
+    <string name="help_satellite_list_guide_desc">Satellites are grouped as in fix, visible, and searching. Filter by constellation, sort by signal strength, elevation, or SVID, freeze the list for comparison, and tap a satellite for details.</string>
+    <string name="help_sky_chart_guide_title">Sky chart</string>
+    <string name="help_sky_chart_guide_desc">The center represents the zenith and the outer ring the horizon; satellite color, transparency, and size reflect status or signal. Filter constellations, tap satellites for information, drag to zoom, double-tap to reset, and toggle north-up orientation.</string>
+    <string name="help_positioning_guide_title">Positioning &amp; accuracy</string>
+    <string name="help_positioning_guide_desc">Reset TTFF to begin a new timing session and review live DOP trends. Local positioning requires enough valid pseudorange observations and matching ephemerides; it does not produce a reliable solution when those conditions are not met.</string>
+    <string name="help_diagnostics_guide_title">Receiver diagnostics</string>
+    <string name="help_diagnostics_guide_desc">Inspect receiver clock, supported capabilities, and antenna information. Device support and raw observations determine whether RINEX can be exported; no file can be created without valid raw observations.</string>
+    <string name="help_history_guide_title">History</string>
+    <string name="help_history_guide_desc">Save a snapshot manually or automatically according to settings. Filter by time range, export selected records as CSV for sharing, and clear history that is no longer needed.</string>
+    <string name="help_nmea_guide_title">NMEA</string>
+    <string name="help_nmea_guide_desc">Enable NMEA output in Settings first. The screen can freeze display, clear its buffer, filter by sentence type, and share exported content; no data appears when the device does not provide NMEA.</string>
+    <string name="help_navigation_messages_guide_title">Navigation messages</string>
+    <string name="help_navigation_messages_guide_desc">An empty navigation-message list commonly means that the device, system version, receiver implementation, or current signal conditions do not provide this data. It does not mean satellite monitoring has failed.</string>
+    <string name="help_settings_guide_title">Settings</string>
+    <string name="help_settings_guide_desc">Adjust the app theme, NMEA output switch, and the history snapshot saving and automatic-snapshot policy.</string>
+
+    <string name="help_metrics_reference_title">Metric limits</string>
+    <string name="help_location_accuracy_boundary_title">Location accuracy</string>
+    <string name="help_location_accuracy_boundary_desc">Android location accuracy is an estimated radius: it expresses the estimated range around the reported location, not a guaranteed real-world error.</string>
+    <string name="help_dop_cn0_boundary_title">DOP and C/N0 ratings</string>
+    <string name="help_dop_cn0_boundary_desc">DOP and C/N0 ratings are empirical references. They help assess satellite geometry and signal conditions, but neither can independently guarantee an actual positioning result.</string>
+
+    <string name="help_agps_advanced_title">A-GPS and advanced capabilities</string>
+    <string name="help_agps_actions_title">Assistance-data actions</string>
+    <string name="help_agps_actions_desc">Download or import assistance data, validate it, and attempt injection to supplement receiver information. Time sync can help time-related initialization, automatic update retrieves data on a schedule, and clear removes current assistance data before starting again.</string>
+    <string name="help_agps_injection_limit_title">Injection result limits</string>
+    <string name="help_agps_injection_limit_desc">A successful injection only means the system accepted the request; it does not mean the device will obtain a fix immediately. Device or vendor implementations can reject, ignore, or defer these commands.</string>
+    <string name="help_agps_custom_url_title">Custom download URL</string>
+    <string name="help_agps_custom_url_desc">Use only encrypted download URLs from trusted providers. Data from unknown sources can be invalid, tampered with, or unsuitable for the device.</string>
+    <string name="help_privileged_diagnostics_title">Shizuku and root diagnostics</string>
+    <string name="help_privileged_diagnostics_desc">Shizuku and root are optional extensions for advanced diagnostics. Missing authorization does not affect normal satellite monitoring; ADB authorization and root access are different, and ADB does not grant highest system privileges.</string>
 </resources>
