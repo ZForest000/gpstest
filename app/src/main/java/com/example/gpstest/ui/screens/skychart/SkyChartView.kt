@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.gpstest.R
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.ui.components.color
 import kotlin.math.cos
@@ -93,12 +95,19 @@ fun SkyChartView(
         val latestTransformState = rememberUpdatedState(transformState)
         val latestHeadingDegrees = rememberUpdatedState(headingDegrees)
         val latestOnSatelliteClick = rememberUpdatedState(onSatelliteClick)
+        val context = LocalContext.current
+        val chartDescription =
+            context.getString(
+                R.string.sky_chart_content_description,
+                plottableSatellites.size,
+            )
+        val waitingText = context.getString(R.string.sky_chart_waiting)
 
         Canvas(
             modifier =
                 Modifier
                     .semantics {
-                        contentDescription = "卫星天空图，显示 ${plottableSatellites.size} 颗卫星的位置分布"
+                        contentDescription = chartDescription
                     }.pointerInput(
                         transformState.northUp,
                         center,
@@ -286,7 +295,7 @@ fun SkyChartView(
             if (plottableSatellites.isEmpty()) {
                 val textResult =
                     textMeasurer.measure(
-                        text = AnnotatedString("等待卫星信号..."),
+                        text = AnnotatedString(waitingText),
                         style = TextStyle(fontSize = 14.sp),
                     )
                 drawText(

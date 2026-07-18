@@ -259,35 +259,35 @@ fun GpsTestApp(
         drawerContent = {
             androidx.compose.material3.ModalDrawerSheet {
                 androidx.compose.material3.Text(
-                    text = "GNSS 测试",
+                    text = stringResource(R.string.nav_drawer_title),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(16.dp),
                 )
                 androidx.compose.material3.HorizontalDivider()
                 androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.SatelliteAlt, contentDescription = null) },
-                    label = { Text("卫星列表") },
+                    label = { Text(stringResource(R.string.nav_satellite_list)) },
                     selected = currentRoute == Screen.SatelliteList.route,
                     onClick = { navigateAndCloseDrawer(Screen.SatelliteList.route) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
                 androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Explore, contentDescription = null) },
-                    label = { Text("天空图") },
+                    label = { Text(stringResource(R.string.nav_sky_chart)) },
                     selected = currentRoute == Screen.SkyChart.route,
                     onClick = { navigateAndCloseDrawer(Screen.SkyChart.route) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
                 androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.CloudDownload, contentDescription = null) },
-                    label = { Text("A-GPS 管理") },
+                    label = { Text(stringResource(R.string.nav_agps)) },
                     selected = currentRoute == Screen.AGps.route,
                     onClick = { navigateAndCloseDrawer(Screen.AGps.route) },
                     modifier = Modifier.padding(horizontal = 12.dp),
                 )
                 androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.History, contentDescription = null) },
-                    label = { Text("历史记录") },
+                    label = { Text(stringResource(R.string.nav_history)) },
                     selected = currentRoute == Screen.History.route,
                     onClick = { navigateAndCloseDrawer(Screen.History.route) },
                     modifier = Modifier.padding(horizontal = 12.dp),
@@ -301,7 +301,7 @@ fun GpsTestApp(
                 )
                 androidx.compose.material3.NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Help, contentDescription = null) },
-                    label = { Text("帮助") },
+                    label = { Text(stringResource(R.string.nav_help)) },
                     selected = currentRoute == Screen.Help.route,
                     onClick = { navigateAndCloseDrawer(Screen.Help.route) },
                     modifier = Modifier.padding(horizontal = 12.dp),

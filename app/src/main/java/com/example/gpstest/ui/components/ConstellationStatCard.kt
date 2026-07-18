@@ -15,11 +15,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.gpstest.R
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.SignalStrength
-import com.example.gpstest.ui.components.color
 import com.example.gpstest.ui.theme.SignalMedium
 import com.example.gpstest.ui.theme.SignalStrong
 import com.example.gpstest.ui.theme.SignalWeak
@@ -53,7 +54,7 @@ fun ConstellationStatCard(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
-            text = "在用卫星统计",
+            text = stringResource(R.string.constellation_stat_title),
             style = MaterialTheme.typography.titleMedium,
         )
 
@@ -80,17 +81,17 @@ fun ConstellationStatCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SignalChip(
-                label = "强",
+                label = stringResource(R.string.signal_strength_strong_short),
                 count = signalCounts[SignalStrength.STRONG] ?: 0,
                 color = SignalStrong,
             )
             SignalChip(
-                label = "中",
+                label = stringResource(R.string.signal_strength_medium_short),
                 count = signalCounts[SignalStrength.MEDIUM] ?: 0,
                 color = SignalMedium,
             )
             SignalChip(
-                label = "弱",
+                label = stringResource(R.string.signal_strength_weak_short),
                 count = signalCounts[SignalStrength.WEAK] ?: 0,
                 color = SignalWeak,
             )

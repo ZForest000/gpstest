@@ -61,6 +61,16 @@ class AGpsViewModelTest {
         coEvery { repository.hydrateHistory() } just Runs
         every { application.getString(R.string.agps_import_success) } returns "文件导入并注入成功"
         every { application.getString(R.string.agps_import_fail) } returns "导入失败"
+        every { application.getString(R.string.agps_inject_success) } returns
+            "A-GPS数据注入成功，请返回主界面查看卫星状态验证效果"
+        every { application.getString(R.string.agps_download_fail) } returns "下载失败"
+        every { application.getString(R.string.agps_time_sync_success) } returns "时间同步成功"
+        every { application.getString(R.string.agps_time_sync_fail) } returns "时间同步失败"
+        every { application.getString(R.string.agps_clear_success) } returns "A-GPS数据已清除"
+        every { application.getString(R.string.agps_clear_fail) } returns "清除失败"
+        every { application.getString(R.string.agps_file_validate_success) } returns "文件验证通过"
+        every { application.getString(R.string.agps_source_validate_success) } returns "下载源验证通过"
+        every { application.getString(R.string.agps_validation_fail) } returns "验证失败"
         // AGpsUpdateWorker 伴生对象静态方法桩（schedule/cancel 需 Context + WorkManager）
         mockkObject(AGpsUpdateWorker)
         every { AGpsUpdateWorker.schedule(any(), any()) } just Runs

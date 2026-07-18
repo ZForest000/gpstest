@@ -67,11 +67,15 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Downloading
             val result = repository.downloadAndInject()
+            val app = getApplication<Application>()
             _uiState.value =
                 if (result.isSuccess) {
-                    AGpsUiState.Success("A-GPS数据注入成功，请返回主界面查看卫星状态验证效果")
+                    AGpsUiState.Success(app.getString(R.string.agps_inject_success))
                 } else {
-                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "下载失败")
+                    AGpsUiState.Error(
+                        result.exceptionOrNull()?.message
+                            ?: app.getString(R.string.agps_download_fail),
+                    )
                 }
         }
     }
@@ -80,11 +84,15 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Injecting
             val result = repository.injectTime()
+            val app = getApplication<Application>()
             _uiState.value =
                 if (result.isSuccess) {
-                    AGpsUiState.Success("时间同步成功")
+                    AGpsUiState.Success(app.getString(R.string.agps_time_sync_success))
                 } else {
-                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "时间同步失败")
+                    AGpsUiState.Error(
+                        result.exceptionOrNull()?.message
+                            ?: app.getString(R.string.agps_time_sync_fail),
+                    )
                 }
         }
     }
@@ -93,11 +101,15 @@ class AGpsViewModel(
         viewModelScope.launch {
             _uiState.value = AGpsUiState.Injecting
             val result = repository.clearApsData()
+            val app = getApplication<Application>()
             _uiState.value =
                 if (result.isSuccess) {
-                    AGpsUiState.Success("A-GPS数据已清除")
+                    AGpsUiState.Success(app.getString(R.string.agps_clear_success))
                 } else {
-                    AGpsUiState.Error(result.exceptionOrNull()?.message ?: "清除失败")
+                    AGpsUiState.Error(
+                        result.exceptionOrNull()?.message
+                            ?: app.getString(R.string.agps_clear_fail),
+                    )
                 }
         }
     }
@@ -126,11 +138,14 @@ class AGpsViewModel(
             _uiState.value = AGpsUiState.Injecting
             val result = repository.validateFile(uri.toString())
             _validationResult.value = result
+            val app = getApplication<Application>()
             _uiState.value =
                 if (result.isValid) {
-                    AGpsUiState.Success("文件验证通过")
+                    AGpsUiState.Success(app.getString(R.string.agps_file_validate_success))
                 } else {
-                    AGpsUiState.Error(result.errorMessage ?: "验证失败")
+                    AGpsUiState.Error(
+                        result.errorMessage ?: app.getString(R.string.agps_validation_fail),
+                    )
                 }
         }
     }
@@ -167,11 +182,14 @@ class AGpsViewModel(
             _uiState.value = AGpsUiState.Downloading
             val result = repository.validateCurrentSource()
             _validationResult.value = result
+            val app = getApplication<Application>()
             _uiState.value =
                 if (result.isValid) {
-                    AGpsUiState.Success("下载源验证通过")
+                    AGpsUiState.Success(app.getString(R.string.agps_source_validate_success))
                 } else {
-                    AGpsUiState.Error(result.errorMessage ?: "验证失败")
+                    AGpsUiState.Error(
+                        result.errorMessage ?: app.getString(R.string.agps_validation_fail),
+                    )
                 }
         }
     }

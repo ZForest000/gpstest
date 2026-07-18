@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.gpstest.R
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.ui.components.color
 
@@ -32,8 +34,16 @@ fun SkyChartLegend(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // 定位状态图例
-        LegendItem(dotColor = MaterialTheme.colorScheme.onSurface, filled = true, label = "定位中")
-        LegendItem(dotColor = MaterialTheme.colorScheme.onSurfaceVariant, filled = false, label = "可见")
+        LegendItem(
+            dotColor = MaterialTheme.colorScheme.onSurface,
+            filled = true,
+            label = stringResource(R.string.sky_legend_used_in_fix),
+        )
+        LegendItem(
+            dotColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            filled = false,
+            label = stringResource(R.string.sky_legend_visible),
+        )
 
         // 分隔
         Text(

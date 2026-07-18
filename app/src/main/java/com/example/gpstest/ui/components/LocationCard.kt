@@ -150,7 +150,11 @@ fun LocationCard(
 
                 val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                 Text(
-                    text = "更新: ${timeFormat.format(Date(location.timestamp))}",
+                    text =
+                        stringResource(
+                            R.string.location_updated_at,
+                            timeFormat.format(Date(location.timestamp)),
+                        ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

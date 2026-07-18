@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GPS Debug Tool</string>
+
+    <!-- Navigation / drawer -->
+    <string name="nav_drawer_title">GNSS Test</string>
+    <string name="nav_satellite_list">Satellites</string>
+    <string name="nav_sky_chart">Sky Chart</string>
+    <string name="nav_agps">A-GPS</string>
+    <string name="nav_history">History</string>
+    <string name="nav_help">Help</string>
+    <string name="nav_nmea">NMEA</string>
+    <string name="cd_menu">Menu</string>
+
+    <!-- Sky chart -->
+    <string name="sky_chart_title">Sky Chart</string>
+    <string name="sky_chart_north_up_on">Disable north-up</string>
+    <string name="sky_chart_north_up_off">Enable north-up</string>
+    <string name="sky_chart_content_description">Satellite sky chart showing %1$d satellites</string>
+    <string name="sky_chart_waiting">Waiting for satellite signals…</string>
+    <string name="sky_legend_used_in_fix">In fix</string>
+    <string name="sky_legend_visible">Visible</string>
+
+    <!-- Constellation stats -->
+    <string name="constellation_stat_title">Satellites in fix</string>
+    <string name="signal_strength_strong_short">Strong</string>
+    <string name="signal_strength_medium_short">Medium</string>
+    <string name="signal_strength_weak_short">Weak</string>
+
+    <!-- Location card -->
+    <string name="location_updated_at">Updated: %1$s</string>
+
+    <!-- Main Screen -->
+    <string name="main_title">GPS Debug Tool</string>
+    <string name="main_gps_status_title">GPS Status</string>
+    <string name="main_satellite_info_title">Satellite Info</string>
+    <string name="main_signal_quality_title">Signal Quality</string>
+    <string name="main_location_data_title">Location Data</string>
+    <string name="main_nmea_data_title">NMEA Data</string>
+
+    <!-- GPS Status -->
+    <string name="gps_status_enabled">Enabled</string>
+    <string name="gps_status_disabled">Disabled</string>
+    <string name="gps_status_enabled_details">GPS is on and searching for satellites</string>
+    <string name="gps_status_disabled_details">GPS is off; check system settings</string>
+
+    <!-- Satellite Info -->
+    <string name="satellite_count_format">Satellites: %1$d</string>
+    <string name="satellite_used_in_fix">Used in fix: %1$d</string>
+    <string name="satellite_view_only">View only: %1$d</string>
+
+    <!-- Satellite Filter / Sort / Freeze -->
+    <string name="satellite_filter_title">Filter</string>
+    <string name="satellite_sort_cn0">Signal</string>
+    <string name="satellite_sort_elevation">Elevation</string>
+    <string name="satellite_sort_svid">SVID</string>
+    <string name="satellite_search_svid">Search SVID</string>
+    <string name="satellite_freeze">Freeze</string>
+    <string name="satellite_resume">Resume</string>
+    <string name="satellite_frozen_banner">List frozen — display updates paused</string>
+    <string name="constellation_all">All</string>
+
+    <!-- Signal Quality -->
+    <string name="signal_strength_excellent">Excellent</string>
+    <string name="signal_strength_good">Good</string>
+    <string name="signal_strength_fair">Fair</string>
+    <string name="signal_strength_poor">Poor</string>
+    <string name="signal_strength_none">No signal</string>
+
+    <!-- Location Data -->
+    <string name="location_latitude">Latitude</string>
+    <string name="location_longitude">Longitude</string>
+    <string name="location_altitude">Altitude</string>
+    <string name="location_accuracy">Accuracy</string>
+    <string name="location_speed">Speed</string>
+    <string name="location_bearing">Bearing</string>
+    <string name="location_time">Update time</string>
+
+    <!-- Values -->
+    <string name="value_not_available">--</string>
+    <string name="value_latitude_format">%.6f°</string>
+    <string name="value_longitude_format">%.6f°</string>
+    <string name="value_altitude_format">%.1f m</string>
+    <string name="value_accuracy_format">%.1f m</string>
+    <string name="value_speed_format">%.1f km/h</string>
+    <string name="value_bearing_format">%.1f°</string>
+
+    <!-- NMEA Data -->
+    <string name="nmea_no_data">No NMEA data yet</string>
+    <string name="nmea_sentence_format">[%1$tH:%1$tM:%1$tS.%1$tL] %2$s</string>
+    <string name="nmea_freeze">Freeze</string>
+    <string name="nmea_resume">Resume</string>
+    <string name="nmea_clear">Clear</string>
+    <string name="nmea_share">Share</string>
+    <string name="nmea_share_chooser">Share NMEA file</string>
+    <string name="nmea_export_failed">Export failed: empty buffer or write error</string>
+    <string name="nmea_rate_format">%.0f Hz</string>
+    <string name="nmea_buffer_format">%1$d / %2$d</string>
+    <string name="nmea_filter_all">All</string>
+    <string name="nmea_parsed_title">Parsed summary</string>
+    <string name="nmea_parsed_gga">GGA: quality %1$d · sats %2$d · HDOP %3$s · alt %4$s</string>
+    <string name="nmea_parsed_rmc">RMC: %1$s · speed %2$s kn · course %3$s°</string>
+    <string name="nmea_disabled">NMEA output is off; enable it in Settings</string>
+    <string name="nmea_type_count_format">%1$s (%2$d)</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+
+    <!-- A-GPS -->
+    <string name="agps_manager">A-GPS Manager</string>
+    <string name="data_status">Data status</string>
+    <string name="time_sync">Time sync</string>
+    <string name="ephemeris">Ephemeris</string>
+    <string name="almanac">Almanac</string>
+    <string name="ephemeris_short">Eph</string>
+    <string name="almanac_short">Alm</string>
+    <string name="last_update">Last update: %s</string>
+    <string name="last_injection_time">Last injection: %s</string>
+    <string name="status_valid">Valid</string>
+    <string name="status_partial">Partial</string>
+    <string name="status_expired">Expired</string>
+    <string name="status_missing">Missing</string>
+    <string name="status_unknown">Unknown</string>
+    <string name="auto_update">Auto update</string>
+    <string name="enable_auto_update">Enable auto update</string>
+    <string name="auto_update_desc">Download updates every %d hours</string>
+    <string name="manual_actions">Manual actions</string>
+    <string name="download_now">Download now</string>
+    <string name="import_file">Import file</string>
+    <string name="sync_time">Sync time</string>
+    <string name="clear_agps_data">Clear data</string>
+    <string name="injection_history">Injection history</string>
+    <string name="success">Success</string>
+    <string name="failed">Failed</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="agps_download_url">Download URL</string>
+    <string name="agps_save_url">Save URL</string>
+    <string name="agps_url_invalid">Enter a valid http(s) URL</string>
+    <string name="agps_interval_hours">Update interval (hours)</string>
+    <string name="agps_clear_history">Clear history</string>
+    <string name="agps_validate_source">Validate source</string>
+    <string name="agps_validation_ok">Validation succeeded</string>
+    <string name="agps_validation_fail">Validation failed</string>
+    <string name="agps_error_prefix">Error: %1$s</string>
+    <string name="agps_import_success">File imported and injected</string>
+    <string name="agps_import_fail">Import failed</string>
+    <string name="agps_file_read_fail">Unable to read file</string>
+    <string name="agps_cache_write_fail">Failed to write cache</string>
+    <string name="agps_inject_fail">Injection failed</string>
+    <string name="agps_inject_success">A-GPS data injected. Return to the main screen to verify satellite status.</string>
+    <string name="agps_download_fail">Download failed</string>
+    <string name="agps_time_sync_success">Time sync succeeded</string>
+    <string name="agps_time_sync_fail">Time sync failed</string>
+    <string name="agps_clear_success">A-GPS data cleared</string>
+    <string name="agps_clear_fail">Clear failed</string>
+    <string name="agps_file_validate_success">File validation passed</string>
+    <string name="agps_source_validate_success">Source validation passed</string>
+
+    <!-- History filters (common keys) -->
+    <string name="history_filter_24h">24 hours</string>
+    <string name="history_filter_7d">7 days</string>
+    <string name="history_filter_empty">No snapshots in this time range</string>
+    <string name="history_location_line">Location: %1$s, %2$s · accuracy %3$s m</string>
+    <string name="history_dop_line">DOP: P%1$s H%2$s V%3$s</string>
+    <string name="history_ttff_line">TTFF: %.1f s</string>
+</resources>

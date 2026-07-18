@@ -28,6 +28,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.example.gpstest.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -60,12 +62,12 @@ fun SkyChartScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("天空图") },
+                title = { Text(stringResource(R.string.sky_chart_title)) },
                 navigationIcon = {
                     IconButton(onClick = onOpenDrawer) {
                         Icon(
                             imageVector = Icons.Filled.Menu,
-                            contentDescription = "菜单",
+                            contentDescription = stringResource(R.string.cd_menu),
                         )
                     }
                 },
@@ -181,9 +183,9 @@ private fun SkyChartContent(
                         },
                     contentDescription =
                         if (transformState.northUp) {
-                            "关闭北向上"
+                            stringResource(R.string.sky_chart_north_up_on)
                         } else {
-                            "开启北向上"
+                            stringResource(R.string.sky_chart_north_up_off)
                         },
                     tint =
                         if (transformState.northUp) {
