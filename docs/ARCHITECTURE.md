@@ -24,11 +24,15 @@ GPS Debug Tool 采用 **Clean MVVM** 与 **单向数据流**。单 Activity（`M
 
 **手动 DI**，无 Hilt / Dagger / Koin。
 
-- 在 `MainActivity` 中构建依赖图
+- `GpsTestApplication` 持有惰性创建的 `AppDependencies`，是唯一的应用级手动 DI 组合点。
+- `AppDependencies` 惰性缓存现有的 GNSS、卫星历史、应用设置、外部 GPS 星历和 A-GPS 依赖链。
 - 通过 `ViewModelProvider.Factory` 注入：
     - `SatelliteViewModelFactory`
     - `AGpsViewModelFactory`
-- `AGpsUpdateWorker` **自行重建**依赖链（不共享 Activity 作用域实例）
+    - `SettingsViewModelFactory`
+    - `NmeaViewModelFactory`
+    - `NavigationMessageViewModelFactory`
+- `MainActivity` 的 Factory 与 `AGpsUpdateWorker` 都从同一个应用组合根读取依赖，不再自行构造依赖链。
 
 约定：接口无后缀（如 `GnssDataSource`），实现类加 `Impl`。
 
@@ -99,7 +103,9 @@ SatelliteViewModel.maybeSaveSnapshot()（约每 60 秒）
 
 ```
 app/src/main/java/com/example/gpstest/
-├── MainActivity.kt           # 入口、DI、权限、导航
+├── GpsTestApplication.kt     # Application 入口，持有应用级组合根
+├── AppDependencies.kt        # 惰性缓存的应用级依赖组合
+├── MainActivity.kt           # Activity 入口、权限、导航；消费应用组合根
 ├── viewmodel/                # SatelliteViewModel, AGpsViewModel, …
 ├── domain/
 │   ├── model/

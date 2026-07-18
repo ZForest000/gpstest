@@ -27,7 +27,7 @@ Android GPS 调试工具，用于实时 GNSS 卫星监控和 A-GPS 管理。支�
 - `SatelliteUiState`: Loading → PermissionRequired → Success(...) → Error(message)
 - `AGpsUiState`: Idle → Downloading → Injecting → Success(message) → Error(message)
 
-**依赖注入**: 通过 `ViewModelProvider.Factory` 手动 DI。无 Hilt/Dagger/Koin。依赖在 `MainActivity` 中构建，传入工厂类 (`SatelliteViewModelFactory`, `AGpsViewModelFactory`)。`AGpsUpdateWorker` 自行重建依赖链。
+**依赖注入**: 通过 `ViewModelProvider.Factory` 手动 DI。无 Hilt/Dagger/Koin。`GpsTestApplication` 持有应用级 `AppDependencies`，集中惰性创建依赖；`MainActivity` 的 Factory 和 `AGpsUpdateWorker` 都从该组合根取得既有依赖。
 
 **错误处理**: 仓库和数据源中全面使用 `Result<T>`。ViewModel 协程作用域内 `try/catch` 配合密封错误状态。A-GPS 下载支持多 URL 回退。WorkManager 指数退避重试。
 
