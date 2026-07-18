@@ -17,7 +17,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,6 +70,17 @@ fun HelpScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            HelpGuideSection.readingOrder.forEach { section ->
+                item(key = section) {
+                    when (section) {
+                        HelpGuideSection.QUICK_DIAGNOSTICS -> QuickDiagnosticsSection()
+                        HelpGuideSection.SCREEN_GUIDE -> ScreenGuideSection()
+                        HelpGuideSection.METRICS_REFERENCE -> MetricsReferenceSection()
+                        HelpGuideSection.AGPS_AND_ADVANCED -> AdvancedCapabilitiesSection()
+                    }
+                }
+            }
+
             item {
                 HelpSection(
                     title = stringResource(R.string.help_ttff_title),
@@ -221,6 +236,111 @@ fun HelpScreen(
 }
 
 @Composable
+private fun QuickDiagnosticsSection() {
+    HelpSection(
+        title = stringResource(R.string.help_quick_diagnostics_title),
+        icon = { Icon(Icons.Default.MyLocation, contentDescription = null) },
+    ) {
+        HelpText(stringResource(R.string.help_quick_diagnostics_content))
+        HelpSubItem(
+            title = stringResource(R.string.help_no_satellites_title),
+            desc = stringResource(R.string.help_no_satellites_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_ttff_accuracy_factors_title),
+            desc = stringResource(R.string.help_ttff_accuracy_factors_desc),
+        )
+    }
+}
+
+@Composable
+private fun ScreenGuideSection() {
+    HelpSection(
+        title = stringResource(R.string.help_screen_guide_title),
+        icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+    ) {
+        HelpSubItem(
+            title = stringResource(R.string.help_overview_title),
+            desc = stringResource(R.string.help_overview_desc),
+        )
+        HelpSubItem(
+            stringResource(R.string.help_satellite_list_guide_title),
+            stringResource(R.string.help_satellite_list_guide_desc),
+        )
+        HelpSubItem(
+            stringResource(R.string.help_sky_chart_guide_title),
+            stringResource(R.string.help_sky_chart_guide_desc),
+        )
+        HelpSubItem(
+            stringResource(R.string.help_positioning_guide_title),
+            stringResource(R.string.help_positioning_guide_desc),
+        )
+        HelpSubItem(
+            stringResource(R.string.help_diagnostics_guide_title),
+            stringResource(R.string.help_diagnostics_guide_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_history_guide_title),
+            desc = stringResource(R.string.help_history_guide_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_nmea_guide_title),
+            desc = stringResource(R.string.help_nmea_guide_desc),
+        )
+        HelpSubItem(
+            stringResource(R.string.help_navigation_messages_guide_title),
+            stringResource(R.string.help_navigation_messages_guide_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_settings_guide_title),
+            desc = stringResource(R.string.help_settings_guide_desc),
+        )
+    }
+}
+
+@Composable
+private fun MetricsReferenceSection() {
+    HelpSection(
+        title = stringResource(R.string.help_metrics_reference_title),
+        icon = { Icon(Icons.Default.Memory, contentDescription = null) },
+    ) {
+        HelpSubItem(
+            title = stringResource(R.string.help_location_accuracy_boundary_title),
+            desc = stringResource(R.string.help_location_accuracy_boundary_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_dop_cn0_boundary_title),
+            desc = stringResource(R.string.help_dop_cn0_boundary_desc),
+        )
+    }
+}
+
+@Composable
+private fun AdvancedCapabilitiesSection() {
+    HelpSection(
+        title = stringResource(R.string.help_agps_advanced_title),
+        icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+    ) {
+        HelpSubItem(
+            title = stringResource(R.string.help_agps_actions_title),
+            desc = stringResource(R.string.help_agps_actions_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_agps_injection_limit_title),
+            desc = stringResource(R.string.help_agps_injection_limit_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_agps_custom_url_title),
+            desc = stringResource(R.string.help_agps_custom_url_desc),
+        )
+        HelpSubItem(
+            title = stringResource(R.string.help_privileged_diagnostics_title),
+            desc = stringResource(R.string.help_privileged_diagnostics_desc),
+        )
+    }
+}
+
+@Composable
 private fun HelpSection(
     title: String,
     icon: @Composable () -> Unit,
@@ -228,7 +348,7 @@ private fun HelpSection(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(8.dp),
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
