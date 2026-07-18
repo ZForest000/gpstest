@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash 'D:\\project\\gpstest\\.codex\\hooks\\block-sensitive.sh'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'file=$(cat | grep -oP \"\\\"file_path\\\"\\s*:\\s*\\\"[^\\\"]+\\\"\" | head -1 | grep -oP \"\\\"[^\\\"]+\\\"$\" | tr -d \"\\\"\"); if [[ \"$file\" == *.kt ]]; then export JAVA_HOME=\"/c/Program Files/Java/jdk-21\" && cd D:/project/gpstest && ./gradlew ktlintFormat -q 2>/dev/null && echo \"[ktlint] 已自动格式化\"; fi'"
+          }
+        ]
+      }
+    ]
+  }
+}
