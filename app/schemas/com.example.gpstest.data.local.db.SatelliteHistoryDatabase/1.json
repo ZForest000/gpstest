@@ -1,0 +1,168 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "53f30ce703dfd96f410ab4af88953707",
+    "entities": [
+      {
+        "tableName": "history_snapshots",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`timestamp` INTEGER NOT NULL, `usedInFixCount` INTEGER NOT NULL, `visibleCount` INTEGER NOT NULL, `averageSignalStrength` REAL NOT NULL, `latitude` REAL, `longitude` REAL, `accuracy` REAL, `pdop` REAL, `hdop` REAL, `vdop` REAL, `ttffMs` INTEGER, PRIMARY KEY(`timestamp`))",
+        "fields": [
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usedInFixCount",
+            "columnName": "usedInFixCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "visibleCount",
+            "columnName": "visibleCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "averageSignalStrength",
+            "columnName": "averageSignalStrength",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "accuracy",
+            "columnName": "accuracy",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "pdop",
+            "columnName": "pdop",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "hdop",
+            "columnName": "hdop",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "vdop",
+            "columnName": "vdop",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "ttffMs",
+            "columnName": "ttffMs",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "timestamp"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "history_satellites",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`snapshotTimestamp` INTEGER NOT NULL, `svid` INTEGER NOT NULL, `constellationName` TEXT NOT NULL, `rawConstellationType` INTEGER, `cn0DbHz` REAL NOT NULL, `usedInFix` INTEGER NOT NULL, PRIMARY KEY(`snapshotTimestamp`, `constellationName`, `svid`), FOREIGN KEY(`snapshotTimestamp`) REFERENCES `history_snapshots`(`timestamp`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "snapshotTimestamp",
+            "columnName": "snapshotTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "svid",
+            "columnName": "svid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "constellationName",
+            "columnName": "constellationName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rawConstellationType",
+            "columnName": "rawConstellationType",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "cn0DbHz",
+            "columnName": "cn0DbHz",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "usedInFix",
+            "columnName": "usedInFix",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "snapshotTimestamp",
+            "constellationName",
+            "svid"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_history_satellites_snapshotTimestamp",
+            "unique": false,
+            "columnNames": [
+              "snapshotTimestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_history_satellites_snapshotTimestamp` ON `${TABLE_NAME}` (`snapshotTimestamp`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "history_snapshots",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "snapshotTimestamp"
+            ],
+            "referencedColumns": [
+              "timestamp"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '53f30ce703dfd96f410ab4af88953707')"
+    ]
+  }
+}

@@ -115,7 +115,7 @@ data class SnapshotWithSatellites(
 @Database(
     entities = [HistorySnapshotEntity::class, HistorySatelliteEntity::class],
     version = 1,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class SatelliteHistoryDatabase : RoomDatabase() {
     abstract fun historyDao(): SatelliteHistoryDao
