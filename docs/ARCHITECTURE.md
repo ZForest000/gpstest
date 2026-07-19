@@ -85,15 +85,19 @@ WorkManager 使用指数退避重试。
 
 ### 历史快照
 
-```
+```text
 SatelliteViewModel.maybeSaveSnapshot()（约每 60 秒）
         ↓
-  SatelliteHistoryRepositoryImpl
+SatelliteHistoryRepositoryImpl
         ↓
-  SatelliteHistoryDataStore（DataStore Preferences + kotlinx-serialization JSON）
-        ↓ StateFlow
-  HistoryScreen
+SatelliteHistoryPersistence
+        ├─ RoomSatelliteHistoryStore（v1→v2 显式 migration、当前读写）
+        └─ SatelliteHistoryDataStore（仅 legacy JSON / marker 兼容）
+        ↓ Flow<List<SatelliteHistorySnapshot>>
+HistoryScreen
 ```
+
+`SatelliteHistoryPersistence` 唯一拥有 legacy JSON 导入、重开恢复、retention 和 clear 的协调职责。`RoomSatelliteHistoryStore` 使用显式且非 destructive 的 Room v1→v2 migration，并承担当前历史的读写；`SatelliteHistoryDataStore` 仅保留旧 JSON 与 marker 的兼容职责。UI、ViewModel 和 repository 均不读取 marker 或 Room version。
 
 ## 导航
 
