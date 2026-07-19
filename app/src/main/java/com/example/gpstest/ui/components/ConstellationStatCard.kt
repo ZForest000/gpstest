@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -43,58 +42,53 @@ fun ConstellationStatCard(
             .groupBy { it.signalStrength }
             .mapValues { it.value.size }
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(12.dp),
-                ).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.constellation_stat_title),
-            style = MaterialTheme.typography.titleMedium,
-        )
-
-        // Constellation row
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    GpsCard(modifier = modifier) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            val constellationOrder =
-                Constellation.entries
-                    .filter { it != Constellation.UNKNOWN }
-                    .map { it to it.shortName to it.color }
+            Text(
+                text = stringResource(R.string.constellation_stat_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
 
-            for ((pair, color) in constellationOrder) {
-                val (constellation, name) = pair
-                val count = constellationCounts[constellation] ?: 0
-                ConstellationChip(name = name, count = count, color = color)
+            // Constellation row
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val constellationOrder =
+                    Constellation.entries
+                        .filter { it != Constellation.UNKNOWN }
+                        .map { it to it.shortName to it.color }
+
+                for ((pair, color) in constellationOrder) {
+                    val (constellation, name) = pair
+                    val count = constellationCounts[constellation] ?: 0
+                    ConstellationChip(name = name, count = count, color = color)
+                }
             }
-        }
 
-        // Signal strength row
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SignalChip(
-                label = stringResource(R.string.signal_strength_strong_short),
-                count = signalCounts[SignalStrength.STRONG] ?: 0,
-                color = SignalStrong,
-            )
-            SignalChip(
-                label = stringResource(R.string.signal_strength_medium_short),
-                count = signalCounts[SignalStrength.MEDIUM] ?: 0,
-                color = SignalMedium,
-            )
-            SignalChip(
-                label = stringResource(R.string.signal_strength_weak_short),
-                count = signalCounts[SignalStrength.WEAK] ?: 0,
-                color = SignalWeak,
-            )
+            // Signal strength row
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SignalChip(
+                    label = stringResource(R.string.signal_strength_strong_short),
+                    count = signalCounts[SignalStrength.STRONG] ?: 0,
+                    color = SignalStrong,
+                )
+                SignalChip(
+                    label = stringResource(R.string.signal_strength_medium_short),
+                    count = signalCounts[SignalStrength.MEDIUM] ?: 0,
+                    color = SignalMedium,
+                )
+                SignalChip(
+                    label = stringResource(R.string.signal_strength_weak_short),
+                    count = signalCounts[SignalStrength.WEAK] ?: 0,
+                    color = SignalWeak,
+                )
+            }
         }
     }
 }

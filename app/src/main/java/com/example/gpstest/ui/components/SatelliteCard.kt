@@ -1,13 +1,9 @@
 package com.example.gpstest.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,69 +24,68 @@ fun SatelliteCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp),
-                ).clickable(onClick = onClick)
-                .padding(12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    GpsCard(
+        modifier = modifier,
+        density = GpsCardDensity.COMPACT,
+        onClick = onClick,
     ) {
-        // Left side: Constellation indicator and ID
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ConstellationIndicator(
-                constellation = satellite.constellation,
-                usedInFix = satellite.usedInFix,
-            )
-            Column {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "${satellite.getDisplayName()}-${satellite.svid}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    if (satellite.multipathIndicator == MultipathIndicator.DETECTED) {
+            // Left side: Constellation indicator and ID
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ConstellationIndicator(
+                    constellation = satellite.constellation,
+                    usedInFix = satellite.usedInFix,
+                )
+                Column {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
-                            text = stringResource(R.string.multipath_detected),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFF9800),
+                            text = "${satellite.getDisplayName()}-${satellite.svid}",
+                            style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium,
                         )
+                        if (satellite.multipathIndicator == MultipathIndicator.DETECTED) {
+                            Text(
+                                text = stringResource(R.string.multipath_detected),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFFFF9800),
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
                     }
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.signal_strength_format,
+                                satellite.cn0DbHz.toInt(),
+                            ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = getSignalColor(satellite.cn0DbHz),
+                    )
                 }
-                Text(
-                    text =
-                        stringResource(
-                            R.string.signal_strength_format,
-                            satellite.cn0DbHz.toInt(),
-                        ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = getSignalColor(satellite.cn0DbHz),
-                )
             }
-        }
 
-        // Right side: Azimuth and Elevation
-        Text(
-            text =
-                stringResource(
-                    R.string.azimuth_elevation_format,
-                    satellite.elevationDegrees.toInt(),
-                    satellite.azimuthDegrees.toInt(),
-                ),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+            // Right side: Azimuth and Elevation
+            Text(
+                text =
+                    stringResource(
+                        R.string.azimuth_elevation_format,
+                        satellite.elevationDegrees.toInt(),
+                        satellite.azimuthDegrees.toInt(),
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

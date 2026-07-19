@@ -4,9 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,12 +26,8 @@ fun SignalBarChart(
     if (satellites.isEmpty()) return
 
     val bars = satellites.sortedByDescending { it.cn0DbHz }.take(24)
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+    GpsCard(modifier = modifier) {
+        Column {
             Text(
                 text = stringResource(R.string.signal_bar_chart_title),
                 style = MaterialTheme.typography.titleSmall,

@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.AppSettings
 import com.example.gpstest.domain.model.DarkModeConfig
+import com.example.gpstest.ui.components.GpsCard
 import com.example.gpstest.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,8 +104,8 @@ private fun AppearanceCard(
     onDarkModeChange: (DarkModeConfig) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    GpsCard(modifier = modifier) {
+        Column {
             Text(
                 text = stringResource(R.string.settings_dark_mode),
                 style = MaterialTheme.typography.titleMedium,
@@ -147,12 +147,11 @@ private fun NmeaCard(
     onNmeaEnabledChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
+    GpsCard(modifier = modifier) {
         Row(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                    .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -183,8 +182,8 @@ private fun SnapshotCard(
     onSettingsChange: (AppSettings) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    GpsCard(modifier = modifier) {
+        Column {
             Text(
                 text = stringResource(R.string.settings_snapshot_section),
                 style = MaterialTheme.typography.titleMedium,

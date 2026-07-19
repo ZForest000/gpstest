@@ -1,7 +1,6 @@
 package com.example.gpstest.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
@@ -46,113 +44,107 @@ fun HistorySnapshotCard(
     var expanded by remember(snapshot.timestamp) { mutableStateOf(initiallyExpanded) }
     val entries = remember(snapshot.entriesJson) { snapshot.getEntries() }
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(8.dp),
-                ).padding(12.dp),
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded },
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = formatMillisToDateTime(snapshot.timestamp),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text = stringResource(R.string.signal_strength_avg, snapshot.averageSignalStrength.toInt()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = getSignalColor(snapshot.averageSignalStrength),
+    GpsCard(modifier = modifier) {
+        Column {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { expanded = !expanded },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = formatMillisToDateTime(snapshot.timestamp),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.signal_strength_avg, snapshot.averageSignalStrength.toInt()),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = getSignalColor(snapshot.averageSignalStrength),
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                    contentDescription =
+                        stringResource(
+                            if (expanded) R.string.history_collapse else R.string.history_expand,
+                        ),
                 )
             }
-            Icon(
-                imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                contentDescription =
-                    stringResource(
-                        if (expanded) R.string.history_collapse else R.string.history_expand,
-                    ),
-            )
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            StatItemCompact(
-                label = stringResource(R.string.used_in_fix),
-                value = snapshot.usedInFixCount.toString(),
-            )
-            StatItemCompact(
-                label = stringResource(R.string.visible),
-                value = snapshot.visibleCount.toString(),
-            )
-            StatItemCompact(
-                label = stringResource(R.string.total),
-                value = entries.size.toString(),
-            )
-        }
-
-        if (snapshot.hasLocation || snapshot.pdop != null || snapshot.ttffMs != null) {
             Spacer(modifier = Modifier.height(8.dp))
-            QualitySummaryRow(snapshot)
-        }
 
-        AnimatedVisibility(visible = expanded) {
-            Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                StatItemCompact(
+                    label = stringResource(R.string.used_in_fix),
+                    value = snapshot.usedInFixCount.toString(),
+                )
+                StatItemCompact(
+                    label = stringResource(R.string.visible),
+                    value = snapshot.visibleCount.toString(),
+                )
+                StatItemCompact(
+                    label = stringResource(R.string.total),
+                    value = entries.size.toString(),
+                )
+            }
+
+            if (snapshot.hasLocation || snapshot.pdop != null || snapshot.ttffMs != null) {
                 Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider()
-                Spacer(modifier = Modifier.height(8.dp))
+                QualitySummaryRow(snapshot)
+            }
 
-                if (entries.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.history_no_entries),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.history_entries_title, entries.size),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    entries
-                        .sortedWith(
-                            compareByDescending<SatelliteHistoryEntry> { it.usedInFix }
-                                .thenByDescending { it.cn0DbHz },
-                        ).forEach { entry ->
-                            EntryRow(entry = entry)
-                        }
-                }
+            AnimatedVisibility(visible = expanded) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider()
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    IconButton(onClick = onShare) {
-                        Icon(
-                            imageVector = Icons.Filled.Share,
-                            contentDescription = stringResource(R.string.history_share_snapshot),
+                    if (entries.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.history_no_entries),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    } else {
+                        Text(
+                            text = stringResource(R.string.history_entries_title, entries.size),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        entries
+                            .sortedWith(
+                                compareByDescending<SatelliteHistoryEntry> { it.usedInFix }
+                                    .thenByDescending { it.cn0DbHz },
+                            ).forEach { entry ->
+                                EntryRow(entry = entry)
+                            }
                     }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = stringResource(R.string.history_delete_snapshot),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        IconButton(onClick = onShare) {
+                            Icon(
+                                imageVector = Icons.Filled.Share,
+                                contentDescription = stringResource(R.string.history_share_snapshot),
+                            )
+                        }
+                        IconButton(onClick = onDelete) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.history_delete_snapshot),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 }
             }

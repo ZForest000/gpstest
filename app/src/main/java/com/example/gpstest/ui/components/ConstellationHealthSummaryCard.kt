@@ -1,12 +1,9 @@
 package com.example.gpstest.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,55 +43,50 @@ fun ConstellationHealthSummaryCard(
         )
     if (stats.isEmpty()) return
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(12.dp),
-                ).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.constellation_health_summary),
-            style = MaterialTheme.typography.titleMedium,
-        )
+    GpsCard(modifier = modifier) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.constellation_health_summary),
+                style = MaterialTheme.typography.titleMedium,
+            )
 
-        stats.forEach { stat ->
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text =
-                            stringResource(
-                                R.string.constellation_health_ratio,
-                                stat.name,
-                                stat.availableCount,
-                                stat.totalCount,
-                            ),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Text(
-                        text =
-                            stringResource(
-                                R.string.constellation_health_percent,
-                                (stat.ratio * 100).roundToInt(),
-                            ),
-                        style = MaterialTheme.typography.labelLarge,
+            stats.forEach { stat ->
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.constellation_health_ratio,
+                                    stat.name,
+                                    stat.availableCount,
+                                    stat.totalCount,
+                                ),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.constellation_health_percent,
+                                    (stat.ratio * 100).roundToInt(),
+                                ),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    LinearProgressIndicator(
+                        progress = { stat.ratio.coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth(),
                         color = stat.color,
+                        trackColor = stat.color.copy(alpha = 0.2f),
                     )
                 }
-
-                LinearProgressIndicator(
-                    progress = { stat.ratio.coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth(),
-                    color = stat.color,
-                    trackColor = stat.color.copy(alpha = 0.2f),
-                )
             }
         }
     }

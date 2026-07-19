@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -47,6 +46,8 @@ import com.example.gpstest.R
 import com.example.gpstest.data.local.NmeaExportHelper
 import com.example.gpstest.domain.model.NmeaParsedSnapshot
 import com.example.gpstest.domain.model.NmeaSentence
+import com.example.gpstest.ui.components.GpsCard
+import com.example.gpstest.ui.components.GpsCardDensity
 import com.example.gpstest.ui.components.PermissionRequiredContent
 import com.example.gpstest.viewmodel.NmeaUiState
 import com.example.gpstest.viewmodel.NmeaViewModel
@@ -321,8 +322,11 @@ private fun ParsedCard(
     val rmc = parsed.rmc
     if (gga == null && rmc == null) return
 
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
+    GpsCard(
+        modifier = modifier,
+        density = GpsCardDensity.COMPACT,
+    ) {
+        Column {
             Text(
                 text = stringResource(R.string.nmea_parsed_title),
                 style = MaterialTheme.typography.titleSmall,

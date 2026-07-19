@@ -20,8 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -52,6 +50,8 @@ import com.example.gpstest.R
 import com.example.gpstest.domain.model.AGpsInjectionRecord
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.ui.components.AGpsStatusCard
+import com.example.gpstest.ui.components.GpsCard
+import com.example.gpstest.ui.components.GpsCardTone
 import com.example.gpstest.viewmodel.AGpsUiState
 import com.example.gpstest.viewmodel.AGpsViewModel
 import java.text.SimpleDateFormat
@@ -198,8 +198,8 @@ private fun AutoUpdateCard(
         urlError = false
     }
 
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    GpsCard(modifier = modifier) {
+        Column {
             Text(
                 text = stringResource(R.string.auto_update),
                 style = MaterialTheme.typography.titleMedium,
@@ -306,8 +306,8 @@ private fun ManualActionsCard(
     isLoading: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Card(modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    GpsCard(modifier = modifier) {
+        Column {
             Text(
                 text = stringResource(R.string.manual_actions),
                 style = MaterialTheme.typography.titleMedium,
@@ -382,19 +382,11 @@ private fun ValidationResultCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (result.isValid) {
-                        MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.errorContainer
-                    },
-            ),
+    GpsCard(
+        modifier = modifier,
+        tone = if (result.isValid) GpsCardTone.DEFAULT else GpsCardTone.ERROR,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -410,12 +402,6 @@ private fun ValidationResultCard(
                             },
                         ),
                     style = MaterialTheme.typography.titleMedium,
-                    color =
-                        if (result.isValid) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onErrorContainer
-                        },
                 )
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.dismiss))
@@ -454,19 +440,11 @@ private fun HistoryItem(
     record: AGpsInjectionRecord,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (record.success) {
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                    } else {
-                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                    },
-            ),
+    GpsCard(
+        modifier = modifier,
+        tone = if (record.success) GpsCardTone.DEFAULT else GpsCardTone.ERROR,
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

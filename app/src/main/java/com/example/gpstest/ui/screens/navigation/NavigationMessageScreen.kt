@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +28,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.example.gpstest.R
 import com.example.gpstest.domain.model.NavigationMessageFrame
+import com.example.gpstest.ui.components.GpsCard
+import com.example.gpstest.ui.components.GpsCardDensity
 import com.example.gpstest.viewmodel.NavigationMessageUiState
 import com.example.gpstest.viewmodel.NavigationMessageViewModel
 
@@ -100,8 +101,8 @@ private fun NavigationContent(
 
 @Composable
 private fun NavigationFrameCard(frame: NavigationMessageFrame) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    GpsCard(density = GpsCardDensity.COMPACT) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = "${frame.constellation.shortName} SVID ${frame.svid} · ${frame.typeLabel()}",
                 fontFamily = FontFamily.Monospace,

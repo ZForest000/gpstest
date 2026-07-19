@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,51 +26,46 @@ fun DopCard(
     dopInfo: DopInfo?,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(12.dp),
-                ).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        // Title row
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+    GpsCard(modifier = modifier) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.dop_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            if (dopInfo != null) {
+            // Title row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = stringResource(R.string.dop_satellite_count, dopInfo.satelliteCount),
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(R.string.dop_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (dopInfo != null) {
+                    Text(
+                        text = stringResource(R.string.dop_satellite_count, dopInfo.satelliteCount),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            if (dopInfo != null) {
+                DopGroup(title = stringResource(R.string.dop_group_spatial)) {
+                    DopRow(label = "PDOP", value = dopInfo.pdop)
+                    DopRow(label = "HDOP", value = dopInfo.hdop)
+                    DopRow(label = "VDOP", value = dopInfo.vdop)
+                }
+                DopGroup(title = stringResource(R.string.dop_group_time)) {
+                    DopRow(label = "TDOP", value = dopInfo.tdop)
+                    DopRow(label = "GDOP", value = dopInfo.gdop)
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.dop_waiting),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-
-        if (dopInfo != null) {
-            DopGroup(title = stringResource(R.string.dop_group_spatial)) {
-                DopRow(label = "PDOP", value = dopInfo.pdop)
-                DopRow(label = "HDOP", value = dopInfo.hdop)
-                DopRow(label = "VDOP", value = dopInfo.vdop)
-            }
-            DopGroup(title = stringResource(R.string.dop_group_time)) {
-                DopRow(label = "TDOP", value = dopInfo.tdop)
-                DopRow(label = "GDOP", value = dopInfo.gdop)
-            }
-        } else {
-            Text(
-                text = stringResource(R.string.dop_waiting),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
