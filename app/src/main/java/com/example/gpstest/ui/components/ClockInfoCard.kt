@@ -27,9 +27,8 @@ fun ClockInfoCard(
         Column(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
+            GpsCardTitle(
                 text = stringResource(R.string.clock_info),
-                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
 
@@ -194,13 +193,13 @@ private fun CompactDetailRow(
     ) {
         Text(
             text = "$label: ",
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
     }

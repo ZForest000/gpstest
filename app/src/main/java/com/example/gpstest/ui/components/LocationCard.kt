@@ -32,10 +32,7 @@ fun LocationCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.location_info),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                GpsCardTitle(text = stringResource(R.string.location_info))
 
                 Text(
                     text =

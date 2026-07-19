@@ -8,8 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -72,6 +75,49 @@ fun GpsCard(
             GpsCardContent(contentPadding, content)
         }
     }
+}
+
+@Composable
+fun GpsCardTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = color,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun GpsCardBody(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurface,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
+) {
+    Text(
+        text = text,
+        style = style,
+        color = color,
+        modifier = modifier,
+    )
+}
+
+@Composable
+fun GpsCardMeta(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = color,
+        modifier = modifier,
+    )
 }
 
 @Composable

@@ -24,11 +24,7 @@ fun AntennaInfoCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.antenna_info_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            GpsCardTitle(text = stringResource(R.string.antenna_info_title))
             infos.forEachIndexed { index, info ->
                 if (index > 0) {
                     HorizontalDivider()
@@ -48,7 +44,7 @@ private fun AntennaInfoEntry(info: AntennaInfo) {
                     R.string.antenna_carrier_format,
                     info.carrierFrequencyMHz,
                 ),
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
         )
         Text(
             text =
@@ -58,8 +54,8 @@ private fun AntennaInfoEntry(info: AntennaInfo) {
                     info.pcoYMm,
                     info.pcoZMm,
                 ),
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
         )
         Text(
             text =
@@ -84,6 +80,7 @@ private fun AntennaInfoEntry(info: AntennaInfo) {
                         pcv.maxCorrectionMm,
                     ),
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

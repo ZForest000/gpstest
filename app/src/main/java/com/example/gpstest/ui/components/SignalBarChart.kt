@@ -28,10 +28,7 @@ fun SignalBarChart(
     val bars = satellites.sortedByDescending { it.cn0DbHz }.take(24)
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.signal_bar_chart_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
+            GpsCardTitle(text = stringResource(R.string.signal_bar_chart_title))
             Canvas(
                 modifier =
                     Modifier

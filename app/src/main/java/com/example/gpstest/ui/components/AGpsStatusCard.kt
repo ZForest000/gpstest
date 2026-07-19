@@ -34,10 +34,7 @@ fun AGpsStatusCard(
 ) {
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.data_status),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.data_status))
 
             Spacer(modifier = Modifier.height(12.dp))
 

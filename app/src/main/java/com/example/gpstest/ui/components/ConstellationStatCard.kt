@@ -46,10 +46,7 @@ fun ConstellationStatCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.constellation_stat_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.constellation_stat_title))
 
             // Constellation row
             FlowRow(

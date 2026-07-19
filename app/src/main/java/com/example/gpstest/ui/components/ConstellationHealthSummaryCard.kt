@@ -47,10 +47,7 @@ fun ConstellationHealthSummaryCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.constellation_health_summary),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.constellation_health_summary))
 
             stats.forEach { stat ->
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

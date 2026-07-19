@@ -48,6 +48,7 @@ import com.example.gpstest.domain.model.NmeaParsedSnapshot
 import com.example.gpstest.domain.model.NmeaSentence
 import com.example.gpstest.ui.components.GpsCard
 import com.example.gpstest.ui.components.GpsCardDensity
+import com.example.gpstest.ui.components.GpsCardTitle
 import com.example.gpstest.ui.components.PermissionRequiredContent
 import com.example.gpstest.viewmodel.NmeaUiState
 import com.example.gpstest.viewmodel.NmeaViewModel
@@ -327,10 +328,7 @@ private fun ParsedCard(
         density = GpsCardDensity.COMPACT,
     ) {
         Column {
-            Text(
-                text = stringResource(R.string.nmea_parsed_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
+            GpsCardTitle(text = stringResource(R.string.nmea_parsed_title))
             if (gga != null) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -342,7 +340,7 @@ private fun ParsedCard(
                             gga.hdop?.let { String.format(Locale.US, "%.1f", it) } ?: "--",
                             gga.altitude?.let { String.format(Locale.US, "%.1f m", it) } ?: "--",
                         ),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
             if (rmc != null) {
@@ -355,7 +353,7 @@ private fun ParsedCard(
                             rmc.sogKnots?.let { String.format(Locale.US, "%.1f", it) } ?: "--",
                             rmc.cogDegrees?.let { String.format(Locale.US, "%.1f", it) } ?: "--",
                         ),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }

@@ -55,10 +55,7 @@ fun HistorySnapshotCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = formatMillisToDateTime(snapshot.timestamp),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
+                    GpsCardTitle(text = formatMillisToDateTime(snapshot.timestamp))
                     Text(
                         text = stringResource(R.string.signal_strength_avg, snapshot.averageSignalStrength.toInt()),
                         style = MaterialTheme.typography.bodyMedium,

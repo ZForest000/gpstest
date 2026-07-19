@@ -35,10 +35,7 @@ fun StatBar(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.signal_stats),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                GpsCardTitle(text = stringResource(R.string.signal_stats))
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     StatItem(label = stringResource(R.string.used_in_fix), count = usedInFixCount)
                     StatItem(label = stringResource(R.string.visible), count = visibleCount)

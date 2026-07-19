@@ -33,10 +33,7 @@ fun TtffCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.ttff_title),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                GpsCardTitle(text = stringResource(R.string.ttff_title))
             }
 
             when (ttffState) {

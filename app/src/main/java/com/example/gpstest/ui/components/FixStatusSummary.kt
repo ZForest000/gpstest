@@ -53,10 +53,7 @@ fun FixStatusSummary(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.overview_fix_summary_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
+            GpsCardTitle(text = stringResource(R.string.overview_fix_summary_title))
             Row(modifier = Modifier.fillMaxWidth()) {
                 SummaryMetric(
                     label = stringResource(R.string.overview_fix_status),

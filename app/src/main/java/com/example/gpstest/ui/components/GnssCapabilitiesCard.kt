@@ -28,11 +28,7 @@ fun GnssCapabilitiesCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(R.string.gnss_capabilities_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            GpsCardTitle(text = stringResource(R.string.gnss_capabilities_title))
 
             CapabilityRow(
                 label = stringResource(R.string.cap_hardware_model),
@@ -114,14 +110,14 @@ private fun CapabilityRow(
     ) {
         Text(
             text = "$label:",
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.bodySmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f),
         )
     }

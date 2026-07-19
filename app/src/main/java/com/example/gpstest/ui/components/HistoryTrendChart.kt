@@ -45,10 +45,7 @@ fun HistoryTrendChart(
 
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.history_trend_title),
-                style = MaterialTheme.typography.titleSmall,
-            )
+            GpsCardTitle(text = stringResource(R.string.history_trend_title))
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(

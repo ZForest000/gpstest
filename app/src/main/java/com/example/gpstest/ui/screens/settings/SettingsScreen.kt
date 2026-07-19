@@ -34,6 +34,8 @@ import com.example.gpstest.R
 import com.example.gpstest.domain.model.AppSettings
 import com.example.gpstest.domain.model.DarkModeConfig
 import com.example.gpstest.ui.components.GpsCard
+import com.example.gpstest.ui.components.GpsCardMeta
+import com.example.gpstest.ui.components.GpsCardTitle
 import com.example.gpstest.viewmodel.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -106,16 +108,9 @@ private fun AppearanceCard(
 ) {
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.settings_dark_mode),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.settings_dark_mode))
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.settings_dark_mode_summary),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            GpsCardMeta(text = stringResource(R.string.settings_dark_mode_summary))
             Spacer(modifier = Modifier.height(12.dp))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -156,16 +151,9 @@ private fun NmeaCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.settings_nmea_enabled),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                GpsCardTitle(text = stringResource(R.string.settings_nmea_enabled))
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.settings_nmea_enabled_summary),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                GpsCardMeta(text = stringResource(R.string.settings_nmea_enabled_summary))
             }
             Switch(
                 checked = nmeaEnabled,
@@ -184,10 +172,7 @@ private fun SnapshotCard(
 ) {
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.settings_snapshot_section),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.settings_snapshot_section))
 
             Spacer(modifier = Modifier.height(12.dp))
 

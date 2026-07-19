@@ -29,10 +29,7 @@ fun LocalPositionCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                stringResource(R.string.local_position_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.local_position_title))
             val statusText =
                 when (solution.status) {
                     PositionSolutionStatus.AVAILABLE -> stringResource(R.string.local_position_available)

@@ -51,6 +51,7 @@ import com.example.gpstest.domain.model.AGpsInjectionRecord
 import com.example.gpstest.domain.model.AGpsSettings
 import com.example.gpstest.ui.components.AGpsStatusCard
 import com.example.gpstest.ui.components.GpsCard
+import com.example.gpstest.ui.components.GpsCardTitle
 import com.example.gpstest.ui.components.GpsCardTone
 import com.example.gpstest.viewmodel.AGpsUiState
 import com.example.gpstest.viewmodel.AGpsViewModel
@@ -200,10 +201,7 @@ private fun AutoUpdateCard(
 
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.auto_update),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.auto_update))
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -308,10 +306,7 @@ private fun ManualActionsCard(
 ) {
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.manual_actions),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.manual_actions))
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -392,7 +387,7 @@ private fun ValidationResultCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
+                GpsCardTitle(
                     text =
                         stringResource(
                             if (result.isValid) {
@@ -401,7 +396,6 @@ private fun ValidationResultCard(
                                 R.string.agps_validation_fail
                             },
                         ),
-                    style = MaterialTheme.typography.titleMedium,
                 )
                 TextButton(onClick = onDismiss) {
                     Text(stringResource(R.string.dismiss))

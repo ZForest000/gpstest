@@ -36,10 +36,7 @@ fun DopCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.dop_title),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                GpsCardTitle(text = stringResource(R.string.dop_title))
                 if (dopInfo != null) {
                     Text(
                         text = stringResource(R.string.dop_satellite_count, dopInfo.satelliteCount),
@@ -103,7 +100,7 @@ private fun DopRow(
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(48.dp),
         )
@@ -111,7 +108,7 @@ private fun DopRow(
             text = String.format("%.1f", value),
             style =
                 MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                 ),
         )
     }

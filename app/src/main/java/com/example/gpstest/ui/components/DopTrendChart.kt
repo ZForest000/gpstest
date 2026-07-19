@@ -39,10 +39,7 @@ fun DopTrendChart(
     val gridColor = MaterialTheme.colorScheme.outlineVariant
     GpsCard(modifier = modifier) {
         Column {
-            Text(
-                text = stringResource(R.string.dop_trend_chart_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
+            GpsCardTitle(text = stringResource(R.string.dop_trend_chart_title))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
