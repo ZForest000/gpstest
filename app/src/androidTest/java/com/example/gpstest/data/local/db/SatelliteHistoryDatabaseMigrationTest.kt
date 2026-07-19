@@ -70,10 +70,17 @@ class SatelliteHistoryDatabaseMigrationTest {
                     InstrumentationRegistry.getInstrumentation().targetContext,
                     SatelliteHistoryDatabase::class.java,
                     TEST_DB,
-                ).addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
+                )
+                    .addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
                     .build()
             try {
-                val snapshot = database.historyDao().observeAll().first().single().toSnapshot()
+                val snapshot =
+                    database
+                        .historyDao()
+                        .observeAll()
+                        .first()
+                        .single()
+                        .toSnapshot()
                 val satellite = snapshot.getEntries().single()
 
                 assertEquals(1000L, snapshot.timestamp)
