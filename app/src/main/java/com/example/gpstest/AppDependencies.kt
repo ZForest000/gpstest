@@ -9,6 +9,7 @@ import com.example.gpstest.data.local.ExternalGpsEphemerisProvider
 import com.example.gpstest.data.local.ExternalGpsEphemerisStore
 import com.example.gpstest.data.local.RoomSatelliteHistoryStore
 import com.example.gpstest.data.local.SatelliteHistoryDataStore
+import com.example.gpstest.data.local.SatelliteHistoryPersistence
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.AGpsDataSource
 import com.example.gpstest.data.source.AGpsDataSourceImpl
@@ -51,13 +52,20 @@ class AppDependencies private constructor(
     }
 
     private val historyDataStore: SatelliteHistoryDataStore by lazy {
-        factory.createSatelliteHistoryDataStore(application, appSettingsStore)
+        factory.createSatelliteHistoryDataStore(application)
     }
     private val roomSatelliteHistoryStore: RoomSatelliteHistoryStore by lazy {
-        factory.createRoomSatelliteHistoryStore(application, historyDataStore, appSettingsStore)
+        factory.createRoomSatelliteHistoryStore(application)
+    }
+    private val satelliteHistoryPersistence: SatelliteHistoryPersistence by lazy {
+        factory.createSatelliteHistoryPersistence(
+            roomSatelliteHistoryStore,
+            historyDataStore,
+            appSettingsStore,
+        )
     }
     val satelliteHistoryRepository: SatelliteHistoryRepository by lazy {
-        factory.createSatelliteHistoryRepository(roomSatelliteHistoryStore)
+        factory.createSatelliteHistoryRepository(satelliteHistoryPersistence)
     }
     val externalGpsEphemerisProvider: ExternalGpsEphemerisProvider by lazy {
         factory.createExternalGpsEphemerisProvider(application)
@@ -101,25 +109,21 @@ internal class AppDependencyFactory(
     val createGnssRepository: (GnssAcquisitionSession) -> GnssRepository = { session ->
         GnssRepositoryImpl(session)
     },
-    val createSatelliteHistoryDataStore: (Application, SettingsStore) -> SatelliteHistoryDataStore = {
-        application,
-        settingsStore,
-        ->
-        SatelliteHistoryDataStore(application, settingsStore)
+    val createSatelliteHistoryDataStore: (Application) -> SatelliteHistoryDataStore = { application ->
+        SatelliteHistoryDataStore(application)
     },
-    val createRoomSatelliteHistoryStore: (
-        Application,
+    val createRoomSatelliteHistoryStore: (Application) -> RoomSatelliteHistoryStore = { application ->
+        RoomSatelliteHistoryStore(application)
+    },
+    val createSatelliteHistoryPersistence: (
+        RoomSatelliteHistoryStore,
         SatelliteHistoryDataStore,
         SettingsStore,
-    ) -> RoomSatelliteHistoryStore = {
-        application,
-        dataStore,
-        settingsStore,
-        ->
-        RoomSatelliteHistoryStore(application, dataStore, settingsStore)
+    ) -> SatelliteHistoryPersistence = { roomStore, legacyStore, settingsStore ->
+        SatelliteHistoryPersistence(roomStore, legacyStore, settingsStore.settings)
     },
-    val createSatelliteHistoryRepository: (RoomSatelliteHistoryStore) -> SatelliteHistoryRepository = { historyStore ->
-        SatelliteHistoryRepositoryImpl(historyStore)
+    val createSatelliteHistoryRepository: (SatelliteHistoryPersistence) -> SatelliteHistoryRepository = { persistence ->
+        SatelliteHistoryRepositoryImpl(persistence)
     },
     val createExternalGpsEphemerisProvider: (Application) -> ExternalGpsEphemerisProvider = { application ->
         ExternalGpsEphemerisStore(application)

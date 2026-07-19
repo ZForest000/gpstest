@@ -7,6 +7,7 @@ import com.example.gpstest.data.local.AGpsSettingsStore
 import com.example.gpstest.data.local.ExternalGpsEphemerisProvider
 import com.example.gpstest.data.local.RoomSatelliteHistoryStore
 import com.example.gpstest.data.local.SatelliteHistoryDataStore
+import com.example.gpstest.data.local.SatelliteHistoryPersistence
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.AGpsDataSource
 import com.example.gpstest.data.source.AGpsDownloader
@@ -30,6 +31,7 @@ class AppDependenciesTest {
         val gnssRepository = mockk<GnssRepository>()
         val historyDataStore = mockk<SatelliteHistoryDataStore>()
         val roomSatelliteHistoryStore = mockk<RoomSatelliteHistoryStore>()
+        val satelliteHistoryPersistence = mockk<SatelliteHistoryPersistence>()
         val satelliteHistoryRepository = mockk<SatelliteHistoryRepository>()
         val externalGpsEphemerisProvider = mockk<ExternalGpsEphemerisProvider>()
         val agpsDataSource = mockk<AGpsDataSource>()
@@ -66,22 +68,26 @@ class AppDependenciesTest {
                     assertSame(gnssAcquisitionSession, session)
                     gnssRepository
                 },
-                createSatelliteHistoryDataStore = { context, settingsStore ->
+                createSatelliteHistoryDataStore = { context ->
                     created("historyDataStore")
                     assertSame(application, context)
-                    assertSame(appSettingsStore, settingsStore)
                     historyDataStore
                 },
-                createRoomSatelliteHistoryStore = { context, dataStore, settingsStore ->
+                createRoomSatelliteHistoryStore = { context ->
                     created("roomHistoryStore")
                     assertSame(application, context)
-                    assertSame(historyDataStore, dataStore)
-                    assertSame(appSettingsStore, settingsStore)
                     roomSatelliteHistoryStore
                 },
-                createSatelliteHistoryRepository = { historyStore ->
+                createSatelliteHistoryPersistence = { roomStore, legacyStore, settingsStore ->
+                    created("satelliteHistoryPersistence")
+                    assertSame(roomSatelliteHistoryStore, roomStore)
+                    assertSame(historyDataStore, legacyStore)
+                    assertSame(appSettingsStore, settingsStore)
+                    satelliteHistoryPersistence
+                },
+                createSatelliteHistoryRepository = { persistence ->
                     created("satelliteHistoryRepository")
-                    assertSame(roomSatelliteHistoryStore, historyStore)
+                    assertSame(satelliteHistoryPersistence, persistence)
                     satelliteHistoryRepository
                 },
                 createExternalGpsEphemerisProvider = { context ->
@@ -153,6 +159,7 @@ class AppDependenciesTest {
         assertEquals(1, creationCounts["gnssRepository"])
         assertEquals(1, creationCounts["historyDataStore"])
         assertEquals(1, creationCounts["roomHistoryStore"])
+        assertEquals(1, creationCounts["satelliteHistoryPersistence"])
         assertEquals(1, creationCounts["satelliteHistoryRepository"])
         assertEquals(1, creationCounts["externalGpsEphemerisProvider"])
         assertEquals(1, creationCounts["agpsDataSource"])

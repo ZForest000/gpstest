@@ -1,6 +1,6 @@
 package com.example.gpstest.domain.repository
 
-import com.example.gpstest.data.local.RoomSatelliteHistoryStore
+import com.example.gpstest.data.local.SatelliteHistoryPersistence
 import com.example.gpstest.domain.model.DopInfo
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
@@ -8,9 +8,9 @@ import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import kotlinx.coroutines.flow.Flow
 
 class SatelliteHistoryRepositoryImpl internal constructor(
-    private val dataStore: RoomSatelliteHistoryStore,
+    private val persistence: SatelliteHistoryPersistence,
 ) : SatelliteHistoryRepository {
-    override val historySnapshots: Flow<List<SatelliteHistorySnapshot>> = dataStore.snapshots
+    override val historySnapshots: Flow<List<SatelliteHistorySnapshot>> = persistence.snapshots
 
     override suspend fun saveSnapshot(
         satellites: List<GnssSatellite>,
@@ -26,14 +26,14 @@ class SatelliteHistoryRepositoryImpl internal constructor(
                 dopInfo = dopInfo,
                 ttffMs = ttffMs,
             )
-        dataStore.saveSnapshot(snapshot)
+        persistence.save(snapshot)
     }
 
     override suspend fun deleteSnapshot(timestamp: Long) {
-        dataStore.deleteSnapshot(timestamp)
+        persistence.delete(timestamp)
     }
 
     override suspend fun clearHistory() {
-        dataStore.clearHistory()
+        persistence.clear()
     }
 }

@@ -20,13 +20,6 @@ internal class SatelliteHistoryDataStore(
 ) : LegacySatelliteHistoryStore {
     private val json = Json { ignoreUnknownKeys = true }
 
-    @Deprecated(
-        message = "SatelliteHistoryPersistence owns history retention policy; Task5 will remove this constructor.",
-        level = DeprecationLevel.WARNING,
-    )
-    @Suppress("UNUSED_PARAMETER")
-    constructor(context: Context, settingsStore: SettingsStore) : this(context)
-
     override suspend fun readLegacyHistory(): LegacySatelliteHistory {
         val preferences = context.historyDataStore.data.first()
         return LegacySatelliteHistory(

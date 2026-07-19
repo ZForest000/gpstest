@@ -20,17 +20,6 @@ internal class RoomSatelliteHistoryStore(
             .build()
             .historyDao()
 
-    @Deprecated(
-        message = "SatelliteHistoryPersistence owns migration policy; Task5 will remove this constructor.",
-        level = DeprecationLevel.WARNING,
-    )
-    @Suppress("UNUSED_PARAMETER")
-    internal constructor(
-        context: Context,
-        legacyStore: SatelliteHistoryDataStore,
-        settingsStore: SettingsStore,
-    ) : this(context)
-
     override val snapshots: Flow<List<SatelliteHistorySnapshot>> =
         dao.observeAll().map { rows -> rows.map { it.toSnapshot() } }
 
@@ -71,13 +60,5 @@ internal class RoomSatelliteHistoryStore(
 
     override suspend fun clearHistory() {
         dao.clearAndMarkLegacyImportComplete()
-    }
-
-    @Deprecated(
-        message = "SatelliteHistoryPersistence owns retention policy; Task5 will remove this overload.",
-        level = DeprecationLevel.WARNING,
-    )
-    internal suspend fun saveSnapshot(snapshot: SatelliteHistorySnapshot) {
-        throw UnsupportedOperationException("Use SatelliteHistoryPersistence.save")
     }
 }
