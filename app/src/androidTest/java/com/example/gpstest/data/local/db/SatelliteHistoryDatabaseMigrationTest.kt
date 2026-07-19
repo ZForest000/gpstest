@@ -66,14 +66,11 @@ class SatelliteHistoryDatabaseMigrationTest {
             )
 
             val database: SatelliteHistoryDatabase =
-                Room
-                    .databaseBuilder(
+                Room.databaseBuilder(
                     InstrumentationRegistry.getInstrumentation().targetContext,
                     SatelliteHistoryDatabase::class.java,
                     TEST_DB,
-                    )
-                    .addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
-                    .build()
+                ).addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2).build()
             try {
                 val snapshot =
                     database
