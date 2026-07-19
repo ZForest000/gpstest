@@ -65,21 +65,24 @@ class SatelliteHistoryDatabaseMigrationTest {
                 SatelliteHistoryDatabase.MIGRATION_1_2,
             )
 
-            Room.databaseBuilder(
-                InstrumentationRegistry.getInstrumentation().targetContext,
-                SatelliteHistoryDatabase::class.java,
-                TEST_DB,
-            ).addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
-                .build()
-                .use { database ->
-                    val snapshot = database.historyDao().observeAll().first().single().toSnapshot()
-                    val satellite = snapshot.getEntries().single()
+            val database: SatelliteHistoryDatabase =
+                Room.databaseBuilder(
+                    InstrumentationRegistry.getInstrumentation().targetContext,
+                    SatelliteHistoryDatabase::class.java,
+                    TEST_DB,
+                ).addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
+                    .build()
+            try {
+                val snapshot = database.historyDao().observeAll().first().single().toSnapshot()
+                val satellite = snapshot.getEntries().single()
 
-                    assertEquals(1000L, snapshot.timestamp)
-                    assertEquals(1, snapshot.usedInFixCount)
-                    assertEquals(7, satellite.svid)
-                    assertEquals("GPS", satellite.constellationName)
-                }
+                assertEquals(1000L, snapshot.timestamp)
+                assertEquals(1, snapshot.usedInFixCount)
+                assertEquals(7, satellite.svid)
+                assertEquals("GPS", satellite.constellationName)
+            } finally {
+                database.close()
+            }
         }
 
     private companion object {
