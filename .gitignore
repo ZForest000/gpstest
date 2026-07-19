@@ -101,3 +101,5 @@ compose_generated/
 .zcode/
 skills-lock.json
 .worktrees/
+.gradle-user/
+.workbuddy/memory/2026-07-19.md
