@@ -2,83 +2,82 @@ package com.example.gpstest.data.local
 
 import android.content.Context
 import androidx.room.Room
-import com.example.gpstest.data.local.db.HistorySatelliteEntity
-import com.example.gpstest.data.local.db.HistorySnapshotEntity
+import com.example.gpstest.data.local.db.HistoryMigrationMetadataEntity
 import com.example.gpstest.data.local.db.SatelliteHistoryDao
 import com.example.gpstest.data.local.db.SatelliteHistoryDatabase
-import com.example.gpstest.domain.model.AppSettings
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
-/** Room 历史存储；首次访问时把旧 DataStore JSON 事务迁移到一对多表。 */
-class RoomSatelliteHistoryStore(
+/** Room 历史存储，仅负责对 DAO 的事务原语进行适配。 */
+internal class RoomSatelliteHistoryStore(
     context: Context,
-    private val legacyStore: SatelliteHistoryDataStore,
-    private val settingsStore: SettingsStore,
-) {
+) : SatelliteHistoryRoomStore {
     private val dao: SatelliteHistoryDao =
         Room
             .databaseBuilder(context, SatelliteHistoryDatabase::class.java, "satellite_history.db")
             .addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
             .build()
             .historyDao()
-    private val migrationMutex = Mutex()
-    private var migrationChecked = false
 
-    val snapshots: Flow<List<SatelliteHistorySnapshot>> =
-        flow {
-            migrateIfNeeded()
-            emitAll(dao.observeAll().map { rows -> rows.map { it.toSnapshot() } })
-        }
+    @Deprecated(
+        message = "SatelliteHistoryPersistence owns migration policy; Task5 will remove this constructor.",
+        level = DeprecationLevel.WARNING,
+    )
+    @Suppress("UNUSED_PARAMETER")
+    internal constructor(
+        context: Context,
+        legacyStore: SatelliteHistoryDataStore,
+        settingsStore: SettingsStore,
+    ) : this(context)
 
-    suspend fun saveSnapshot(snapshot: SatelliteHistorySnapshot) {
-        migrateIfNeeded()
-        insert(snapshot)
-        prune(settingsStore.settings.first())
-    }
+    override val snapshots: Flow<List<SatelliteHistorySnapshot>> =
+        dao.observeAll().map { rows -> rows.map { it.toSnapshot() } }
 
-    suspend fun deleteSnapshot(timestamp: Long) {
-        migrateIfNeeded()
-        dao.deleteSnapshot(timestamp)
-    }
+    override suspend fun legacyImportCompleted(): Boolean =
+        dao.migrationMetadata()?.legacyImportCompleted ?: false
 
-    suspend fun clearHistory() {
-        migrateIfNeeded()
-        dao.clear()
-    }
+    override suspend fun hasSnapshots(): Boolean = dao.hasSnapshots()
 
-    private suspend fun migrateIfNeeded() {
-        migrationMutex.withLock {
-            if (migrationChecked) return
-            for (snapshot in legacyStore.readSnapshotsForMigration()) {
-                insert(snapshot)
-            }
-            legacyStore.markRoomMigrationComplete()
-            migrationChecked = true
-        }
-    }
-
-    private suspend fun insert(snapshot: SatelliteHistorySnapshot) {
-        dao.insertSnapshotWithSatellites(
-            snapshot = HistorySnapshotEntity.fromSnapshot(snapshot),
-            satellites = snapshot.getEntries().map(HistorySatelliteEntity::fromEntry),
+    override suspend fun importLegacySnapshots(
+        snapshots: List<SatelliteHistorySnapshot>,
+        retention: HistoryRetention,
+    ) {
+        dao.importLegacySnapshots(
+            snapshots = snapshots,
+            cutoffTimestamp = retention.cutoffTimestamp,
+            maxSnapshots = retention.maxSnapshots,
         )
     }
 
-    private suspend fun prune(settings: AppSettings) {
-        val cutoff = System.currentTimeMillis() - settings.retentionDays * MS_PER_DAY
-        dao.deleteBefore(cutoff)
-        val excess = dao.timestampsAfterNewest(settings.maxSnapshots)
-        if (excess.isNotEmpty()) dao.deleteTimestamps(excess)
+    override suspend fun markLegacyImportComplete() {
+        dao.upsertMigrationMetadata(HistoryMigrationMetadataEntity(legacyImportCompleted = true))
     }
 
-    private companion object {
-        const val MS_PER_DAY = 24L * 60 * 60 * 1000
+    override suspend fun saveSnapshot(
+        snapshot: SatelliteHistorySnapshot,
+        retention: HistoryRetention,
+    ) {
+        dao.saveSnapshotAndPrune(
+            snapshot = snapshot,
+            cutoffTimestamp = retention.cutoffTimestamp,
+            maxSnapshots = retention.maxSnapshots,
+        )
+    }
+
+    override suspend fun deleteSnapshot(timestamp: Long) {
+        dao.deleteSnapshot(timestamp)
+    }
+
+    override suspend fun clearHistory() {
+        dao.clearAndMarkLegacyImportComplete()
+    }
+
+    @Deprecated(
+        message = "SatelliteHistoryPersistence owns retention policy; Task5 will remove this overload.",
+        level = DeprecationLevel.WARNING,
+    )
+    internal suspend fun saveSnapshot(snapshot: SatelliteHistorySnapshot) {
+        throw UnsupportedOperationException("Use SatelliteHistoryPersistence.save")
     }
 }

@@ -7,7 +7,7 @@ import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import kotlinx.coroutines.flow.Flow
 
-class SatelliteHistoryRepositoryImpl(
+class SatelliteHistoryRepositoryImpl internal constructor(
     private val dataStore: RoomSatelliteHistoryStore,
 ) : SatelliteHistoryRepository {
     override val historySnapshots: Flow<List<SatelliteHistorySnapshot>> = dataStore.snapshots
