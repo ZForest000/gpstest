@@ -25,7 +25,7 @@ class RoomSatelliteHistoryStore(
     private val dao: SatelliteHistoryDao =
         Room
             .databaseBuilder(context, SatelliteHistoryDatabase::class.java, "satellite_history.db")
-            .fallbackToDestructiveMigration()
+            .addMigrations(SatelliteHistoryDatabase.MIGRATION_1_2)
             .build()
             .historyDao()
     private val migrationMutex = Mutex()

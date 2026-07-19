@@ -7,6 +7,8 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.gpstest.domain.model.SatelliteHistoryEntry
 import com.example.gpstest.domain.model.SatelliteHistorySnapshot
 import kotlinx.serialization.builtins.ListSerializer
@@ -104,6 +106,16 @@ data class HistorySatelliteEntity(
     }
 }
 
+@Entity(tableName = "history_migration_metadata")
+data class HistoryMigrationMetadataEntity(
+    @PrimaryKey val id: Int = SINGLETON_ID,
+    val legacyImportCompleted: Boolean,
+) {
+    companion object {
+        const val SINGLETON_ID = 0
+    }
+}
+
 data class SnapshotWithSatellites(
     @androidx.room.Embedded val snapshot: HistorySnapshotEntity,
     @Relation(parentColumn = "timestamp", entityColumn = "snapshotTimestamp")
@@ -113,10 +125,31 @@ data class SnapshotWithSatellites(
 }
 
 @Database(
-    entities = [HistorySnapshotEntity::class, HistorySatelliteEntity::class],
-    version = 1,
+    entities = [
+        HistorySnapshotEntity::class,
+        HistorySatelliteEntity::class,
+        HistoryMigrationMetadataEntity::class,
+    ],
+    version = 2,
     exportSchema = true,
 )
 abstract class SatelliteHistoryDatabase : RoomDatabase() {
     abstract fun historyDao(): SatelliteHistoryDao
+
+    companion object {
+        val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(database: SupportSQLiteDatabase) {
+                    database.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS `history_migration_metadata` (
+                            `id` INTEGER NOT NULL,
+                            `legacyImportCompleted` INTEGER NOT NULL,
+                            PRIMARY KEY(`id`)
+                        )
+                        """.trimIndent(),
+                    )
+                }
+            }
+    }
 }
