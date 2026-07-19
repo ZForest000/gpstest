@@ -23,8 +23,7 @@ internal class RoomSatelliteHistoryStore(
     override val snapshots: Flow<List<SatelliteHistorySnapshot>> =
         dao.observeAll().map { rows -> rows.map { it.toSnapshot() } }
 
-    override suspend fun legacyImportCompleted(): Boolean =
-        dao.migrationMetadata()?.legacyImportCompleted ?: false
+    override suspend fun legacyImportCompleted(): Boolean = dao.migrationMetadata()?.legacyImportCompleted ?: false
 
     override suspend fun hasSnapshots(): Boolean = dao.hasSnapshots()
 

@@ -41,7 +41,10 @@ internal interface SatelliteHistoryRoomStore {
 
     suspend fun markLegacyImportComplete()
 
-    suspend fun saveSnapshot(snapshot: SatelliteHistorySnapshot, retention: HistoryRetention)
+    suspend fun saveSnapshot(
+        snapshot: SatelliteHistorySnapshot,
+        retention: HistoryRetention,
+    )
 
     suspend fun deleteSnapshot(timestamp: Long)
 

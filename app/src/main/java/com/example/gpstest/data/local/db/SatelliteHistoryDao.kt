@@ -92,7 +92,10 @@ interface SatelliteHistoryDao {
         )
     }
 
-    private suspend fun prune(cutoffTimestamp: Long, maxSnapshots: Int) {
+    private suspend fun prune(
+        cutoffTimestamp: Long,
+        maxSnapshots: Int,
+    ) {
         deleteBefore(cutoffTimestamp)
         val timestamps = timestampsAfterNewest(maxSnapshots)
         if (timestamps.isNotEmpty()) deleteTimestamps(timestamps)

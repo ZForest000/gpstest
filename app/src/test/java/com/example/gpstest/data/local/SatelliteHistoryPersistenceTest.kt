@@ -98,12 +98,13 @@ class SatelliteHistoryPersistenceTest {
             val room = FakeRoomStore()
             val legacy = FakeLegacyStore()
             val settings = MutableStateFlow(AppSettings(maxSnapshots = 3, retentionDays = 2))
-            val persistence = SatelliteHistoryPersistence(
-                roomStore = room,
-                legacyStore = legacy,
-                settings = settings,
-                clock = { 10_000L },
-            )
+            val persistence =
+                SatelliteHistoryPersistence(
+                    roomStore = room,
+                    legacyStore = legacy,
+                    settings = settings,
+                    clock = { 10_000L },
+                )
 
             persistence.save(snapshot(timestamp = 10_000L))
 
@@ -128,7 +129,10 @@ class SatelliteHistoryPersistenceTest {
         private val beforeMarkerWrite: () -> Unit = {},
     ) : LegacySatelliteHistoryStore {
         override suspend fun readLegacyHistory(): LegacySatelliteHistory =
-            LegacySatelliteHistory(snapshots = snapshots, markerWritten = markerWritten)
+            LegacySatelliteHistory(
+                snapshots = snapshots,
+                markerWritten = markerWritten,
+            )
 
         override suspend fun markRoomMigrationComplete() {
             beforeMarkerWrite()
