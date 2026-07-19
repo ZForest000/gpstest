@@ -59,6 +59,37 @@ class SatelliteHistoryPersistenceTest {
         }
 
     @Test
+    fun `reopen after marker write failure completes marker without reimporting snapshots`() =
+        runTest {
+            val snapshot = snapshot(timestamp = 1_000L)
+            val room = FakeRoomStore()
+            val legacy =
+                FakeLegacyStore(
+                    snapshots = listOf(snapshot),
+                    failNextMarkerWrite = true,
+                )
+            val settings = MutableStateFlow(AppSettings())
+
+            val error =
+                runCatching {
+                    SatelliteHistoryPersistence(room, legacy, settings).snapshots.first()
+                }.exceptionOrNull()
+
+            assertTrue(error is IllegalStateException)
+            assertTrue(room.metadataComplete)
+            assertEquals(1, room.importAttempts)
+            assertFalse(legacy.markerWritten)
+            assertEquals(listOf(snapshot), room.rows.value)
+
+            val restoredSnapshots =
+                SatelliteHistoryPersistence(room, legacy, settings).snapshots.first()
+
+            assertEquals(listOf(snapshot), restoredSnapshots)
+            assertTrue(legacy.markerWritten)
+            assertEquals(1, room.importAttempts)
+        }
+
+    @Test
     fun `marked legacy json restores into an empty room`() =
         runTest {
             val snapshot = snapshot(timestamp = 1_000L)
@@ -126,6 +157,7 @@ class SatelliteHistoryPersistenceTest {
     private class FakeLegacyStore(
         var snapshots: List<SatelliteHistorySnapshot> = emptyList(),
         var markerWritten: Boolean = false,
+        private var failNextMarkerWrite: Boolean = false,
         private val beforeMarkerWrite: () -> Unit = {},
     ) : LegacySatelliteHistoryStore {
         override suspend fun readLegacyHistory(): LegacySatelliteHistory =
@@ -136,6 +168,10 @@ class SatelliteHistoryPersistenceTest {
 
         override suspend fun markRoomMigrationComplete() {
             beforeMarkerWrite()
+            if (failNextMarkerWrite) {
+                failNextMarkerWrite = false
+                throw IllegalStateException("marker write failed")
+            }
             markerWritten = true
         }
 
