@@ -10,7 +10,8 @@ import com.example.gpstest.data.local.SatelliteHistoryDataStore
 import com.example.gpstest.data.local.SettingsStore
 import com.example.gpstest.data.source.AGpsDataSource
 import com.example.gpstest.data.source.AGpsDownloader
-import com.example.gpstest.data.source.GnssDataSource
+import com.example.gpstest.data.source.GnssAcquisitionSession
+import com.example.gpstest.data.source.GnssPlatformSource
 import com.example.gpstest.domain.repository.AGpsRepository
 import com.example.gpstest.domain.repository.GnssRepository
 import com.example.gpstest.domain.repository.SatelliteHistoryRepository
@@ -24,7 +25,8 @@ class AppDependenciesTest {
     fun `uses application context and reuses dependencies within one application container`() {
         val application = mockk<Application>()
         val appSettingsStore = mockk<SettingsStore>()
-        val gnssDataSource = mockk<GnssDataSource>()
+        val gnssPlatformSource = mockk<GnssPlatformSource>()
+        val gnssAcquisitionSession = mockk<GnssAcquisitionSession>()
         val gnssRepository = mockk<GnssRepository>()
         val historyDataStore = mockk<SatelliteHistoryDataStore>()
         val roomSatelliteHistoryStore = mockk<RoomSatelliteHistoryStore>()
@@ -49,14 +51,19 @@ class AppDependenciesTest {
                     assertSame(application, context)
                     appSettingsStore
                 },
-                createGnssDataSource = { context ->
-                    created("gnssDataSource")
+                createGnssPlatformSource = { context ->
+                    created("gnssPlatformSource")
                     assertSame(application, context)
-                    gnssDataSource
+                    gnssPlatformSource
                 },
-                createGnssRepository = { dataSource ->
+                createGnssAcquisitionSession = { platformSource ->
+                    created("gnssAcquisitionSession")
+                    assertSame(gnssPlatformSource, platformSource)
+                    gnssAcquisitionSession
+                },
+                createGnssRepository = { session ->
                     created("gnssRepository")
-                    assertSame(gnssDataSource, dataSource)
+                    assertSame(gnssAcquisitionSession, session)
                     gnssRepository
                 },
                 createSatelliteHistoryDataStore = { context, settingsStore ->
@@ -141,7 +148,8 @@ class AppDependenciesTest {
         assertSame(agpsRepository, dependencies.agpsRepository)
 
         assertEquals(1, creationCounts["settingsStore"])
-        assertEquals(1, creationCounts["gnssDataSource"])
+        assertEquals(1, creationCounts["gnssPlatformSource"])
+        assertEquals(1, creationCounts["gnssAcquisitionSession"])
         assertEquals(1, creationCounts["gnssRepository"])
         assertEquals(1, creationCounts["historyDataStore"])
         assertEquals(1, creationCounts["roomHistoryStore"])

@@ -3,7 +3,7 @@ package com.example.gpstest.domain.model
 /**
  * 设备 GNSS 能力查询结果。
  *
- * 由 [com.example.gpstest.data.source.GnssDataSource.getGnssCapabilities] 从
+ * 由 [com.example.gpstest.data.source.GnssPlatformSource.getGnssCapabilities] 从
  * [android.location.LocationManager.gnssCapabilities] 提取，用于解释"某类数据为何为空"：
  * 若设备不支持原始测量 / 导航电文 / 天线信息，则对应 UI 为空是正常的。
  *

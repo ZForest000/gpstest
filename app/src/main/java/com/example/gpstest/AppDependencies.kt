@@ -14,8 +14,10 @@ import com.example.gpstest.data.source.AGpsDataSource
 import com.example.gpstest.data.source.AGpsDataSourceImpl
 import com.example.gpstest.data.source.AGpsDownloader
 import com.example.gpstest.data.source.AGpsDownloaderImpl
-import com.example.gpstest.data.source.GnssDataSource
-import com.example.gpstest.data.source.GnssDataSourceImpl
+import com.example.gpstest.data.source.GnssAcquisitionSession
+import com.example.gpstest.data.source.GnssAcquisitionSessionImpl
+import com.example.gpstest.data.source.GnssPlatformSource
+import com.example.gpstest.data.source.GnssPlatformSourceImpl
 import com.example.gpstest.domain.repository.AGpsRepository
 import com.example.gpstest.domain.repository.AGpsRepositoryImpl
 import com.example.gpstest.domain.repository.GnssRepository
@@ -38,11 +40,14 @@ class AppDependencies private constructor(
 
     val appSettingsStore: SettingsStore by lazy { factory.createSettingsStore(application) }
 
-    private val gnssDataSource: GnssDataSource by lazy {
-        factory.createGnssDataSource(application)
+    private val gnssPlatformSource: GnssPlatformSource by lazy {
+        factory.createGnssPlatformSource(application)
+    }
+    private val gnssAcquisitionSession: GnssAcquisitionSession by lazy {
+        factory.createGnssAcquisitionSession(gnssPlatformSource)
     }
     val gnssRepository: GnssRepository by lazy {
-        factory.createGnssRepository(gnssDataSource)
+        factory.createGnssRepository(gnssAcquisitionSession)
     }
 
     private val historyDataStore: SatelliteHistoryDataStore by lazy {
@@ -87,11 +92,14 @@ internal class AppDependencyFactory(
     val createSettingsStore: (Application) -> SettingsStore = { application ->
         SettingsStore(application)
     },
-    val createGnssDataSource: (Application) -> GnssDataSource = { application ->
-        GnssDataSourceImpl(application)
+    val createGnssPlatformSource: (Application) -> GnssPlatformSource = { application ->
+        GnssPlatformSourceImpl(application)
     },
-    val createGnssRepository: (GnssDataSource) -> GnssRepository = { dataSource ->
-        GnssRepositoryImpl(dataSource)
+    val createGnssAcquisitionSession: (GnssPlatformSource) -> GnssAcquisitionSession = { platformSource ->
+        GnssAcquisitionSessionImpl(platformSource)
+    },
+    val createGnssRepository: (GnssAcquisitionSession) -> GnssRepository = { session ->
+        GnssRepositoryImpl(session)
     },
     val createSatelliteHistoryDataStore: (Application, SettingsStore) -> SatelliteHistoryDataStore = {
         application,

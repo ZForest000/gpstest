@@ -19,16 +19,15 @@ import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.Constellation
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssClockData
-import com.example.gpstest.domain.model.GnssData
 import com.example.gpstest.domain.model.GnssSatellite
 import com.example.gpstest.domain.model.LocationInfo
 import com.example.gpstest.domain.model.MultipathIndicator
 import com.example.gpstest.domain.model.NavigationMessageFrame
 import com.example.gpstest.domain.model.NmeaSentence
 import com.example.gpstest.domain.model.PseudorangeMeasurement
-import com.example.gpstest.domain.model.PseudorangeResult
 import com.example.gpstest.domain.model.PseudorangeStatus
 import com.example.gpstest.domain.util.PseudorangeCalculator
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -42,57 +41,42 @@ import timber.log.Timber
 // dumpsys location 轮询间隔。该命令开销较大（数百 ms），过长则数据陈旧，过短则耗电
 private const val DUMPSYS_POLL_INTERVAL_MS = 5000L
 
+/** 每个平台注册的反注册必须独立执行，避免单个 OEM/Binder 异常阻断其余清理。 */
+internal fun runGnssListenerCleanup(vararg actions: () -> Unit) {
+    actions.forEach { action ->
+        try {
+            action()
+        } catch (_: Exception) {
+            // 某个 listener 已被系统移除时，继续清理其余 listener。
+        }
+    }
+}
+
 /**
- * Android GNSS 平台 API 的统一数据源实现。
+ * Android GNSS 平台 API adapter。
  *
- * 将 4 个独立平台回调合并为单个 [Flow]：
+ * 将主采集的 4 个独立平台回调转换为 [GnssAcquisitionEvent]：
  * 1. [GnssStatus.Callback] — 卫星列表（星座、CN0、方位角、仰角、星历/历书状态）
  * 2. [GnssMeasurementsEvent.Callback] — 原始测量值（多普勒、多路径、ADR、载波相位）
  * 3. [LocationListener] — 位置信息（经纬度、海拔、精度）
  * 4. [SensorEventListener] — 气压传感器（用于气压高度辅助）
  *
- * 合并策略：测量回调先触发，将每颗卫星的测量数据暂存到 [measurementMap]；
- * 状态回调随后触发时，通过"星座类型_SVID"键将测量数据与卫星合并。
- * 任一回调触发时都尝试通过 [trySend] 发射最新的 [GnssData]。
+ * 事件配对、freshness 与共享订阅语义由 [GnssAcquisitionSession] 持有；本类不保存
+ * 跨 callback 的融合状态。
  */
-class GnssDataSourceImpl(
+@Suppress("DEPRECATION")
+@OptIn(DelicateCoroutinesApi::class)
+class GnssPlatformSourceImpl(
     private val context: Context,
-) : GnssDataSource {
+) : GnssPlatformSource {
     private val locationManager: LocationManager?
         get() = context.getSystemService(LocationManager::class.java)
 
     private val sensorManager: SensorManager?
         get() = context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
 
-    override fun getGnssData(): Flow<GnssData> =
+    override fun getAcquisitionEvents(): Flow<GnssAcquisitionEvent> =
         callbackFlow {
-            var currentSatellites: List<GnssSatellite> = emptyList()
-            var currentLocation: LocationInfo? = null
-            var currentPressure: Float? = null
-            var currentBaroAltitude: Double? = null
-            var currentClock: GnssClockData? = null
-            var currentDumpsysData: DumpsysGnssData? = null
-
-            // 由于 Android 将 GNSS 测量值和状态分开在两个回调中传递，
-            // 此结构用于暂存测量数据，在状态回调通过"星座类型_SVID"键合并
-            data class MeasurementExtras(
-                val carrierCycles: Long?,
-                val dopplerShiftHz: Double?,
-                val agcLevelDb: Double?,
-                val multipathIndicator: MultipathIndicator?,
-                val accumulatedDeltaRangeMeters: Double?,
-                val accumulatedDeltaRangeState: Int?,
-                val accumulatedDeltaRangeUncertaintyMeters: Double?,
-                val receivedSvTimeNanos: Long?,
-                val receivedSvTimeUncertaintyNanos: Double?,
-                val pseudorangeRateMetersPerSecond: Double?,
-                val measurementState: Int?,
-                val measurementCn0DbHz: Double?,
-                val fullCarrierPhaseCycleCount: Long?,
-                val pseudorangeResult: PseudorangeResult,
-            )
-            var measurementMap = mutableMapOf<String, MeasurementExtras>()
-
             val speedOfLight = 299_792_458.0 // m/s
 
             val measurementCallback =
@@ -138,9 +122,9 @@ class GnssDataSourceImpl(
                                 hardwareClockDiscontinuityCount = clock.hardwareClockDiscontinuityCount,
                                 leapSecond = if (clock.hasLeapSecond()) clock.leapSecond else null,
                             )
-                        val newMap = mutableMapOf<String, MeasurementExtras>()
+                        val newMap = mutableMapOf<GnssSatelliteKey, GnssMeasurementExtras>()
                         for (measurement in event.measurements) {
-                            val key = "${measurement.constellationType}_${measurement.svid}"
+                            val key = GnssSatelliteKey(measurement.constellationType, measurement.svid)
                             val carrierFreqHz =
                                 if (measurement.hasCarrierFrequencyHz()) {
                                     measurement.carrierFrequencyHz.toDouble()
@@ -156,7 +140,7 @@ class GnssDataSourceImpl(
                                     null
                                 }
                             newMap[key] =
-                                MeasurementExtras(
+                                GnssMeasurementExtras(
                                     carrierCycles = if (measurement.hasCarrierCycles()) measurement.carrierCycles else null,
                                     dopplerShiftHz = dopplerShift,
                                     agcLevelDb =
@@ -216,44 +200,7 @@ class GnssDataSourceImpl(
                                         ),
                                 )
                         }
-                        measurementMap = newMap
-
-                        currentClock = clockData
-
-                        if (currentSatellites.isNotEmpty()) {
-                            currentSatellites =
-                                currentSatellites.map { sat ->
-                                    val key = "${toConstellationType(sat.constellation)}_${sat.svid}"
-                                    val extras = measurementMap[key]
-                                    if (extras != null) {
-                                        sat.copy(
-                                            carrierCycles = extras.carrierCycles ?: sat.carrierCycles,
-                                            dopplerShiftHz = extras.dopplerShiftHz ?: sat.dopplerShiftHz,
-                                            agcLevelDb = extras.agcLevelDb ?: sat.agcLevelDb,
-                                            multipathIndicator = extras.multipathIndicator ?: sat.multipathIndicator,
-                                            accumulatedDeltaRangeMeters =
-                                                extras.accumulatedDeltaRangeMeters ?: sat.accumulatedDeltaRangeMeters,
-                                            accumulatedDeltaRangeState = extras.accumulatedDeltaRangeState ?: sat.accumulatedDeltaRangeState,
-                                            accumulatedDeltaRangeUncertaintyMeters =
-                                                extras.accumulatedDeltaRangeUncertaintyMeters ?: sat.accumulatedDeltaRangeUncertaintyMeters,
-                                            receivedSvTimeNanos = extras.receivedSvTimeNanos ?: sat.receivedSvTimeNanos,
-                                            receivedSvTimeUncertaintyNanos =
-                                                extras.receivedSvTimeUncertaintyNanos ?: sat.receivedSvTimeUncertaintyNanos,
-                                            pseudorangeRateMetersPerSecond =
-                                                extras.pseudorangeRateMetersPerSecond ?: sat.pseudorangeRateMetersPerSecond,
-                                            measurementState = extras.measurementState ?: sat.measurementState,
-                                            measurementCn0DbHz = extras.measurementCn0DbHz ?: sat.measurementCn0DbHz,
-                                            fullCarrierPhaseCycleCount = extras.fullCarrierPhaseCycleCount ?: sat.fullCarrierPhaseCycleCount,
-                                            pseudorangeMeters = extras.pseudorangeResult.meters,
-                                            pseudorangeUncertaintyMeters = extras.pseudorangeResult.uncertaintyMeters,
-                                            pseudorangeStatus = extras.pseudorangeResult.status,
-                                        )
-                                    } else {
-                                        sat
-                                    }
-                                }
-                            trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
-                        }
+                        trySend(GnssAcquisitionEvent.Measurements(clockData, newMap))
                     }
                 }
 
@@ -268,9 +215,6 @@ class GnssDataSourceImpl(
                                     Constellation.fromConstellationType(
                                         status.getConstellationType(i),
                                     )
-
-                                val key = "${status.getConstellationType(i)}_${status.getSvid(i)}"
-                                val extras = measurementMap[key]
 
                                 val basebandCn0 =
                                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
@@ -296,24 +240,24 @@ class GnssDataSourceImpl(
                                             } else {
                                                 null
                                             },
-                                        carrierCycles = extras?.carrierCycles,
-                                        dopplerShiftHz = extras?.dopplerShiftHz,
+                                        carrierCycles = null,
+                                        dopplerShiftHz = null,
                                         timeNanos = System.nanoTime(),
-                                        agcLevelDb = extras?.agcLevelDb,
-                                        multipathIndicator = extras?.multipathIndicator,
+                                        agcLevelDb = null,
+                                        multipathIndicator = null,
                                         basebandCn0DbHz = basebandCn0,
-                                        accumulatedDeltaRangeMeters = extras?.accumulatedDeltaRangeMeters,
-                                        accumulatedDeltaRangeState = extras?.accumulatedDeltaRangeState,
-                                        accumulatedDeltaRangeUncertaintyMeters = extras?.accumulatedDeltaRangeUncertaintyMeters,
-                                        receivedSvTimeNanos = extras?.receivedSvTimeNanos,
-                                        receivedSvTimeUncertaintyNanos = extras?.receivedSvTimeUncertaintyNanos,
-                                        pseudorangeRateMetersPerSecond = extras?.pseudorangeRateMetersPerSecond,
-                                        measurementState = extras?.measurementState,
-                                        measurementCn0DbHz = extras?.measurementCn0DbHz,
-                                        fullCarrierPhaseCycleCount = extras?.fullCarrierPhaseCycleCount,
-                                        pseudorangeMeters = extras?.pseudorangeResult?.meters,
-                                        pseudorangeUncertaintyMeters = extras?.pseudorangeResult?.uncertaintyMeters,
-                                        pseudorangeStatus = extras?.pseudorangeResult?.status ?: PseudorangeStatus.MISSING_MEASUREMENT,
+                                        accumulatedDeltaRangeMeters = null,
+                                        accumulatedDeltaRangeState = null,
+                                        accumulatedDeltaRangeUncertaintyMeters = null,
+                                        receivedSvTimeNanos = null,
+                                        receivedSvTimeUncertaintyNanos = null,
+                                        pseudorangeRateMetersPerSecond = null,
+                                        measurementState = null,
+                                        measurementCn0DbHz = null,
+                                        fullCarrierPhaseCycleCount = null,
+                                        pseudorangeMeters = null,
+                                        pseudorangeUncertaintyMeters = null,
+                                        pseudorangeStatus = PseudorangeStatus.MISSING_MEASUREMENT,
                                     )
 
                                 satellites.add(satellite)
@@ -323,15 +267,14 @@ class GnssDataSourceImpl(
                             }
                         }
 
-                        currentSatellites = satellites
-                        trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
+                        trySend(GnssAcquisitionEvent.SatelliteStatus(satellites))
                     }
                 }
 
             val locationListener =
                 object : LocationListener {
                     override fun onLocationChanged(location: Location) {
-                        currentLocation =
+                        val locationInfo =
                             LocationInfo(
                                 latitude = location.latitude,
                                 longitude = location.longitude,
@@ -340,8 +283,6 @@ class GnssDataSourceImpl(
                                 speed = if (location.hasSpeed()) location.speed else 0f,
                                 bearing = if (location.hasBearing()) location.bearing else 0f,
                                 timestamp = location.time,
-                                barometricAltitude = currentBaroAltitude,
-                                pressure = currentPressure,
                                 verticalAccuracyMeters =
                                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
                                         location.hasVerticalAccuracy()
@@ -367,7 +308,7 @@ class GnssDataSourceImpl(
                                         null
                                     },
                             )
-                        trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
+                        trySend(GnssAcquisitionEvent.Location(locationInfo))
                     }
                 }
 
@@ -378,16 +319,14 @@ class GnssDataSourceImpl(
                     override fun onSensorChanged(event: SensorEvent?) {
                         event?.let {
                             if (it.sensor.type == Sensor.TYPE_PRESSURE && it.values.isNotEmpty()) {
-                                // 气压是位置（LocationInfo）的辅助字段，静默更新即可；
-                                // 下次位置回调（1Hz）会自然带上最新值。气压计可达数十 Hz，
-                                // 若由它驱动 trySend 会高频重发整条数据，拖垮 UI。
-                                currentPressure = it.values[0]
-                                currentBaroAltitude =
+                                val pressure = it.values[0]
+                                val barometricAltitude =
                                     SensorManager
                                         .getAltitude(
                                             SensorManager.PRESSURE_STANDARD_ATMOSPHERE,
-                                            it.values[0],
+                                            pressure,
                                         ).toDouble()
+                                trySend(GnssAcquisitionEvent.Pressure(pressure, barometricAltitude))
                             }
                         }
                     }
@@ -403,6 +342,15 @@ class GnssDataSourceImpl(
                 close(IllegalStateException("LocationManager not available"))
                 awaitClose()
                 return@callbackFlow
+            }
+
+            val cleanupListeners: () -> Unit = {
+                runGnssListenerCleanup(
+                    { lm.unregisterGnssStatusCallback(callback) },
+                    { lm.unregisterGnssMeasurementsCallback(measurementCallback) },
+                    { lm.removeUpdates(locationListener) },
+                    { sensorManager?.unregisterListener(pressureListener) },
+                )
             }
 
             try {
@@ -425,10 +373,12 @@ class GnssDataSourceImpl(
                     )
                 }
             } catch (e: SecurityException) {
+                cleanupListeners()
                 close(e)
                 awaitClose()
                 return@callbackFlow
             } catch (e: Exception) {
+                cleanupListeners()
                 close(e)
                 awaitClose()
                 return@callbackFlow
@@ -436,15 +386,14 @@ class GnssDataSourceImpl(
 
             // dumpsys location 是开销较大的 shell 命令（数百 ms），且需 Shizuku/root 权限。
             // 用独立协程每 5 秒轮询一次：无权限时 fetchDumpsysGnssData() 首步即返回 null，
-            // 开销可忽略；有权限时在 IO 线程执行并刷新 currentDumpsysData，驱动 ClockInfoCard
+            // 开销可忽略；有权限时在 IO 线程执行并发出事件，驱动 ClockInfoCard
             // 的 DumpsysDataSection 显示基带 C/N0、测量计数、定位星座列表。
             val dumpsysJob =
                 launch {
                     while (isActive) {
                         val data = withContext(Dispatchers.IO) { ShizukuHelper.fetchDumpsysGnssData() }
                         if (data != null) {
-                            currentDumpsysData = data
-                            trySend(GnssData(currentSatellites, currentLocation, currentClock, currentDumpsysData))
+                            trySend(GnssAcquisitionEvent.Dumpsys(data))
                         }
                         delay(DUMPSYS_POLL_INTERVAL_MS)
                     }
@@ -452,16 +401,9 @@ class GnssDataSourceImpl(
 
             awaitClose {
                 // callbackFlow 要求协程取消时注销所有监听器以防止泄漏
-                // 注销顺序不影响正确性，但必须全部移除
+                // 各反注册动作独立容错，确保其中一个 OEM/Binder 异常不会跳过后续清理。
                 dumpsysJob.cancel()
-                try {
-                    locationManager?.unregisterGnssStatusCallback(callback)
-                    locationManager?.unregisterGnssMeasurementsCallback(measurementCallback)
-                    locationManager?.removeUpdates(locationListener)
-                    sensorManager?.unregisterListener(pressureListener)
-                } catch (e: Exception) {
-                    // Ignore cleanup errors
-                }
+                cleanupListeners()
             }
         }
 
@@ -702,18 +644,4 @@ class GnssDataSourceImpl(
 
     // Android GnssCapabilities 布尔返回值映射为领域层 Int 编码：true=1, false=0
     private fun Boolean.toCapabilityResult(): Int = if (this) 1 else 0
-
-    // 将 [Constellation] 枚举映射为 Android [GnssStatus] 的整型常量
-    // 1=GPS, 2=SBAS, 3=GLONASS, 4=QZSS, 5=北斗, 6=伽利略, 0=未知
-    private fun toConstellationType(constellation: Constellation): Int =
-        when (constellation) {
-            Constellation.GPS -> 1
-            Constellation.SBAS -> 2
-            Constellation.GLONASS -> 3
-            Constellation.QZSS -> 4
-            Constellation.BEIDOU -> 5
-            Constellation.GALILEO -> 6
-            Constellation.IRNSS -> 7
-            Constellation.UNKNOWN -> 0
-        }
 }

@@ -34,7 +34,7 @@ GPS Debug Tool 采用 **Clean MVVM** 与 **单向数据流**。单 Activity（`M
     - `NavigationMessageViewModelFactory`
 - `MainActivity` 的 Factory 与 `AGpsUpdateWorker` 都从同一个应用组合根读取依赖，不再自行构造依赖链。
 
-约定：接口无后缀（如 `GnssDataSource`），实现类加 `Impl`。
+约定：接口无后缀（如 `GnssAcquisitionSession`），实现类加 `Impl`。
 
 ## 状态管理
 
@@ -52,7 +52,9 @@ ViewModel 内 `MutableStateFlow`，对外只读 `StateFlow`。典型密封状态
 ```
 Android 回调
   GnssStatus + GnssMeasurements + Location + 气压计
-        ↓ callbackFlow 合并（GnssDataSourceImpl）
+        ↓ callbackFlow 归一化（GnssPlatformSourceImpl）
+  Flow<GnssAcquisitionEvent>
+        ↓ 事件融合 + WhileSubscribed(0) 共享（GnssAcquisitionSessionImpl）
   Flow<GnssData>
         ↓
   GnssRepositoryImpl
@@ -61,6 +63,9 @@ Android 回调
         ↓ collectAsState()
   Compose UI（列表 / 天空图 / DOP / TTFF 等）
 ```
+
+NMEA、导航电文和天线信息也由同一个 acquisition session 按需共享；同类平台 listener
+仅在首个 consumer 到来时注册，并在最后一个 consumer 取消时立即注销。
 
 ### A-GPS（XTRA 下载与注入）
 

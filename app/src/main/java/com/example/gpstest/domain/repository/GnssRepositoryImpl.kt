@@ -1,6 +1,6 @@
 package com.example.gpstest.domain.repository
 
-import com.example.gpstest.data.source.GnssDataSource
+import com.example.gpstest.data.source.GnssAcquisitionSession
 import com.example.gpstest.domain.model.AntennaInfo
 import com.example.gpstest.domain.model.GnssCapabilitiesInfo
 import com.example.gpstest.domain.model.GnssData
@@ -16,19 +16,19 @@ private const val UI_SAMPLE_INTERVAL_MS = 250L
 
 @OptIn(kotlinx.coroutines.FlowPreview::class)
 class GnssRepositoryImpl(
-    private val dataSource: GnssDataSource,
+    private val acquisitionSession: GnssAcquisitionSession,
 ) : GnssRepository {
-    override fun getGnssData(): Flow<GnssData> = dataSource.getGnssData().sample(UI_SAMPLE_INTERVAL_MS)
+    override fun getGnssData(): Flow<GnssData> = acquisitionSession.getGnssData().sample(UI_SAMPLE_INTERVAL_MS)
 
     // NMEA 报文不采样：原始数据按行展示，采样会丢失报文。
-    override fun getNmeaSentences(): Flow<NmeaSentence> = dataSource.getNmeaSentences()
+    override fun getNmeaSentences(): Flow<NmeaSentence> = acquisitionSession.getNmeaSentences()
 
-    override fun getNavigationMessages(): Flow<NavigationMessageFrame> = dataSource.getNavigationMessages()
+    override fun getNavigationMessages(): Flow<NavigationMessageFrame> = acquisitionSession.getNavigationMessages()
 
     // 天线信息不采样：更新频率低，直接透传。
-    override fun getAntennaInfos(): Flow<List<AntennaInfo>> = dataSource.getAntennaInfos()
+    override fun getAntennaInfos(): Flow<List<AntennaInfo>> = acquisitionSession.getAntennaInfos()
 
-    override suspend fun isGnssSupported(): Boolean = dataSource.isSupported()
+    override suspend fun isGnssSupported(): Boolean = acquisitionSession.isSupported()
 
-    override suspend fun getGnssCapabilities(): GnssCapabilitiesInfo? = dataSource.getGnssCapabilities()
+    override suspend fun getGnssCapabilities(): GnssCapabilitiesInfo? = acquisitionSession.getGnssCapabilities()
 }

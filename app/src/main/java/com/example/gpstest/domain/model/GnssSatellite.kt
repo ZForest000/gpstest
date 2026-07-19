@@ -34,8 +34,8 @@ enum class MultipathIndicator {
  * - [GnssMeasurementsEvent.Callback]：原始测量值（多普勒频移、多路径、累积
  *   载波相位 ADR、伪距率）
  *
- * 合并策略：测量回调先触发，将测量数据暂存到 [GnssDataSourceImpl] 的
- * measurementMap 中；状态回调随后触发时，通过 "星座_SVID" 键将两者合并。
+ * 合并策略：测量回调先触发，由 [GnssEventFusion] 暂存测量数据；状态回调随后触发时，
+ * 通过 "星座_SVID" 键将两者合并。
  */
 
 data class GnssSatellite(
