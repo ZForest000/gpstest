@@ -130,4 +130,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.compose.ui.test.junit4)
     androidTestImplementation(libs.work.testing)
+    androidTestImplementation(libs.room.testing)
 }
