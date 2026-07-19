@@ -25,12 +25,7 @@ class RinexSessionRecorder(
                     satellite.pseudorangeMeters.takeIf {
                         satellite.pseudorangeStatus == PseudorangeStatus.AVAILABLE
                     }
-                val carrierPhase =
-                    satellite.accumulatedDeltaRangeMeters
-                        ?.takeIf { satellite.isAdrValid && !satellite.hasCycleSlip }
-                        ?.let { meters ->
-                            satellite.carrierFrequencyHz?.let { frequency -> meters * frequency / SPEED_OF_LIGHT }
-                        }
+                val carrierPhase = satellite.effectiveCarrierPhaseCycles
                 val doppler = satellite.dopplerShiftHz
                 if (pseudorange == null && carrierPhase == null && doppler == null) {
                     null
@@ -52,7 +47,6 @@ class RinexSessionRecorder(
     fun clear() = recordedEpochs.clear()
 
     private companion object {
-        const val SPEED_OF_LIGHT = 299_792_458.0
         const val MAX_EPOCHS = 7_200
     }
 }

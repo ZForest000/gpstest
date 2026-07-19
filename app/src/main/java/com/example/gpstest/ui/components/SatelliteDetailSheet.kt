@@ -80,19 +80,31 @@ fun SatelliteDetailSheet(
             DetailRow(
                 stringResource(R.string.carrier_frequency),
                 satellite.carrierFrequencyHz?.let { "%.2f MHz".format(it / 1_000_000) }
-                    ?: "N/A",
+                    ?: stringResource(R.string.value_not_available),
             )
             DetailRow(
-                stringResource(R.string.carrier_cycles),
-                satellite.carrierCycles?.let { "%.2f".format(it) } ?: "N/A",
+                stringResource(R.string.carrier_phase_cycles),
+                satellite.effectiveCarrierPhaseCycles?.let { "%,.3f cyc".format(it) }
+                    ?: stringResource(R.string.value_not_available),
             )
             DetailRow(
-                stringResource(R.string.full_carrier_phase),
-                satellite.fullCarrierPhaseCycleCount?.let { "%,d".format(it) } ?: "N/A",
+                stringResource(R.string.accumulated_delta_range),
+                satellite.effectiveAdrMeters?.let { "%.3f m".format(it) }
+                    ?: stringResource(R.string.value_not_available),
+            )
+            DetailRow(
+                stringResource(R.string.adr_uncertainty),
+                satellite.effectiveAdrUncertaintyMeters?.let { "%.3f m".format(it) }
+                    ?: stringResource(R.string.value_not_available),
+            )
+            DetailRow(
+                stringResource(R.string.adr_status),
+                adrStatusText(satellite),
             )
             DetailRow(
                 stringResource(R.string.doppler_shift),
-                satellite.dopplerShiftHz?.let { "%.2f Hz".format(it) } ?: "N/A",
+                satellite.dopplerShiftHz?.let { "%.2f Hz".format(it) }
+                    ?: stringResource(R.string.value_not_available),
             )
             DetailRow(
                 stringResource(R.string.agc_level),
@@ -196,6 +208,19 @@ private fun pseudorangeStatusText(status: PseudorangeStatus): String =
             PseudorangeStatus.OUT_OF_RANGE -> R.string.pseudorange_status_out_of_range
         },
     )
+
+@Composable
+private fun adrStatusText(satellite: GnssSatellite): String =
+    when {
+        satellite.accumulatedDeltaRangeState == null ->
+            stringResource(R.string.adr_status_unavailable)
+        satellite.hasCycleSlip ->
+            stringResource(R.string.adr_status_cycle_slip)
+        satellite.isAdrValid ->
+            stringResource(R.string.adr_status_valid)
+        else ->
+            stringResource(R.string.adr_status_invalid)
+    }
 
 @Composable
 private fun DetailSection(

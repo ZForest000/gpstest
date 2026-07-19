@@ -10,7 +10,12 @@ class GnssSatelliteTest {
         cn0DbHz: Float = 30f,
         constellation: Constellation = Constellation.GPS,
         rawConstellationType: Int = constellation.constellationType,
+        carrierFrequencyHz: Float? = null,
+        carrierCycles: Long? = null,
+        fullCarrierPhaseCycleCount: Long? = null,
+        accumulatedDeltaRangeMeters: Double? = null,
         accumulatedDeltaRangeState: Int? = null,
+        accumulatedDeltaRangeUncertaintyMeters: Double? = null,
         measurementState: Int? = null,
     ): GnssSatellite =
         GnssSatellite(
@@ -23,12 +28,15 @@ class GnssSatelliteTest {
             hasAlmanac = true,
             hasEphemeris = true,
             usedInFix = usedInFix,
-            carrierFrequencyHz = null,
-            carrierCycles = null,
+            carrierFrequencyHz = carrierFrequencyHz,
+            carrierCycles = carrierCycles,
             dopplerShiftHz = null,
             timeNanos = 0L,
+            accumulatedDeltaRangeMeters = accumulatedDeltaRangeMeters,
             accumulatedDeltaRangeState = accumulatedDeltaRangeState,
+            accumulatedDeltaRangeUncertaintyMeters = accumulatedDeltaRangeUncertaintyMeters,
             measurementState = measurementState,
+            fullCarrierPhaseCycleCount = fullCarrierPhaseCycleCount,
         )
 
     // --- group ---
@@ -191,6 +199,97 @@ class GnssSatelliteTest {
     fun `hasCycleSlip is false when accumulatedDeltaRangeState is null`() {
         val sat = makeSatellite(accumulatedDeltaRangeState = null)
         assertEquals(false, sat.hasCycleSlip)
+    }
+
+    // --- effectiveCarrierPhaseCycles / effectiveAdrMeters ---
+
+    @Test
+    fun `effectiveCarrierPhaseCycles prefers carrierCycles when present`() {
+        val sat =
+            makeSatellite(
+                carrierCycles = 100L,
+                carrierFrequencyHz = 1_575_420_000f,
+                accumulatedDeltaRangeMeters = 19.0,
+                accumulatedDeltaRangeState = 1,
+            )
+        assertEquals(100.0, sat.effectiveCarrierPhaseCycles!!, 1e-9)
+    }
+
+    @Test
+    fun `effectiveCarrierPhaseCycles falls back to fullCarrierPhaseCycleCount`() {
+        val sat = makeSatellite(fullCarrierPhaseCycleCount = 42L)
+        assertEquals(42.0, sat.effectiveCarrierPhaseCycles!!, 1e-9)
+    }
+
+    @Test
+    fun `effectiveCarrierPhaseCycles derives from valid ADR and frequency`() {
+        // GPS L1: 1575.42 MHz, ADR 19.029367 m → cycles = ADR * f / c
+        val frequencyHz = 1_575_420_000f
+        val adrMeters = 19.029367
+        val expected = adrMeters * frequencyHz / 299_792_458.0
+        val sat =
+            makeSatellite(
+                carrierFrequencyHz = frequencyHz,
+                accumulatedDeltaRangeMeters = adrMeters,
+                accumulatedDeltaRangeState = 1,
+            )
+        assertEquals(expected, sat.effectiveCarrierPhaseCycles!!, 1e-6)
+    }
+
+    @Test
+    fun `effectiveCarrierPhaseCycles is null when ADR invalid`() {
+        val sat =
+            makeSatellite(
+                carrierFrequencyHz = 1_575_420_000f,
+                accumulatedDeltaRangeMeters = 19.0,
+                accumulatedDeltaRangeState = 0,
+            )
+        assertNull(sat.effectiveCarrierPhaseCycles)
+    }
+
+    @Test
+    fun `effectiveCarrierPhaseCycles is null when cycle slip`() {
+        val sat =
+            makeSatellite(
+                carrierFrequencyHz = 1_575_420_000f,
+                accumulatedDeltaRangeMeters = 19.0,
+                accumulatedDeltaRangeState = 1 or 4,
+            )
+        assertNull(sat.effectiveCarrierPhaseCycles)
+    }
+
+    @Test
+    fun `effectiveCarrierPhaseCycles is null when frequency missing`() {
+        val sat =
+            makeSatellite(
+                accumulatedDeltaRangeMeters = 19.0,
+                accumulatedDeltaRangeState = 1,
+            )
+        assertNull(sat.effectiveCarrierPhaseCycles)
+    }
+
+    @Test
+    fun `effectiveAdrMeters returns value only when valid and no cycle slip`() {
+        val sat =
+            makeSatellite(
+                accumulatedDeltaRangeMeters = 12.5,
+                accumulatedDeltaRangeState = 1,
+                accumulatedDeltaRangeUncertaintyMeters = 0.02,
+            )
+        assertEquals(12.5, sat.effectiveAdrMeters!!, 1e-9)
+        assertEquals(0.02, sat.effectiveAdrUncertaintyMeters!!, 1e-9)
+    }
+
+    @Test
+    fun `effectiveAdrMeters is null when cycle slip`() {
+        val sat =
+            makeSatellite(
+                accumulatedDeltaRangeMeters = 12.5,
+                accumulatedDeltaRangeState = 1 or 4,
+                accumulatedDeltaRangeUncertaintyMeters = 0.02,
+            )
+        assertNull(sat.effectiveAdrMeters)
+        assertNull(sat.effectiveAdrUncertaintyMeters)
     }
 
     // --- bitmask: measurementState properties ---

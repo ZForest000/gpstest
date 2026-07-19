@@ -183,6 +183,14 @@
     <string name="carrier_frequency">载波频率</string>
     <string name="carrier_cycles">载波周期</string>
     <string name="full_carrier_phase">完整载波相位</string>
+    <string name="carrier_phase_cycles">载波相位</string>
+    <string name="accumulated_delta_range">累积距离 (ADR)</string>
+    <string name="adr_uncertainty">ADR 不确定度</string>
+    <string name="adr_status">ADR 状态</string>
+    <string name="adr_status_valid">有效</string>
+    <string name="adr_status_invalid">无效</string>
+    <string name="adr_status_cycle_slip">周跳</string>
+    <string name="adr_status_unavailable">不可用</string>
     <string name="doppler_shift">多普勒频移</string>
     <string name="timestamp">时间戳</string>
     <string name="has_ephemeris">星历数据</string>
@@ -507,8 +515,10 @@
     <string name="help_raw_measurement_title">原始测量数据</string>
     <string name="help_carrier_freq_title">载波频率</string>
     <string name="help_carrier_freq_desc">卫星信号的载波频率，不同星座使用不同频段。如GPS L1频段约为1575.42 MHz。</string>
-    <string name="help_carrier_cycles_title">载波周期</string>
-    <string name="help_carrier_cycles_desc">自信号锁定以来累计的载波周期数，用于高精度相位测量。</string>
+    <string name="help_carrier_cycles_title">载波相位</string>
+    <string name="help_carrier_cycles_desc">载波相位（周）。优先使用芯片上报的载波周期；现代设备通常改用 ADR（累积距离，米）换算：周数 = ADR × 频率 / 光速。用于高精度相位测量与 RINEX 导出。</string>
+    <string name="help_adr_title">累积距离 (ADR)</string>
+    <string name="help_adr_desc">Accumulated Delta Range，现代 GNSS 芯片提供的载波相位替代量（单位米）。仅在 ADR 状态为有效且无周跳时可用。旧版「载波周期 / 完整载波相位」API 已废弃，多数手机不再填充。</string>
     <string name="help_doppler_shift_title">多普勒频移</string>
     <string name="help_doppler_shift_desc">由于卫星与接收器相对运动产生的频率偏移，可用于计算卫星径向速度。</string>
     <string name="help_agc_title">AGC 自动增益控制</string>

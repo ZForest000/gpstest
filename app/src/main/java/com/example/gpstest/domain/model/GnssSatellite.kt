@@ -129,6 +129,37 @@ data class GnssSatellite(
             measurementState?.let { state ->
                 (state and GnssMeasurement.STATE_SUBFRAME_SYNC) != 0
             } ?: false
+
+    /**
+     * 有效载波相位（周）。
+     *
+     * 优先使用已废弃但若芯片仍上报的 [carrierCycles] / [fullCarrierPhaseCycleCount]；
+     * 否则由 ADR（米）÷ 波长换算：cycles = ADR_m × f / c。
+     * 仅在 ADR 有效且无周跳、且已知载波频率时才从 ADR 推导。
+     */
+    val effectiveCarrierPhaseCycles: Double?
+        get() {
+            carrierCycles?.let { return it.toDouble() }
+            fullCarrierPhaseCycleCount?.let { return it.toDouble() }
+            val adrMeters = accumulatedDeltaRangeMeters ?: return null
+            val frequencyHz = carrierFrequencyHz ?: return null
+            if (!isAdrValid || hasCycleSlip || frequencyHz <= 0f) return null
+            return adrMeters * frequencyHz / SPEED_OF_LIGHT_METERS_PER_SECOND
+        }
+
+    /** 有效 ADR（米），仅在 ADR_STATE_VALID 且无周跳时返回。 */
+    val effectiveAdrMeters: Double?
+        get() =
+            accumulatedDeltaRangeMeters?.takeIf { isAdrValid && !hasCycleSlip }
+
+    /** ADR 不确定度（米），仅在 ADR 可用时返回。 */
+    val effectiveAdrUncertaintyMeters: Double?
+        get() =
+            accumulatedDeltaRangeUncertaintyMeters?.takeIf { isAdrValid && !hasCycleSlip }
+
+    private companion object {
+        const val SPEED_OF_LIGHT_METERS_PER_SECOND = 299_792_458.0
+    }
 }
 
 /** 信号强度等级，基于载噪比 CN0 (dB-Hz) 划分。STRONG >= 35, MEDIUM >= 25, WEAK < 25。 */
