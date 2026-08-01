@@ -18,7 +18,7 @@ mockk = "1.13.13"
 turbine = "1.2.0"
 androidx-junit = "1.2.1"
 timber = "5.0.1"
-room = "2.6.1"
+room = "2.8.4"
 ksp = "2.1.0-1.0.29"
 
 [libraries]
